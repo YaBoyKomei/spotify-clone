@@ -9,7 +9,9 @@ app.use(express.json());
 
 // Serve static files from React build in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
+  const buildPath = path.join(__dirname, '../client/build');
+  console.log('📁 Serving static files from:', buildPath);
+  app.use(express.static(buildPath));
 }
 
 // Parse songs from YouTube Music API response with sections
@@ -545,7 +547,22 @@ app.get('/api/search', async (req, res) => {
 // Catch-all route to serve React app in production
 if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+    const indexPath = path.join(__dirname, '../client/build/index.html');
+    console.log('📄 Serving index.html from:', indexPath);
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('❌ Error serving index.html:', err);
+        res.status(500).send('Error loading application. Please check server logs.');
+      }
+    });
+  });
+} else {
+  // Development mode - just show a message
+  app.get('/', (req, res) => {
+    res.json({ 
+      message: 'Server is running in development mode',
+      note: 'Run the React app separately with: cd client && npm start'
+    });
   });
 }
 
