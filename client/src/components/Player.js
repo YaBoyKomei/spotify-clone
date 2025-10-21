@@ -232,17 +232,23 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   useEffect(() => {
     if (!player || !currentSong || !currentSong.youtubeId) return;
 
-    console.log('🎵 Loading song:', currentSong.title, currentSong.youtubeId);
+    console.log('🎵 Loading song:', currentSong.title, currentSong.youtubeId, 'Should play:', isPlayingRef.current);
     
     try {
-      // Load and play the video immediately if isPlaying is true
-      if (isPlayingRef.current) {
-        player.loadVideoById(currentSong.youtubeId);
-      } else {
-        player.cueVideoById(currentSong.youtubeId);
-      }
+      // Load the video
+      player.loadVideoById(currentSong.youtubeId);
       setCurrentTime(0);
       setDuration(0);
+      
+      // Explicitly play if should be playing
+      if (isPlayingRef.current) {
+        setTimeout(() => {
+          if (player.playVideo) {
+            player.playVideo();
+            console.log('▶️ Auto-playing new song');
+          }
+        }, 100);
+      }
     } catch (error) {
       console.error('Error loading video:', error);
     }
