@@ -4,7 +4,12 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm install && cd server && npm install && cd ../client && npm install && npm run build
+    buildCommand: |
+      npm install
+      cd server && npm install && cd ..
+      cd client && npm install && npm run build && cd ..
+      echo "Build completed successfully"
+      ls -la client/build || echo "Build folder not found!"
     startCommand: node server/server.js
     envVars:
       - key: NODE_ENV
