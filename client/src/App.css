@@ -789,7 +789,7 @@
   .main-content {
     padding: 12px;
     padding-top: 72px;
-    padding-bottom: 140px;
+    padding-bottom: max(150px, calc(env(safe-area-inset-bottom) + 150px));
   }
 
   .main-content h1 {
