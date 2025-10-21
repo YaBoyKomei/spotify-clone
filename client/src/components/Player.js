@@ -136,19 +136,25 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   useEffect(() => {
     if (!currentSong || !('mediaSession' in navigator)) return;
 
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: currentSong.title,
-      artist: currentSong.artist,
-      album: 'YouTube Music',
-      artwork: [
-        { src: currentSong.cover, sizes: '96x96', type: 'image/jpeg' },
-        { src: currentSong.cover, sizes: '128x128', type: 'image/jpeg' },
-        { src: currentSong.cover, sizes: '192x192', type: 'image/jpeg' },
-        { src: currentSong.cover, sizes: '256x256', type: 'image/jpeg' },
-        { src: currentSong.cover, sizes: '384x384', type: 'image/jpeg' },
-        { src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' },
-      ]
-    });
+    console.log('🎵 Updating Media Session metadata for:', currentSong.title);
+    
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentSong.title,
+        artist: currentSong.artist,
+        album: 'YouTube Music',
+        artwork: [
+          { src: currentSong.cover, sizes: '96x96', type: 'image/jpeg' },
+          { src: currentSong.cover, sizes: '128x128', type: 'image/jpeg' },
+          { src: currentSong.cover, sizes: '192x192', type: 'image/jpeg' },
+          { src: currentSong.cover, sizes: '256x256', type: 'image/jpeg' },
+          { src: currentSong.cover, sizes: '384x384', type: 'image/jpeg' },
+          { src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' },
+        ]
+      });
+    } catch (error) {
+      console.error('Error setting Media Session metadata:', error);
+    }
 
     navigator.mediaSession.setActionHandler('play', () => {
       console.log('📱 Media Session: Play requested, current state:', isPlayingRef.current);
@@ -185,13 +191,23 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     });
 
     navigator.mediaSession.setActionHandler('previoustrack', () => {
-      console.log('📱 Media Session: Previous track');
-      onPrevious();
+      console.log('📱 Media Session: Previous track requested');
+      try {
+        onPrevious();
+        console.log('✅ Previous track called successfully');
+      } catch (error) {
+        console.error('❌ Error calling onPrevious:', error);
+      }
     });
 
     navigator.mediaSession.setActionHandler('nexttrack', () => {
-      console.log('📱 Media Session: Next track');
-      onNext();
+      console.log('📱 Media Session: Next track requested');
+      try {
+        onNext();
+        console.log('✅ Next track called successfully');
+      } catch (error) {
+        console.error('❌ Error calling onNext:', error);
+      }
     });
 
     navigator.mediaSession.setActionHandler('seekbackward', () => {
@@ -244,10 +260,25 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       // Mark that we're loading a new song
       isLoadingNewSongRef.current = true;
       
-      // Load the video
-      player.loadVideoById(currentSong.youtubeId);
+      // Reset position state for new song
       setCurrentTime(0);
       setDuration(0);
+      
+      // Reset Media Session position
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: 0.1,
+            playbackRate: 1,
+            position: 0
+          });
+        } catch (e) {
+          console.log('Could not reset position state');
+        }
+      }
+      
+      // Load the video
+      player.loadVideoById(currentSong.youtubeId);
       
       // Explicitly play if should be playing
       if (isPlayingRef.current) {
