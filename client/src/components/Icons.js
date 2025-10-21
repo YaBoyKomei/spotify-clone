@@ -104,3 +104,11 @@ export const RepeatOneIcon = () => (
     <text x="12" y="16" fontSize="10" fill="currentColor" textAnchor="middle" fontWeight="bold">1</text>
   </svg>
 );
+
+
+export const AutoplayIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 3l14 9-14 9V3z"></path>
+    <path d="M19 3v18"></path>
+  </svg>
+);

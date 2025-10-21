@@ -19,6 +19,7 @@ function App() {
   const [expandedSongs, setExpandedSongs] = useState([]);
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState('off'); // 'off', 'all', 'one'
+  const [autoplay, setAutoplay] = useState(true); // Auto-play next song
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -155,6 +156,10 @@ function App() {
     if (repeat === 'off') setRepeat('all');
     else if (repeat === 'all') setRepeat('one');
     else setRepeat('off');
+  };
+
+  const toggleAutoplay = () => {
+    setAutoplay(!autoplay);
   };
 
   const toggleLike = (song) => {
@@ -520,6 +525,8 @@ function App() {
         onToggleShuffle={toggleShuffle}
         repeat={repeat}
         onToggleRepeat={toggleRepeat}
+        autoplay={autoplay}
+        onToggleAutoplay={toggleAutoplay}
         isLiked={currentSong ? !!likedSongs.find(s => s.id === currentSong.id) : false}
         onToggleLike={() => currentSong && toggleLike(currentSong)}
       />

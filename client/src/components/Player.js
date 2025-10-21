@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
-import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon } from './Icons';
+import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon } from './Icons';
 
-function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, isLiked, onToggleLike }) {
+function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike }) {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -89,12 +89,18 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               }
               
               if (event.data === 0) { // ended
+                console.log('🎵 Song ended - Repeat:', repeat, 'Autoplay:', autoplay);
                 if (repeat === 'one') {
                   // Replay the same song
                   event.target.seekTo(0);
                   event.target.playVideo();
-                } else {
+                } else if (autoplay || repeat === 'all') {
+                  // Auto-play next song if autoplay is on or repeat all is on
                   onNext();
+                } else {
+                  // Stop playing and show play button
+                  console.log('⏹️ Autoplay is off - stopping playback');
+                  onTogglePlay(); // This will set isPlaying to false
                 }
               }
             },
@@ -551,6 +557,13 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 className={`control-btn ${repeat !== 'off' ? 'active' : ''}`}
               >
                 {repeat === 'one' ? <RepeatOneIcon /> : <RepeatIcon />}
+              </button>
+              <button 
+                onClick={onToggleAutoplay} 
+                title={autoplay ? 'Autoplay On' : 'Autoplay Off'} 
+                className={`control-btn ${autoplay ? 'active' : ''}`}
+              >
+                <AutoplayIcon />
               </button>
             </div>
             <div className="progress-bar">
