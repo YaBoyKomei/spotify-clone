@@ -235,7 +235,12 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     console.log('🎵 Loading song:', currentSong.title, currentSong.youtubeId);
     
     try {
-      player.loadVideoById(currentSong.youtubeId);
+      // Load and play the video immediately if isPlaying is true
+      if (isPlayingRef.current) {
+        player.loadVideoById(currentSong.youtubeId);
+      } else {
+        player.cueVideoById(currentSong.youtubeId);
+      }
       setCurrentTime(0);
       setDuration(0);
     } catch (error) {
