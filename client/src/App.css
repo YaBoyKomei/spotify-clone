@@ -594,7 +594,7 @@
   .main-content {
     padding: 20px;
     padding-top: 80px;
-    padding-bottom: 140px;
+    padding-bottom: 180px;
   }
 
   .main-content h1 {
@@ -789,7 +789,7 @@
   .main-content {
     padding: 12px;
     padding-top: 72px;
-    padding-bottom: max(150px, calc(env(safe-area-inset-bottom) + 150px));
+    padding-bottom: 200px;
   }
 
   .main-content h1 {

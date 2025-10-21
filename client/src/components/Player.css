@@ -282,9 +282,9 @@
 @media (max-width: 768px) {
   .player {
     height: auto;
-    min-height: 140px;
+    min-height: 160px;
     padding: 16px;
-    padding-bottom: 24px;
+    padding-bottom: 32px;
     flex-direction: column;
     gap: 8px;
     bottom: 0;
@@ -334,9 +334,9 @@
 /* Mobile portrait (480px) */
 @media (max-width: 480px) {
   .player {
-    min-height: 150px;
-    padding: 12px;
-    padding-bottom: 28px;
+    min-height: 180px;
+    padding: 16px 12px;
+    padding-bottom: 40px;
   }
 
   .player-song-info {
