@@ -13,6 +13,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const manualPauseRef = useRef(false); // Track if user manually paused
   const lastActionTimeRef = useRef(0); // Track last user action
   const isPageHiddenRef = useRef(false); // Track if page is hidden
+  const isLoadingNewSongRef = useRef(false); // Track if loading a new song
 
   // Keep refs updated
   useEffect(() => {
@@ -57,11 +58,11 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               playerInitialized.current = true;
             },
             onStateChange: (event) => {
-              console.log('Player state changed:', event.data, 'Page hidden:', isPageHiddenRef.current);
+              console.log('Player state changed:', event.data, 'Page hidden:', isPageHiddenRef.current, 'Loading:', isLoadingNewSongRef.current);
               // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering, 5: cued
               
-              // Only sync state if page is visible (not hidden/minimized)
-              if (!isPageHiddenRef.current) {
+              // Only sync state if page is visible and not loading a new song
+              if (!isPageHiddenRef.current && !isLoadingNewSongRef.current) {
                 // If player is paused (2) and we think it should be playing, sync the state
                 if (event.data === 2 && isPlayingRef.current) {
                   console.log('⚠️ Player paused while isPlaying is true - syncing UI state');
@@ -79,7 +80,12 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                   onTogglePlay();
                 }
               } else {
-                console.log('📱 Page is hidden, skipping state sync');
+                if (isPageHiddenRef.current) {
+                  console.log('📱 Page is hidden, skipping state sync');
+                }
+                if (isLoadingNewSongRef.current) {
+                  console.log('🔄 Loading new song, skipping state sync');
+                }
               }
               
               if (event.data === 0) { // ended
@@ -235,6 +241,9 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     console.log('🎵 Loading song:', currentSong.title, currentSong.youtubeId, 'Should play:', isPlayingRef.current);
     
     try {
+      // Mark that we're loading a new song
+      isLoadingNewSongRef.current = true;
+      
       // Load the video
       player.loadVideoById(currentSong.youtubeId);
       setCurrentTime(0);
@@ -247,10 +256,20 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             player.playVideo();
             console.log('▶️ Auto-playing new song');
           }
+          // Clear the loading flag after a delay
+          setTimeout(() => {
+            isLoadingNewSongRef.current = false;
+          }, 500);
         }, 100);
+      } else {
+        // Clear the loading flag immediately if not auto-playing
+        setTimeout(() => {
+          isLoadingNewSongRef.current = false;
+        }, 500);
       }
     } catch (error) {
       console.error('Error loading video:', error);
+      isLoadingNewSongRef.current = false;
     }
   }, [currentSong, player]);
 
