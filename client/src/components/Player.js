@@ -300,13 +300,11 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     if (!player) return;
 
     let resumeTimeout;
-    let backgroundCheckInterval;
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
         isPageHiddenRef.current = true;
         console.log('📱 Page hidden - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
-        
         // Try to keep playing even when hidden
         if (isPlayingRef.current && !manualPauseRef.current) {
           try {
@@ -323,31 +321,11 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               iframe.style.pointerEvents = 'none';
               iframe.style.zIndex = '-9999';
             }
-            
-            // Start periodic check to keep playing in background
-            backgroundCheckInterval = setInterval(() => {
-              if (isPlayingRef.current && !manualPauseRef.current && document.hidden) {
-                try {
-                  const state = player.getPlayerState();
-                  if (state !== 1) { // Not playing
-                    console.log('🔄 Background: Resuming playback (state:', state, ')');
-                    player.playVideo();
-                  }
-                } catch (error) {
-                  console.error('Background check error:', error);
-                }
-              }
-            }, 2000); // Check every 2 seconds
           } catch (error) {
             console.error('Error maintaining playback:', error);
           }
         }
       } else {
-        // Clear background check when page becomes visible
-        if (backgroundCheckInterval) {
-          clearInterval(backgroundCheckInterval);
-          backgroundCheckInterval = null;
-        }
         isPageHiddenRef.current = false;
         console.log('📱 Page visible - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
         // Restore iframe settings
@@ -404,7 +382,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
       if (resumeTimeout) clearTimeout(resumeTimeout);
-      if (backgroundCheckInterval) clearInterval(backgroundCheckInterval);
     };
   }, [player]);
 
