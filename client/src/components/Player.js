@@ -1,0 +1,539 @@
+import React, { useEffect, useRef, useState } from 'react';
+import './Player.css';
+import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon } from './Icons';
+
+function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, isLiked, onToggleLike }) {
+  const [player, setPlayer] = useState(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const intervalRef = useRef(null);
+  const playerInitialized = useRef(false);
+  const isPlayingRef = useRef(isPlaying);
+  const playerRef = useRef(null);
+  const manualPauseRef = useRef(false); // Track if user manually paused
+  const lastActionTimeRef = useRef(0); // Track last user action
+  const isPageHiddenRef = useRef(false); // Track if page is hidden
+
+  // Keep refs updated
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+    // If playing, clear manual pause flag (unless page is hidden)
+    if (isPlaying && !isPageHiddenRef.current) {
+      manualPauseRef.current = false;
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    playerRef.current = player;
+  }, [player]);
+
+  // Initialize YouTube Player
+  useEffect(() => {
+    if (playerInitialized.current) return;
+
+    const initPlayer = () => {
+      if (!document.getElementById('youtube-player')) {
+        console.error('YouTube player div not found');
+        return;
+      }
+
+      try {
+        const ytPlayer = new window.YT.Player('youtube-player', {
+          height: '1',
+          width: '1',
+          videoId: '',
+          playerVars: {
+            autoplay: 0,
+            controls: 0,
+            playsinline: 1,
+            enablejsapi: 1,
+            origin: window.location.origin,
+            widget_referrer: window.location.origin
+          },
+          events: {
+            onReady: (event) => {
+              console.log('✅ YouTube Player is ready');
+              setPlayer(event.target);
+              playerInitialized.current = true;
+            },
+            onStateChange: (event) => {
+              console.log('Player state changed:', event.data, 'Page hidden:', isPageHiddenRef.current);
+              // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering, 5: cued
+              
+              // Only sync state if page is visible (not hidden/minimized)
+              if (!isPageHiddenRef.current) {
+                // If player is paused (2) and we think it should be playing, sync the state
+                if (event.data === 2 && isPlayingRef.current) {
+                  console.log('⚠️ Player paused while isPlaying is true - syncing UI state');
+                  manualPauseRef.current = true;
+                  lastActionTimeRef.current = Date.now();
+                  // Update the UI state to match
+                  onTogglePlay();
+                }
+                
+                // If player is playing (1) and we think it should be paused, sync the state
+                if (event.data === 1 && !isPlayingRef.current) {
+                  console.log('⚠️ Player playing while isPlaying is false - syncing UI state');
+                  manualPauseRef.current = false;
+                  // Update the UI state to match
+                  onTogglePlay();
+                }
+              } else {
+                console.log('📱 Page is hidden, skipping state sync');
+              }
+              
+              if (event.data === 0) { // ended
+                if (repeat === 'one') {
+                  // Replay the same song
+                  event.target.seekTo(0);
+                  event.target.playVideo();
+                } else {
+                  onNext();
+                }
+              }
+            },
+            onError: (event) => {
+              console.error('YouTube Player Error:', event.data);
+            }
+          },
+        });
+      } catch (error) {
+        console.error('Error creating player:', error);
+      }
+    };
+
+    // Load YouTube API if not loaded
+    if (!window.YT) {
+      console.log('Loading YouTube API...');
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      
+      window.onYouTubeIframeAPIReady = () => {
+        console.log('YouTube API loaded');
+        initPlayer();
+      };
+    } else if (window.YT.Player) {
+      console.log('YouTube API already loaded');
+      initPlayer();
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [onNext]);
+
+  // Setup Media Session API for background playback
+  useEffect(() => {
+    if (!currentSong || !('mediaSession' in navigator)) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentSong.title,
+      artist: currentSong.artist,
+      album: 'YouTube Music',
+      artwork: [
+        { src: currentSong.cover, sizes: '96x96', type: 'image/jpeg' },
+        { src: currentSong.cover, sizes: '128x128', type: 'image/jpeg' },
+        { src: currentSong.cover, sizes: '192x192', type: 'image/jpeg' },
+        { src: currentSong.cover, sizes: '256x256', type: 'image/jpeg' },
+        { src: currentSong.cover, sizes: '384x384', type: 'image/jpeg' },
+        { src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' },
+      ]
+    });
+
+    navigator.mediaSession.setActionHandler('play', () => {
+      console.log('📱 Media Session: Play requested, current state:', isPlayingRef.current);
+      manualPauseRef.current = false; // Clear manual pause flag
+      lastActionTimeRef.current = Date.now();
+      
+      // Always toggle to play state
+      if (!isPlayingRef.current) {
+        console.log('📱 Calling onTogglePlay to start playback');
+        onTogglePlay();
+      } else {
+        console.log('📱 Already playing, ensuring player is playing');
+        if (playerRef.current && playerRef.current.playVideo) {
+          playerRef.current.playVideo();
+        }
+      }
+    });
+
+    navigator.mediaSession.setActionHandler('pause', () => {
+      console.log('📱 Media Session: Pause requested, current state:', isPlayingRef.current);
+      manualPauseRef.current = true; // Mark as manual pause
+      lastActionTimeRef.current = Date.now();
+      
+      // Always toggle to pause state
+      if (isPlayingRef.current) {
+        console.log('📱 Calling onTogglePlay to pause playback');
+        onTogglePlay();
+      } else {
+        console.log('📱 Already paused, ensuring player is paused');
+        if (playerRef.current && playerRef.current.pauseVideo) {
+          playerRef.current.pauseVideo();
+        }
+      }
+    });
+
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      console.log('📱 Media Session: Previous track');
+      onPrevious();
+    });
+
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      console.log('📱 Media Session: Next track');
+      onNext();
+    });
+
+    navigator.mediaSession.setActionHandler('seekbackward', () => {
+      console.log('📱 Media Session: Seek backward');
+      if (playerRef.current && playerRef.current.seekTo && playerRef.current.getCurrentTime) {
+        const current = playerRef.current.getCurrentTime();
+        const newTime = Math.max(0, current - 10);
+        playerRef.current.seekTo(newTime, true);
+      }
+    });
+
+    navigator.mediaSession.setActionHandler('seekforward', () => {
+      console.log('📱 Media Session: Seek forward');
+      if (playerRef.current && playerRef.current.seekTo && playerRef.current.getCurrentTime && playerRef.current.getDuration) {
+        const current = playerRef.current.getCurrentTime();
+        const total = playerRef.current.getDuration();
+        const newTime = Math.min(total, current + 10);
+        playerRef.current.seekTo(newTime, true);
+      }
+    });
+
+    console.log('📱 Media Session API initialized');
+  }, [currentSong, onTogglePlay, onNext, onPrevious]);
+
+  // Update Media Session playback state
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    }
+  }, [isPlaying]);
+
+  // Update Media Session position
+  useEffect(() => {
+    if ('mediaSession' in navigator && duration > 0) {
+      navigator.mediaSession.setPositionState({
+        duration: duration,
+        playbackRate: 1,
+        position: currentTime
+      });
+    }
+  }, [currentTime, duration]);
+
+  // Load song when currentSong changes
+  useEffect(() => {
+    if (!player || !currentSong || !currentSong.youtubeId) return;
+
+    console.log('🎵 Loading song:', currentSong.title, currentSong.youtubeId);
+    
+    try {
+      player.loadVideoById(currentSong.youtubeId);
+      setCurrentTime(0);
+      setDuration(0);
+    } catch (error) {
+      console.error('Error loading video:', error);
+    }
+  }, [currentSong, player]);
+
+  // Handle play/pause
+  useEffect(() => {
+    if (!player) return;
+
+    try {
+      const playerState = player.getPlayerState ? player.getPlayerState() : -1;
+      console.log('🎮 Play/Pause Effect - Player state:', playerState, 'isPlaying:', isPlaying, 'Manual pause:', manualPauseRef.current);
+
+      if (isPlaying) {
+        manualPauseRef.current = false; // Clear manual pause when playing
+        player.playVideo();
+        console.log('▶️ Playing video');
+      } else {
+        manualPauseRef.current = true; // Set manual pause when pausing
+        player.pauseVideo();
+        console.log('⏸️ Pausing video');
+      }
+    } catch (error) {
+      console.error('Error controlling playback:', error);
+    }
+  }, [isPlaying, player]);
+
+  // Keep playing when page visibility changes (background playback)
+  useEffect(() => {
+    if (!player) return;
+
+    let resumeTimeout;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        isPageHiddenRef.current = true;
+        console.log('📱 Page hidden - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
+        // Try to keep playing even when hidden
+        if (isPlayingRef.current && !manualPauseRef.current) {
+          try {
+            // Force the player to stay playing
+            const iframe = document.getElementById('youtube-player');
+            if (iframe) {
+              iframe.style.display = 'block';
+              iframe.style.position = 'fixed';
+              iframe.style.top = '0';
+              iframe.style.left = '0';
+              iframe.style.width = '1px';
+              iframe.style.height = '1px';
+              iframe.style.opacity = '0.01'; // Slightly visible to prevent pause
+              iframe.style.pointerEvents = 'none';
+              iframe.style.zIndex = '-9999';
+            }
+          } catch (error) {
+            console.error('Error maintaining playback:', error);
+          }
+        }
+      } else {
+        isPageHiddenRef.current = false;
+        console.log('📱 Page visible - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
+        // Restore iframe settings
+        const iframe = document.getElementById('youtube-player');
+        if (iframe) {
+          iframe.style.opacity = '0.01';
+        }
+        
+        // Sync state when page becomes visible again - only if should be playing and not manually paused
+        if (isPlayingRef.current && !manualPauseRef.current) {
+          resumeTimeout = setTimeout(() => {
+            try {
+              // Double check the ref again in case it changed
+              if (isPlayingRef.current && !manualPauseRef.current) {
+                const state = player.getPlayerState();
+                if (state !== 1) { // Not playing
+                  player.playVideo();
+                  console.log('🔄 Resumed playback on visibility');
+                }
+              }
+            } catch (error) {
+              console.error('Error resuming playback:', error);
+            }
+          }, 100);
+        }
+      }
+    };
+
+    // Also handle focus/blur events
+    const handleFocus = () => {
+      console.log('📱 Window focused - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
+      if (isPlayingRef.current && !manualPauseRef.current) {
+        setTimeout(() => {
+          try {
+            // Double check the ref again
+            if (isPlayingRef.current && !manualPauseRef.current) {
+              const state = player.getPlayerState();
+              if (state !== 1) {
+                player.playVideo();
+                console.log('🔄 Resumed on focus');
+              }
+            }
+          } catch (error) {
+            console.error('Error on focus:', error);
+          }
+        }, 100);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      if (resumeTimeout) clearTimeout(resumeTimeout);
+    };
+  }, [player]);
+
+  // Update progress and maintain playback
+  useEffect(() => {
+    // Clear any existing interval first
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    if (!player || !isPlaying) {
+      return;
+    }
+
+    let checkCount = 0;
+    let lastCheckTime = Date.now();
+
+    const updateTime = () => {
+      try {
+        if (player.getCurrentTime && player.getDuration) {
+          const current = player.getCurrentTime();
+          const total = player.getDuration();
+          
+          if (current !== undefined && total !== undefined && !isNaN(current) && !isNaN(total)) {
+            setCurrentTime(current);
+            setDuration(total);
+          }
+
+          // Check if player is still playing every 3 seconds (reduced frequency)
+          checkCount++;
+          if (checkCount >= 15) { // Every 3 seconds (15 * 200ms)
+            checkCount = 0;
+            const now = Date.now();
+            
+            // Only check if enough time has passed, we should be playing, and not manually paused
+            if (now - lastCheckTime >= 3000 && isPlayingRef.current && !manualPauseRef.current) {
+              lastCheckTime = now;
+              
+              // Don't resume if user just paused (within last 5 seconds)
+              if (now - lastActionTimeRef.current < 5000) {
+                return;
+              }
+              
+              const state = player.getPlayerState();
+              
+              // Only resume if paused (2) or buffering (3), not if ended (0) or unstarted (-1)
+              if ((state === 2 || state === 3) && isPlayingRef.current && !manualPauseRef.current) {
+                console.log('⚠️ Player paused unexpectedly (state:', state, '), resuming...');
+                player.playVideo();
+              }
+            }
+          }
+        }
+      } catch (error) {
+        // Silently fail - player might not be ready yet
+      }
+    };
+
+    // Update immediately
+    updateTime();
+    
+    // Then update every 200ms
+    intervalRef.current = setInterval(updateTime, 200);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [player, isPlaying, currentSong]);
+
+  const formatTime = (time) => {
+    if (!time || isNaN(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleSeek = (e) => {
+    if (!player || !duration) return;
+    
+    const newTime = (parseFloat(e.target.value) / 100) * duration;
+    
+    try {
+      player.seekTo(newTime, true);
+      setCurrentTime(newTime);
+    } catch (error) {
+      console.error('Error seeking:', error);
+    }
+  };
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div className="player">
+      {currentSong ? (
+        <>
+          <div className="player-song-info">
+            <img src={currentSong.cover} alt={currentSong.title} />
+            <div className="song-details">
+              <div className="player-song-title">{currentSong.title}</div>
+              <div className="player-song-artist">{currentSong.artist}</div>
+            </div>
+            <button 
+              className={`player-like-btn ${isLiked ? 'liked' : ''}`}
+              onClick={onToggleLike}
+              title={isLiked ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
+            >
+              <HeartIcon filled={isLiked} />
+            </button>
+          </div>
+          
+          <div className="player-controls">
+            <div className="control-buttons">
+              <button 
+                onClick={onToggleShuffle} 
+                title={shuffle ? 'Shuffle Off' : 'Shuffle On'} 
+                className={`control-btn ${shuffle ? 'active' : ''}`}
+              >
+                <ShuffleIcon />
+              </button>
+              <button onClick={onPrevious} title="Previous" className="control-btn">
+                <SkipBackIcon />
+              </button>
+              <button className="play-button" onClick={onTogglePlay} title={isPlaying ? 'Pause' : 'Play'}>
+                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+              </button>
+              <button onClick={onNext} title="Next" className="control-btn">
+                <SkipForwardIcon />
+              </button>
+              <button 
+                onClick={onToggleRepeat} 
+                title={repeat === 'off' ? 'Repeat Off' : repeat === 'all' ? 'Repeat All' : 'Repeat One'} 
+                className={`control-btn ${repeat !== 'off' ? 'active' : ''}`}
+              >
+                {repeat === 'one' ? <RepeatOneIcon /> : <RepeatIcon />}
+              </button>
+            </div>
+            <div className="progress-bar">
+              <span className="time">{formatTime(currentTime)}</span>
+              <div className="progress-container">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={progress}
+                  onChange={handleSeek}
+                />
+                <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+              </div>
+              <span className="time">{formatTime(duration)}</span>
+            </div>
+          </div>
+          
+          <div className="player-volume">
+            <button className="volume-btn" title="Volume">
+              <VolumeIcon />
+            </button>
+          </div>
+
+          {/* YouTube player - must be slightly visible to prevent auto-pause */}
+          <div id="youtube-player" style={{ 
+            position: 'fixed', 
+            top: '0',
+            left: '0',
+            width: '1px',
+            height: '1px',
+            opacity: 0.01,
+            pointerEvents: 'none',
+            zIndex: -9999
+          }}></div>
+        </>
+      ) : (
+        <div className="player-song-info">
+          <div className="player-song-title">Select a song to play</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default Player;
