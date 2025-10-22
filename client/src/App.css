@@ -1393,4 +1393,10 @@
     min-width: 90%;
     max-width: 90%;
   }
+  
+  /* Always show buttons on mobile */
+  .song-card .add-to-playlist-btn,
+  .song-card .remove-from-playlist-btn {
+    opacity: 1;
+  }
 }
