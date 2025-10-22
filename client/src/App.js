@@ -103,7 +103,7 @@ function App() {
     }
   };
 
-  const playSong = async (song, addToHistory = true) => {
+  const playSong = async (song, addToHistory = true, fetchNewQueue = true) => {
     console.log(`🎵 Playing song: "${song.title}" by ${song.artist} (ID: ${song.youtubeId})`);
     setCurrentSong(song);
     setIsPlaying(true);
@@ -121,8 +121,8 @@ function App() {
       setHistoryIndex(prev => prev + 1);
     }
     
-    // Fetch next songs in queue
-    if (song.youtubeId) {
+    // Fetch next songs in queue only if requested
+    if (fetchNewQueue && song.youtubeId) {
       try {
         console.log(`📡 Fetching queue for video ID: ${song.youtubeId}`);
         const response = await fetch(`/api/next/${song.youtubeId}`);
@@ -145,6 +145,8 @@ function App() {
         console.error('❌ Error loading queue:', error);
         setQueue([]);
       }
+    } else if (!fetchNewQueue) {
+      console.log('🔒 Keeping current queue');
     }
   };
 
@@ -279,6 +281,33 @@ function App() {
 
   const toggleQueue = () => {
     setShowQueue(!showQueue);
+  };
+
+  const playFromQueue = async (song) => {
+    console.log(`🎵 Playing from queue without changing playlist: "${song.title}"`);
+    // Play song but don't fetch new queue
+    await playSong(song, true, false);
+    // Find the song's position in current queue and update index
+    const songIndex = queue.findIndex(s => s.id === song.id);
+    if (songIndex !== -1) {
+      setQueueIndex(songIndex + 1);
+      console.log(`📍 Updated queue index to ${songIndex + 1}`);
+    }
+  };
+
+  const refreshQueue = async () => {
+    if (!currentSong || !currentSong.youtubeId) return;
+    
+    console.log(`🔄 Refreshing queue for: "${currentSong.title}"`);
+    try {
+      const response = await fetch(`/api/next/${currentSong.youtubeId}`);
+      const nextSongs = await response.json();
+      setQueue(nextSongs);
+      setQueueIndex(0);
+      console.log(`✅ Queue refreshed: ${nextSongs.length} songs`);
+    } catch (error) {
+      console.error('❌ Error refreshing queue:', error);
+    }
   };
 
   const toggleLike = (song) => {
@@ -651,7 +680,8 @@ function App() {
         queue={queue}
         showQueue={showQueue}
         onToggleQueue={toggleQueue}
-        onPlayFromQueue={playSong}
+        onPlayFromQueue={playFromQueue}
+        onRefreshQueue={refreshQueue}
       />
     </div>
   );

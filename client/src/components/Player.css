@@ -564,6 +564,37 @@
   color: #fff;
 }
 
+.queue-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.queue-refresh-btn {
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.queue-refresh-btn:hover {
+  background: #282828;
+  color: #1db954;
+  transform: rotate(180deg);
+}
+
+.queue-refresh-btn:active {
+  transform: rotate(360deg);
+}
+
 .queue-close-btn {
   background: none;
   border: none;
