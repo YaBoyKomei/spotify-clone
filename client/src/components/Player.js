@@ -73,19 +73,24 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               
               // Only sync state if page is visible and not loading a new song
               if (!isPageHiddenRef.current && !isLoadingNewSongRef.current) {
-                // If player is paused (2) and we think it should be playing, sync the state
+                // Check if this is from external control (like Bluetooth headphones)
+                const timeSinceLastAction = Date.now() - lastActionTimeRef.current;
+                const isExternalControl = timeSinceLastAction > 1000; // More than 1 second since last action
+                
+                // If player is paused (2) and we think it should be playing
                 if (event.data === 2 && isPlayingRef.current) {
-                  console.log('⚠️ Player paused while isPlaying is true - syncing UI state');
+                  console.log('⚠️ Player paused while isPlaying is true', isExternalControl ? '(External control)' : '(Internal)');
                   manualPauseRef.current = true;
                   lastActionTimeRef.current = Date.now();
                   // Update the UI state to match
                   onTogglePlay();
                 }
                 
-                // If player is playing (1) and we think it should be paused, sync the state
+                // If player is playing (1) and we think it should be paused
                 if (event.data === 1 && !isPlayingRef.current) {
-                  console.log('⚠️ Player playing while isPlaying is false - syncing UI state');
+                  console.log('⚠️ Player playing while isPlaying is false', isExternalControl ? '(External control)' : '(Internal)');
                   manualPauseRef.current = false;
+                  lastActionTimeRef.current = Date.now();
                   // Update the UI state to match
                   onTogglePlay();
                 }
