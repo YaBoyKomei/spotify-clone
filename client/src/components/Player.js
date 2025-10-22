@@ -14,6 +14,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const lastActionTimeRef = useRef(0); // Track last user action
   const isPageHiddenRef = useRef(false); // Track if page is hidden
   const isLoadingNewSongRef = useRef(false); // Track if loading a new song
+  const autoplayRef = useRef(autoplay);
+  const repeatRef = useRef(repeat);
 
   // Keep refs updated
   useEffect(() => {
@@ -27,6 +29,14 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   useEffect(() => {
     playerRef.current = player;
   }, [player]);
+
+  useEffect(() => {
+    autoplayRef.current = autoplay;
+  }, [autoplay]);
+
+  useEffect(() => {
+    repeatRef.current = repeat;
+  }, [repeat]);
 
   // Initialize YouTube Player
   useEffect(() => {
@@ -89,18 +99,21 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               }
               
               if (event.data === 0) { // ended
-                console.log('🎵 Song ended - Repeat:', repeat, 'Autoplay:', autoplay);
-                if (repeat === 'one') {
+                console.log('🎵 Song ended - Repeat:', repeatRef.current, 'Autoplay:', autoplayRef.current);
+                if (repeatRef.current === 'one') {
                   // Replay the same song
                   event.target.seekTo(0);
                   event.target.playVideo();
-                } else if (autoplay || repeat === 'all') {
+                } else if (autoplayRef.current || repeatRef.current === 'all') {
                   // Auto-play next song if autoplay is on or repeat all is on
+                  console.log('▶️ Auto-playing next song');
                   onNext();
                 } else {
                   // Stop playing and show play button
                   console.log('⏹️ Autoplay is off - stopping playback');
-                  onTogglePlay(); // This will set isPlaying to false
+                  if (isPlayingRef.current) {
+                    onTogglePlay(); // This will set isPlaying to false
+                  }
                 }
               }
             },
