@@ -1139,3 +1139,166 @@
   background: rgba(255, 255, 255, 0.1);
   margin: 8px 0;
 }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  background: #282828;
+  border-radius: 8px;
+  padding: 24px;
+  min-width: 400px;
+  max-width: 500px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.modal h2 {
+  margin: 0 0 8px 0;
+  color: #fff;
+  font-size: 24px;
+}
+
+.modal-subtitle {
+  color: #b3b3b3;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+
+.modal input {
+  width: 100%;
+  padding: 12px;
+  background: #3e3e3e;
+  border: 1px solid #535353;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 16px;
+  outline: none;
+}
+
+.modal input:focus {
+  border-color: #1db954;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-buttons button {
+  padding: 10px 24px;
+  border-radius: 20px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-buttons button:not(.primary) {
+  background: transparent;
+  color: #fff;
+  border: 1px solid #535353;
+}
+
+.modal-buttons button:not(.primary):hover {
+  border-color: #fff;
+}
+
+.modal-buttons button.primary {
+  background: #1db954;
+  color: #fff;
+}
+
+.modal-buttons button.primary:hover {
+  background: #1ed760;
+  transform: scale(1.04);
+}
+
+.playlist-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.playlist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.playlist-item:hover {
+  background: #3e3e3e;
+}
+
+.playlist-item svg {
+  color: #b3b3b3;
+  flex-shrink: 0;
+}
+
+.playlist-item span {
+  color: #fff;
+}
+
+.playlist-item .song-count {
+  margin-left: auto;
+  color: #b3b3b3;
+  font-size: 12px;
+}
+
+/* Add to playlist button on song cards */
+.song-card {
+  position: relative;
+}
+
+.song-card .add-to-playlist-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s;
+  z-index: 2;
+}
+
+.song-card:hover .add-to-playlist-btn {
+  opacity: 1;
+}
+
+.song-card .add-to-playlist-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .modal {
+    min-width: 90%;
+    max-width: 90%;
+  }
+}

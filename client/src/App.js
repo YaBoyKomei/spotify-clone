@@ -42,6 +42,9 @@ function App() {
     const saved = localStorage.getItem('listeningHistory');
     return saved ? JSON.parse(saved) : [];
   });
+  const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
+  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
+  const [selectedSongForPlaylist, setSelectedSongForPlaylist] = useState(null);
 
   // Save to localStorage whenever data changes
   useEffect(() => {
@@ -805,6 +808,10 @@ function App() {
         playlists={playlists}
         isOpen={isSidebarOpen}
         onClose={closeSidebar}
+        onCreatePlaylist={() => {
+          setShowCreatePlaylist(true);
+          closeSidebar();
+        }}
       />
       <div className="main-content">
         {currentView === 'search' ? (
@@ -913,6 +920,91 @@ function App() {
         onPlayFromQueue={playFromQueue}
         onRefreshQueue={refreshQueue}
       />
+      
+      {/* Create Playlist Modal */}
+      {showCreatePlaylist && (
+        <div className="modal-overlay" onClick={() => setShowCreatePlaylist(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Create Playlist</h2>
+            <input
+              type="text"
+              placeholder="Playlist name"
+              id="playlist-name-input"
+              autoFocus
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  const name = e.target.value.trim();
+                  if (name) {
+                    const newPlaylist = createPlaylist(name);
+                    setShowCreatePlaylist(false);
+                    setCurrentView(`playlist-${newPlaylist.id}`);
+                  }
+                }
+              }}
+            />
+            <div className="modal-buttons">
+              <button onClick={() => setShowCreatePlaylist(false)}>Cancel</button>
+              <button 
+                className="primary"
+                onClick={() => {
+                  const input = document.getElementById('playlist-name-input');
+                  const name = input.value.trim();
+                  if (name) {
+                    const newPlaylist = createPlaylist(name);
+                    setShowCreatePlaylist(false);
+                    setCurrentView(`playlist-${newPlaylist.id}`);
+                  }
+                }}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Add to Playlist Modal */}
+      {showAddToPlaylist && selectedSongForPlaylist && (
+        <div className="modal-overlay" onClick={() => setShowAddToPlaylist(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Add to Playlist</h2>
+            <p className="modal-subtitle">"{selectedSongForPlaylist.title}"</p>
+            {playlists.length === 0 ? (
+              <div className="empty-state">
+                <p>No playlists yet. Create one first!</p>
+              </div>
+            ) : (
+              <div className="playlist-list">
+                {playlists.map(playlist => (
+                  <div
+                    key={playlist.id}
+                    className="playlist-item"
+                    onClick={() => {
+                      addToPlaylist(playlist.id, selectedSongForPlaylist);
+                      setShowAddToPlaylist(false);
+                      setSelectedSongForPlaylist(null);
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/>
+                    </svg>
+                    <span>{playlist.name}</span>
+                    <span className="song-count">({playlist.songs.length})</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="modal-buttons">
+              <button onClick={() => {
+                setShowAddToPlaylist(false);
+                setSelectedSongForPlaylist(null);
+              }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

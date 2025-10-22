@@ -2,7 +2,7 @@ import React from 'react';
 import './Sidebar.css';
 import { HomeIcon, SearchIcon, LibraryIcon, PlusIcon, HeartIcon, MusicIcon } from './Icons';
 
-function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playlists, historyCount }) {
+function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playlists, historyCount, onCreatePlaylist }) {
   return (
     <>
       {isOpen && <div className="sidebar-overlay" onClick={onClose}></div>}
@@ -33,11 +33,8 @@ function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playl
       </nav>
       <div className="playlists">
         <div 
-          className={`nav-item ${currentView === 'create' ? 'active' : ''}`}
-          onClick={() => {
-            onViewChange('create');
-            alert('Create Playlist feature - Coming soon!');
-          }}
+          className="nav-item"
+          onClick={onCreatePlaylist}
         >
           <PlusIcon /> Create Playlist
         </div>
