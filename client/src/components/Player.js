@@ -17,6 +17,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const autoplayRef = useRef(autoplay);
   const repeatRef = useRef(repeat);
   const playerContainerRef = useRef(null);
+  const onNextRef = useRef(onNext);
 
   // Keep refs updated
   useEffect(() => {
@@ -38,6 +39,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   useEffect(() => {
     repeatRef.current = repeat;
   }, [repeat]);
+
+  useEffect(() => {
+    onNextRef.current = onNext;
+  }, [onNext]);
 
   // Initialize YouTube Player
   useEffect(() => {
@@ -118,7 +123,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 } else if (autoplayRef.current || repeatRef.current === 'all') {
                   // Auto-play next song if autoplay is on or repeat all is on
                   console.log('▶️ Auto-playing next song');
-                  onNext();
+                  onNextRef.current();
                 } else {
                   // Stop playing and show play button
                   console.log('⏹️ Autoplay is off - stopping playback');
@@ -162,7 +167,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       // Don't destroy the player on unmount to avoid DOM errors
       // The player will be reused across component lifecycles
     };
-  }, [onNext]);
+  }, []); // Empty deps - player only initializes once, callbacks use refs
 
   // Setup Media Session API for background playback
   useEffect(() => {

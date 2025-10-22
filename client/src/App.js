@@ -159,10 +159,16 @@ function App() {
   };
 
   const playNext = async () => {
-    console.log('🎵 playNext called - Queue length:', queue.length, 'Queue index:', queueIndex, 'Repeat:', repeat, 'Shuffle:', shuffle);
+    console.log('🎵 playNext called');
+    console.log('  - Current song:', currentSong?.title || 'null');
+    console.log('  - Queue length:', queue.length);
+    console.log('  - Queue index:', queueIndex);
+    console.log('  - Repeat:', repeat);
+    console.log('  - Shuffle:', shuffle);
     
     if (!currentSong) {
       console.warn('⚠️ No current song, cannot play next');
+      console.warn('  - This might be a stale closure issue');
       return;
     }
     
