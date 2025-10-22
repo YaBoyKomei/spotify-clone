@@ -12,7 +12,10 @@ function App() {
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentView, setCurrentView] = useState('home');
-  const [likedSongs, setLikedSongs] = useState([]);
+  const [likedSongs, setLikedSongs] = useState(() => {
+    const saved = localStorage.getItem('likedSongs');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [loading, setLoading] = useState(false);
   const [scrollStates, setScrollStates] = useState({});
   const [expandedSection, setExpandedSection] = useState(null);
@@ -25,9 +28,38 @@ function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [queue, setQueue] = useState([]); // Queue of next songs
   const [queueIndex, setQueueIndex] = useState(0); // Current position in queue
-  const [playHistory, setPlayHistory] = useState([]); // History of played songs
+  const [playHistory, setPlayHistory] = useState(() => {
+    const saved = localStorage.getItem('playHistory');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [historyIndex, setHistoryIndex] = useState(-1); // Current position in history
   const [showQueue, setShowQueue] = useState(false); // Show queue panel
+  const [playlists, setPlaylists] = useState(() => {
+    const saved = localStorage.getItem('playlists');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [listeningHistory, setListeningHistory] = useState(() => {
+    const saved = localStorage.getItem('listeningHistory');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
+  }, [likedSongs]);
+
+  useEffect(() => {
+    localStorage.setItem('playlists', JSON.stringify(playlists));
+  }, [playlists]);
+
+  useEffect(() => {
+    // Keep only last 100 songs in listening history
+    const limitedHistory = listeningHistory.slice(-100);
+    if (limitedHistory.length !== listeningHistory.length) {
+      setListeningHistory(limitedHistory);
+    }
+    localStorage.setItem('listeningHistory', JSON.stringify(limitedHistory));
+  }, [listeningHistory]);
 
   useEffect(() => {
     if (currentView === 'home') {
@@ -119,6 +151,27 @@ function App() {
         return newHistory;
       });
       setHistoryIndex(prev => prev + 1);
+      
+      // Add to listening history (persistent)
+      setListeningHistory(prev => {
+        // Check if song already exists in recent history
+        const existingIndex = prev.findIndex(s => s.id === song.id);
+        let newHistory = [...prev];
+        
+        if (existingIndex !== -1) {
+          // Remove old entry
+          newHistory.splice(existingIndex, 1);
+        }
+        
+        // Add to end (most recent)
+        newHistory.push({
+          ...song,
+          playedAt: new Date().toISOString()
+        });
+        
+        // Keep only last 100
+        return newHistory.slice(-100);
+      });
     }
     
     // Fetch next songs in queue only if requested
@@ -332,9 +385,58 @@ function App() {
   const toggleLike = (song) => {
     if (likedSongs.find(s => s.id === song.id)) {
       setLikedSongs(likedSongs.filter(s => s.id !== song.id));
+      console.log(`💔 Removed from liked songs: ${song.title}`);
     } else {
-      setLikedSongs([...likedSongs, song]);
+      setLikedSongs([...likedSongs, { ...song, likedAt: new Date().toISOString() }]);
+      console.log(`❤️ Added to liked songs: ${song.title}`);
     }
+  };
+
+  const createPlaylist = (name) => {
+    const newPlaylist = {
+      id: Date.now().toString(),
+      name: name,
+      songs: [],
+      createdAt: new Date().toISOString()
+    };
+    setPlaylists([...playlists, newPlaylist]);
+    console.log(`📝 Created playlist: ${name}`);
+    return newPlaylist;
+  };
+
+  const addToPlaylist = (playlistId, song) => {
+    setPlaylists(prev => prev.map(playlist => {
+      if (playlist.id === playlistId) {
+        // Check if song already exists
+        if (playlist.songs.find(s => s.id === song.id)) {
+          console.log(`⚠️ Song already in playlist: ${song.title}`);
+          return playlist;
+        }
+        console.log(`➕ Added to playlist "${playlist.name}": ${song.title}`);
+        return {
+          ...playlist,
+          songs: [...playlist.songs, song]
+        };
+      }
+      return playlist;
+    }));
+  };
+
+  const removeFromPlaylist = (playlistId, songId) => {
+    setPlaylists(prev => prev.map(playlist => {
+      if (playlist.id === playlistId) {
+        return {
+          ...playlist,
+          songs: playlist.songs.filter(s => s.id !== songId)
+        };
+      }
+      return playlist;
+    }));
+  };
+
+  const deletePlaylist = (playlistId) => {
+    setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+    console.log(`🗑️ Deleted playlist`);
   };
 
   const loadMoreSection = async (section) => {
@@ -522,6 +624,111 @@ function App() {
     );
   };
 
+  const renderHistoryView = () => {
+    // Reverse to show most recent first
+    const reversedHistory = [...listeningHistory].reverse();
+    
+    return (
+      <div className="home-view">
+        <div className="music-section">
+          <div className="section-header">
+            <h2 className="section-title">Listening History</h2>
+            <span className="section-subtitle">Last 100 songs</span>
+          </div>
+          {listeningHistory.length === 0 ? (
+            <div className="empty-state">
+              <p>No listening history yet. Start playing some songs!</p>
+            </div>
+          ) : (
+            <div className="songs-grid-full">
+              {reversedHistory.map((song, index) => (
+                <div
+                  key={`${song.id}-${index}`}
+                  className={`song-card ${currentSong?.id === song.id ? 'active' : ''}`}
+                >
+                  <button 
+                    className={`like-button ${likedSongs.find(s => s.id === song.id) ? 'liked' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLike(song);
+                    }}
+                    title={likedSongs.find(s => s.id === song.id) ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
+                  >
+                    <HeartIcon filled={!!likedSongs.find(s => s.id === song.id)} />
+                  </button>
+                  <div className="song-card-content" onClick={() => playSong(song)}>
+                    <img src={song.cover} alt={song.title} />
+                    <div className="song-info">
+                      <h3>{song.title}</h3>
+                      <p>{song.artist}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderPlaylistView = (playlistId) => {
+    const playlist = playlists.find(p => p.id === playlistId);
+    
+    if (!playlist) {
+      return (
+        <div className="home-view">
+          <div className="empty-state">
+            <p>Playlist not found</p>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="home-view">
+        <div className="music-section">
+          <div className="section-header">
+            <h2 className="section-title">{playlist.name}</h2>
+            <span className="section-subtitle">{playlist.songs.length} songs</span>
+          </div>
+          {playlist.songs.length === 0 ? (
+            <div className="empty-state">
+              <p>No songs in this playlist yet</p>
+            </div>
+          ) : (
+            <div className="songs-grid-full">
+              {playlist.songs.map(song => (
+                <div
+                  key={song.id}
+                  className={`song-card ${currentSong?.id === song.id ? 'active' : ''}`}
+                >
+                  <button 
+                    className={`like-button ${likedSongs.find(s => s.id === song.id) ? 'liked' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLike(song);
+                    }}
+                    title={likedSongs.find(s => s.id === song.id) ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
+                  >
+                    <HeartIcon filled={!!likedSongs.find(s => s.id === song.id)} />
+                  </button>
+                  <div className="song-card-content" onClick={() => playSong(song)}>
+                    <img src={song.cover} alt={song.title} />
+                    <div className="song-info">
+                      <h3>{song.title}</h3>
+                      <p>{song.artist}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderExpandedSection = () => {
     return (
       <div className="home-view">
@@ -594,6 +801,8 @@ function App() {
           closeSidebar();
         }}
         likedCount={likedSongs.length}
+        historyCount={listeningHistory.length}
+        playlists={playlists}
         isOpen={isSidebarOpen}
         onClose={closeSidebar}
       />
@@ -679,6 +888,8 @@ function App() {
           <>
             {currentView === 'home' && renderHomeView()}
             {currentView === 'liked' && renderLikedView()}
+            {currentView === 'history' && renderHistoryView()}
+            {currentView.startsWith('playlist-') && renderPlaylistView(currentView.replace('playlist-', ''))}
           </>
         )}
       </div>

@@ -1124,3 +1124,18 @@
     padding-top: 72px;
   }
 }
+
+/* Section subtitle */
+.section-subtitle {
+  font-size: 14px;
+  color: #b3b3b3;
+  font-weight: 400;
+  margin-left: 12px;
+}
+
+/* Playlist divider */
+.playlist-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 8px 0;
+}
