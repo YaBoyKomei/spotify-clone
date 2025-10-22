@@ -568,14 +568,17 @@ app.get('/api/next/:videoId', async (req, res) => {
     const queue = [];
     
     try {
-      const contents = data?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer?.contents || [];
+      const panelRenderer = data?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer;
+      const contents = panelRenderer?.contents || [];
+      const playlistId = panelRenderer?.playlistId;
       
       console.log(`🔍 Processing ${contents.length} items from queue for videoId: ${videoId}`);
+      console.log(`📋 PlaylistId: ${playlistId || 'none'}`);
       
       for (const item of contents) {
         const renderer = item.playlistPanelVideoRenderer;
         if (!renderer) {
-          console.log('  ⚠️ No playlistPanelVideoRenderer found');
+          console.log('  ⚠️ No playlistPanelVideoRenderer found (might be automixPreviewVideoRenderer)');
           continue;
         }
         
@@ -596,14 +599,14 @@ app.get('/api/next/:videoId', async (req, res) => {
         
         // Filter out non-music items
         const musicVideoType = renderer.navigationEndpoint?.watchEndpoint?.watchEndpointMusicSupportedConfigs?.watchEndpointMusicConfig?.musicVideoType;
-        const playlistId = renderer.navigationEndpoint?.watchEndpoint?.playlistId;
+        const itemPlaylistId = renderer.navigationEndpoint?.watchEndpoint?.playlistId;
         
         console.log(`     - musicVideoType: ${musicVideoType || 'none'}`);
-        console.log(`     - playlistId: ${playlistId || 'none'}`);
+        console.log(`     - playlistId: ${itemPlaylistId || 'none'}`);
         console.log(`     - title length: ${title.length}`);
         
         // Check if it's a music item
-        const isMusic = musicVideoType || playlistId || title.length < 100;
+        const isMusic = musicVideoType || itemPlaylistId || title.length < 100;
         
         if (!isMusic) {
           console.log(`     🚫 FILTERED OUT: Not music (no musicVideoType, no playlistId, title too long)`);
@@ -621,6 +624,45 @@ app.get('/api/next/:videoId', async (req, res) => {
           });
         } else {
           console.log(`     ⚠️ SKIPPED: Missing videoId or title`);
+        }
+      }
+      
+      // If queue is empty but we have a playlistId, fetch songs from the playlist
+      if (queue.length === 0 && playlistId) {
+        console.log(`📋 Queue empty, fetching songs from playlist: ${playlistId}`);
+        try {
+          const playlistPayload = {
+            context: {
+              client: {
+                clientName: 'WEB_REMIX',
+                clientVersion: '1.20251015.03.00',
+                hl: 'en',
+                gl: 'US',
+              }
+            },
+            browseId: `VL${playlistId}`
+          };
+          
+          const playlistResponse = await fetch('https://music.youtube.com/youtubei/v1/browse?prettyPrint=false', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            body: JSON.stringify(playlistPayload)
+          });
+          
+          if (playlistResponse.ok) {
+            const playlistData = await playlistResponse.json();
+            const playlistSongs = parseBrowseSongs(playlistData);
+            console.log(`✅ Fetched ${playlistSongs.length} songs from playlist`);
+            
+            // Filter out the current song
+            const filteredSongs = playlistSongs.filter(s => s.id !== videoId);
+            queue.push(...filteredSongs.slice(0, 20)); // Limit to 20 songs
+          }
+        } catch (playlistError) {
+          console.error('Error fetching playlist:', playlistError);
         }
       }
       
