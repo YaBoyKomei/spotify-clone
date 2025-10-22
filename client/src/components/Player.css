@@ -555,7 +555,6 @@
   flex-direction: column;
   z-index: 100;
   animation: slideUp 0.3s ease-out;
-  touch-action: pan-y; /* Allow vertical scrolling */
 }
 
 /* Drag Handle */
@@ -595,6 +594,7 @@
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid #282828;
+  touch-action: none; /* Allow swipe gestures on header */
 }
 
 .queue-header h3 {
@@ -660,6 +660,7 @@
   overflow-y: auto;
   flex: 1;
   padding: 8px 0;
+  touch-action: pan-y; /* Allow vertical scrolling, prevent swipe gestures */
 }
 
 .queue-list::-webkit-scrollbar {

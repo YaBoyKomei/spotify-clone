@@ -691,17 +691,22 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       
       {/* Queue Panel */}
       {showQueue && currentSong && (
-        <div 
-          className="queue-panel"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
+        <div className="queue-panel">
           {/* Drag handle for mobile */}
-          <div className="queue-drag-handle">
+          <div 
+            className="queue-drag-handle"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="drag-indicator"></div>
           </div>
-          <div className="queue-header">
+          <div 
+            className="queue-header"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <h3>Up Next</h3>
             <div className="queue-header-actions">
               <button 
