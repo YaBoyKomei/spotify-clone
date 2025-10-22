@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Sidebar from './components/Sidebar';
 import Player from './components/Player';
+import SongCard from './components/SongCard';
 import { HeartIcon, SearchIcon } from './components/Icons';
 import { ChevronLeftIcon, ChevronRightIcon } from './components/ScrollButton';
 
@@ -549,28 +550,18 @@ function App() {
                 )}
                 <div className="songs-carousel" id={`carousel-${index}`}>
                   {section.songs.map(song => (
-                    <div
+                    <SongCard
                       key={song.id}
-                      className={`song-card ${currentSong?.id === song.id ? 'active' : ''}`}
-                    >
-                      <button 
-                        className={`like-button ${likedSongs.find(s => s.id === song.id) ? 'liked' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleLike(song);
-                        }}
-                        title={likedSongs.find(s => s.id === song.id) ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
-                      >
-                        <HeartIcon filled={!!likedSongs.find(s => s.id === song.id)} />
-                      </button>
-                      <div className="song-card-content" onClick={() => playSong(song)}>
-                        <img src={song.cover} alt={song.title} />
-                        <div className="song-info">
-                          <h3>{song.title}</h3>
-                          <p>{song.artist}</p>
-                        </div>
-                      </div>
-                    </div>
+                      song={song}
+                      currentSong={currentSong}
+                      isLiked={!!likedSongs.find(s => s.id === song.id)}
+                      onPlay={playSong}
+                      onToggleLike={toggleLike}
+                      onAddToPlaylist={(song) => {
+                        setSelectedSongForPlaylist(song);
+                        setShowAddToPlaylist(true);
+                      }}
+                    />
                   ))}
                 </div>
               </div>
@@ -596,28 +587,18 @@ function App() {
             <div className="section-carousel">
               <div className="songs-carousel">
                 {likedSongs.map(song => (
-                  <div
+                  <SongCard
                     key={song.id}
-                    className={`song-card ${currentSong?.id === song.id ? 'active' : ''}`}
-                  >
-                    <button 
-                      className={`like-button ${likedSongs.find(s => s.id === song.id) ? 'liked' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleLike(song);
-                      }}
-                      title="Remove from Liked Songs"
-                    >
-                      <HeartIcon filled={true} />
-                    </button>
-                    <div className="song-card-content" onClick={() => playSong(song)}>
-                      <img src={song.cover} alt={song.title} />
-                      <div className="song-info">
-                        <h3>{song.title}</h3>
-                        <p>{song.artist}</p>
-                      </div>
-                    </div>
-                  </div>
+                    song={song}
+                    currentSong={currentSong}
+                    isLiked={true}
+                    onPlay={playSong}
+                    onToggleLike={toggleLike}
+                    onAddToPlaylist={(song) => {
+                      setSelectedSongForPlaylist(song);
+                      setShowAddToPlaylist(true);
+                    }}
+                  />
                 ))}
               </div>
             </div>
@@ -645,28 +626,18 @@ function App() {
           ) : (
             <div className="songs-grid-full">
               {reversedHistory.map((song, index) => (
-                <div
+                <SongCard
                   key={`${song.id}-${index}`}
-                  className={`song-card ${currentSong?.id === song.id ? 'active' : ''}`}
-                >
-                  <button 
-                    className={`like-button ${likedSongs.find(s => s.id === song.id) ? 'liked' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLike(song);
-                    }}
-                    title={likedSongs.find(s => s.id === song.id) ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
-                  >
-                    <HeartIcon filled={!!likedSongs.find(s => s.id === song.id)} />
-                  </button>
-                  <div className="song-card-content" onClick={() => playSong(song)}>
-                    <img src={song.cover} alt={song.title} />
-                    <div className="song-info">
-                      <h3>{song.title}</h3>
-                      <p>{song.artist}</p>
-                    </div>
-                  </div>
-                </div>
+                  song={song}
+                  currentSong={currentSong}
+                  isLiked={!!likedSongs.find(s => s.id === song.id)}
+                  onPlay={playSong}
+                  onToggleLike={toggleLike}
+                  onAddToPlaylist={(song) => {
+                    setSelectedSongForPlaylist(song);
+                    setShowAddToPlaylist(true);
+                  }}
+                />
               ))}
             </div>
           )}
@@ -702,28 +673,18 @@ function App() {
           ) : (
             <div className="songs-grid-full">
               {playlist.songs.map(song => (
-                <div
+                <SongCard
                   key={song.id}
-                  className={`song-card ${currentSong?.id === song.id ? 'active' : ''}`}
-                >
-                  <button 
-                    className={`like-button ${likedSongs.find(s => s.id === song.id) ? 'liked' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLike(song);
-                    }}
-                    title={likedSongs.find(s => s.id === song.id) ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
-                  >
-                    <HeartIcon filled={!!likedSongs.find(s => s.id === song.id)} />
-                  </button>
-                  <div className="song-card-content" onClick={() => playSong(song)}>
-                    <img src={song.cover} alt={song.title} />
-                    <div className="song-info">
-                      <h3>{song.title}</h3>
-                      <p>{song.artist}</p>
-                    </div>
-                  </div>
-                </div>
+                  song={song}
+                  currentSong={currentSong}
+                  isLiked={!!likedSongs.find(s => s.id === song.id)}
+                  onPlay={playSong}
+                  onToggleLike={toggleLike}
+                  onAddToPlaylist={(song) => {
+                    setSelectedSongForPlaylist(song);
+                    setShowAddToPlaylist(true);
+                  }}
+                />
               ))}
             </div>
           )}
@@ -750,28 +711,18 @@ function App() {
           ) : (
             <div className="songs-grid-full">
               {expandedSongs.map(song => (
-                <div
+                <SongCard
                   key={song.id}
-                  className={`song-card ${currentSong?.id === song.id ? 'active' : ''}`}
-                >
-                  <button 
-                    className={`like-button ${likedSongs.find(s => s.id === song.id) ? 'liked' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLike(song);
-                    }}
-                    title={likedSongs.find(s => s.id === song.id) ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
-                  >
-                    <HeartIcon filled={!!likedSongs.find(s => s.id === song.id)} />
-                  </button>
-                  <div className="song-card-content" onClick={() => playSong(song)}>
-                    <img src={song.cover} alt={song.title} />
-                    <div className="song-info">
-                      <h3>{song.title}</h3>
-                      <p>{song.artist}</p>
-                    </div>
-                  </div>
-                </div>
+                  song={song}
+                  currentSong={currentSong}
+                  isLiked={!!likedSongs.find(s => s.id === song.id)}
+                  onPlay={playSong}
+                  onToggleLike={toggleLike}
+                  onAddToPlaylist={(song) => {
+                    setSelectedSongForPlaylist(song);
+                    setShowAddToPlaylist(true);
+                  }}
+                />
               ))}
             </div>
           )}
@@ -856,28 +807,18 @@ function App() {
                 <h2 className="section-title">Search Results</h2>
                 <div className="songs-grid-full">
                   {searchResults.map(song => (
-                    <div
+                    <SongCard
                       key={song.id}
-                      className={`song-card ${currentSong?.id === song.id ? 'active' : ''}`}
-                    >
-                      <button 
-                        className={`like-button ${likedSongs.find(s => s.id === song.id) ? 'liked' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleLike(song);
-                        }}
-                        title={likedSongs.find(s => s.id === song.id) ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
-                      >
-                        <HeartIcon filled={!!likedSongs.find(s => s.id === song.id)} />
-                      </button>
-                      <div className="song-card-content" onClick={() => playSong(song)}>
-                        <img src={song.cover} alt={song.title} />
-                        <div className="song-info">
-                          <h3>{song.title}</h3>
-                          <p>{song.artist}</p>
-                        </div>
-                      </div>
-                    </div>
+                      song={song}
+                      currentSong={currentSong}
+                      isLiked={!!likedSongs.find(s => s.id === song.id)}
+                      onPlay={playSong}
+                      onToggleLike={toggleLike}
+                      onAddToPlaylist={(song) => {
+                        setSelectedSongForPlaylist(song);
+                        setShowAddToPlaylist(true);
+                      }}
+                    />
                   ))}
                 </div>
               </div>
