@@ -101,6 +101,7 @@ function App() {
   };
 
   const playSong = async (song) => {
+    console.log(`🎵 Playing song: "${song.title}" by ${song.artist} (ID: ${song.youtubeId})`);
     setCurrentSong(song);
     setIsPlaying(true);
     setQueueIndex(0);
@@ -108,12 +109,24 @@ function App() {
     // Fetch next songs in queue
     if (song.youtubeId) {
       try {
+        console.log(`📡 Fetching queue for video ID: ${song.youtubeId}`);
         const response = await fetch(`/api/next/${song.youtubeId}`);
         const nextSongs = await response.json();
         setQueue(nextSongs);
         console.log(`📋 Queue loaded: ${nextSongs.length} songs`);
+        if (nextSongs.length > 0) {
+          console.log(`🎵 Next songs in queue:`);
+          nextSongs.slice(0, 5).forEach((s, i) => {
+            console.log(`  ${i + 1}. "${s.title}" by ${s.artist}`);
+          });
+          if (nextSongs.length > 5) {
+            console.log(`  ... and ${nextSongs.length - 5} more`);
+          }
+        } else {
+          console.warn('⚠️ Queue is empty - no next songs found!');
+        }
       } catch (error) {
-        console.error('Error loading queue:', error);
+        console.error('❌ Error loading queue:', error);
         setQueue([]);
       }
     }
@@ -128,7 +141,10 @@ function App() {
   const playNext = async () => {
     console.log('🎵 playNext called - Queue length:', queue.length, 'Queue index:', queueIndex, 'Repeat:', repeat, 'Shuffle:', shuffle);
     
-    if (!currentSong) return;
+    if (!currentSong) {
+      console.warn('⚠️ No current song, cannot play next');
+      return;
+    }
     
     if (repeat === 'one') {
       // Replay the same song
@@ -141,28 +157,36 @@ function App() {
     // Try to play from queue first
     if (queue.length > 0 && queueIndex < queue.length - 1) {
       const nextIndex = queueIndex + 1;
-      console.log(`▶️ Playing from queue: index ${nextIndex}/${queue.length - 1}`);
-      setQueueIndex(nextIndex);
       const nextSong = queue[nextIndex];
+      console.log(`▶️ Playing from queue: index ${nextIndex}/${queue.length - 1}`);
+      console.log(`🎵 Next song: "${nextSong.title}" by ${nextSong.artist}`);
+      setQueueIndex(nextIndex);
       setCurrentSong(nextSong);
       setIsPlaying(true);
       
       // Fetch queue for the new song
       try {
+        console.log(`📡 Fetching new queue for: ${nextSong.youtubeId}`);
         const response = await fetch(`/api/next/${nextSong.youtubeId}`);
         const nextSongs = await response.json();
         setQueue(nextSongs);
         setQueueIndex(0);
         console.log(`📋 Queue updated: ${nextSongs.length} songs`);
+        if (nextSongs.length > 0) {
+          console.log(`  Next up: "${nextSongs[0].title}" by ${nextSongs[0].artist}`);
+        }
       } catch (error) {
-        console.error('Error loading queue:', error);
+        console.error('❌ Error loading queue:', error);
       }
       return;
     }
     
     // Fallback to shuffle or sequential play
     console.log('📋 Queue empty or ended, using fallback');
-    if (songs.length === 0) return;
+    if (songs.length === 0) {
+      console.warn('⚠️ No songs available for fallback');
+      return;
+    }
     
     if (shuffle) {
       // Play random song
