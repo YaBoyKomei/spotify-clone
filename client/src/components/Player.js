@@ -266,11 +266,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   // Update Media Session position
   useEffect(() => {
     if ('mediaSession' in navigator && duration > 0) {
-      navigator.mediaSession.setPositionState({
-        duration: duration,
-        playbackRate: 1,
-        position: currentTime
-      });
+      try {
+        // Ensure position is not greater than duration
+        const safePosition = Math.min(currentTime, duration);
+        navigator.mediaSession.setPositionState({
+          duration: duration,
+          playbackRate: 1,
+          position: safePosition
+        });
+      } catch (error) {
+        console.log('Could not update position state:', error.message);
+      }
     }
   }, [currentTime, duration]);
 
