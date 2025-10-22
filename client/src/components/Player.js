@@ -531,23 +531,38 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     <div className="player">
       {currentSong ? (
         <>
-          <div className="player-song-info">
-            <img src={currentSong.cover} alt={currentSong.title} />
-            <div className="song-details">
-              <div className="player-song-title">{currentSong.title}</div>
-              <div className="player-song-artist">{currentSong.artist}</div>
-            </div>
-            <button 
-              className={`player-like-btn ${isLiked ? 'liked' : ''}`}
-              onClick={onToggleLike}
-              title={isLiked ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
-            >
-              <HeartIcon filled={isLiked} />
-            </button>
+          {/* Progress bar at the top */}
+          <div className="progress-bar-top">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="0.1"
+              value={progress}
+              onChange={handleSeek}
+              className="progress-input"
+            />
+            <div className="progress-fill-top" style={{ width: `${progress}%` }}></div>
           </div>
-          
-          <div className="player-controls">
-            <div className="control-buttons">
+
+          <div className="player-content">
+            <div className="player-song-info">
+              <img src={currentSong.cover} alt={currentSong.title} />
+              <div className="song-details">
+                <div className="player-song-title">{currentSong.title}</div>
+                <div className="player-song-artist">{currentSong.artist}</div>
+              </div>
+              <button 
+                className={`player-like-btn ${isLiked ? 'liked' : ''}`}
+                onClick={onToggleLike}
+                title={isLiked ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
+              >
+                <HeartIcon filled={isLiked} />
+              </button>
+            </div>
+            
+            <div className="player-controls">
+              <div className="control-buttons">
               <button 
                 onClick={onToggleShuffle} 
                 title={shuffle ? 'Shuffle Off' : 'Shuffle On'} 
@@ -579,27 +594,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 <AutoplayIcon />
               </button>
             </div>
-            <div className="progress-bar">
-              <span className="time">{formatTime(currentTime)}</span>
-              <div className="progress-container">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={progress}
-                  onChange={handleSeek}
-                />
-                <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+              <div className="time-display">
+                <span className="time">{formatTime(currentTime)}</span>
+                <span className="time">{formatTime(duration)}</span>
               </div>
-              <span className="time">{formatTime(duration)}</span>
             </div>
-          </div>
-          
-          <div className="player-volume">
-            <button className="volume-btn" title="Volume">
-              <VolumeIcon />
-            </button>
+            
+            <div className="player-volume">
+              <button className="volume-btn" title="Volume">
+                <VolumeIcon />
+              </button>
+            </div>
           </div>
 
           {/* YouTube player - must be slightly visible to prevent auto-pause */}

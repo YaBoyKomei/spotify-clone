@@ -7,12 +7,83 @@
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(40px);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 9999;
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.4);
+}
+
+.player-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  z-index: 9999;
-  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.4);
+  height: 100%;
+}
+
+/* Progress bar at top */
+.progress-bar-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.progress-fill-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #a78bfa 0%, #8b5cf6 100%);
+  pointer-events: none;
+  transition: width 0.1s linear;
+}
+
+.progress-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: transparent;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  z-index: 2;
+  margin: 0;
+}
+
+.progress-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.progress-bar-top:hover .progress-input::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+.progress-input::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  opacity: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.progress-bar-top:hover .progress-input::-moz-range-thumb {
+  opacity: 1;
 }
 
 .player-song-info {
@@ -86,8 +157,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   max-width: 722px;
+}
+
+.time-display {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 8px;
 }
 
 .control-buttons {
@@ -283,14 +361,18 @@
   .player {
     height: auto;
     min-height: 170px;
-    padding: 16px;
-    padding-bottom: 35px;
-    flex-direction: column;
-    gap: 8px;
     bottom: 0;
     position: fixed;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
+  }
+
+  .player-content {
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    padding-top: 20px;
+    padding-bottom: 35px;
   }
 
   .player-song-info {
@@ -335,7 +417,11 @@
 @media (max-width: 480px) {
   .player {
     min-height: 200px;
+  }
+
+  .player-content {
     padding: 18px 12px;
+    padding-top: 22px;
     padding-bottom: 45px;
   }
 
