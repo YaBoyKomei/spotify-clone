@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
 import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon } from './Icons';
 
-function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike }) {
+function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue }) {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -623,6 +623,15 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               <button className="volume-btn" title="Volume">
                 <VolumeIcon />
               </button>
+              <button 
+                className="queue-toggle-btn" 
+                onClick={onToggleQueue}
+                title={showQueue ? "Hide Queue" : "Show Queue"}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d={showQueue ? "M19 9l-7 7-7-7" : "M5 15l7-7 7 7"} />
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -630,6 +639,52 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       ) : (
         <div className="player-song-info">
           <div className="player-song-title">Select a song to play</div>
+        </div>
+      )}
+      
+      {/* Queue Panel */}
+      {showQueue && currentSong && (
+        <div className="queue-panel">
+          <div className="queue-header">
+            <h3>Up Next</h3>
+            <button className="queue-close-btn" onClick={onToggleQueue}>✕</button>
+          </div>
+          <div className="queue-list">
+            {/* Current Song */}
+            <div className="queue-item current-queue-item">
+              <img src={currentSong.cover} alt={currentSong.title} />
+              <div className="queue-item-info">
+                <div className="queue-item-title">{currentSong.title}</div>
+                <div className="queue-item-artist">{currentSong.artist}</div>
+              </div>
+              <span className="now-playing-badge">Now Playing</span>
+            </div>
+            
+            {/* Queue Songs */}
+            {queue.length > 0 ? (
+              queue.map((song, index) => (
+                <div 
+                  key={`${song.id}-${index}`} 
+                  className="queue-item"
+                  onClick={() => {
+                    onPlayFromQueue(song);
+                    onToggleQueue();
+                  }}
+                >
+                  <img src={song.cover} alt={song.title} />
+                  <div className="queue-item-info">
+                    <div className="queue-item-title">{song.title}</div>
+                    <div className="queue-item-artist">{song.artist}</div>
+                  </div>
+                  <span className="queue-item-number">{index + 1}</span>
+                </div>
+              ))
+            ) : (
+              <div className="queue-empty">
+                <p>No songs in queue</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -27,6 +27,7 @@ function App() {
   const [queueIndex, setQueueIndex] = useState(0); // Current position in queue
   const [playHistory, setPlayHistory] = useState([]); // History of played songs
   const [historyIndex, setHistoryIndex] = useState(-1); // Current position in history
+  const [showQueue, setShowQueue] = useState(false); // Show queue panel
 
   useEffect(() => {
     if (currentView === 'home') {
@@ -274,6 +275,10 @@ function App() {
 
   const toggleAutoplay = () => {
     setAutoplay(!autoplay);
+  };
+
+  const toggleQueue = () => {
+    setShowQueue(!showQueue);
   };
 
   const toggleLike = (song) => {
@@ -643,6 +648,10 @@ function App() {
         onToggleAutoplay={toggleAutoplay}
         isLiked={currentSong ? !!likedSongs.find(s => s.id === currentSong.id) : false}
         onToggleLike={() => currentSong && toggleLike(currentSong)}
+        queue={queue}
+        showQueue={showQueue}
+        onToggleQueue={toggleQueue}
+        onPlayFromQueue={playSong}
       />
     </div>
   );
