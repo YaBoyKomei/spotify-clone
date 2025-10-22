@@ -570,19 +570,39 @@ app.get('/api/next/:videoId', async (req, res) => {
     try {
       const contents = data?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer?.contents || [];
       
+      console.log(`🔍 Processing ${contents.length} items from queue`);
+      
       for (const item of contents) {
         const renderer = item.playlistPanelVideoRenderer;
         if (!renderer) continue;
         
-        const videoId = renderer.videoId;
+        // Skip the currently playing song (marked as selected)
+        if (renderer.selected) {
+          console.log(`⏭️ Skipping current song: ${renderer.title?.runs?.[0]?.text}`);
+          continue;
+        }
+        
+        const itemVideoId = renderer.videoId;
         const title = renderer.title?.runs?.[0]?.text || '';
         const artist = renderer.longBylineText?.runs?.[0]?.text || 'Unknown Artist';
         const thumbnail = renderer.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
         
-        if (videoId && title) {
+        // Filter out non-music items
+        const musicVideoType = renderer.navigationEndpoint?.watchEndpoint?.watchEndpointMusicSupportedConfigs?.watchEndpointMusicConfig?.musicVideoType;
+        const playlistId = renderer.navigationEndpoint?.watchEndpoint?.playlistId;
+        
+        // Check if it's a music item
+        const isMusic = musicVideoType || playlistId || title.length < 100;
+        
+        if (!isMusic) {
+          console.log(`🚫 Filtered out non-music item: ${title}`);
+          continue;
+        }
+        
+        if (itemVideoId && title) {
           queue.push({
-            id: videoId,
-            youtubeId: videoId,
+            id: itemVideoId,
+            youtubeId: itemVideoId,
             title,
             artist,
             cover: thumbnail
@@ -590,7 +610,7 @@ app.get('/api/next/:videoId', async (req, res) => {
         }
       }
       
-      console.log(`✅ Found ${queue.length} songs in queue for ${videoId}`);
+      console.log(`✅ Found ${queue.length} music songs in queue for ${videoId}`);
       res.json(queue);
     } catch (parseError) {
       console.error('Error parsing queue:', parseError);
