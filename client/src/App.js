@@ -680,6 +680,10 @@ function App() {
                   isLiked={!!likedSongs.find(s => s.id === song.id)}
                   onPlay={playSong}
                   onToggleLike={toggleLike}
+                  showRemove={true}
+                  onRemoveFromPlaylist={(song) => {
+                    removeFromPlaylist(playlistId, song.id);
+                  }}
                   onAddToPlaylist={(song) => {
                     setSelectedSongForPlaylist(song);
                     setShowAddToPlaylist(true);
