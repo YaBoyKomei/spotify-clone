@@ -574,12 +574,26 @@ app.get('/api/next/:videoId', async (req, res) => {
         const renderer = item.playlistPanelVideoRenderer;
         if (!renderer) continue;
         
+        // Skip if it's the currently playing song (selected: true)
+        if (renderer.selected) {
+          console.log('Skipping current song:', renderer.title?.runs?.[0]?.text);
+          continue;
+        }
+        
         const videoId = renderer.videoId;
         const title = renderer.title?.runs?.[0]?.text || '';
         const artist = renderer.longBylineText?.runs?.[0]?.text || 'Unknown Artist';
         const thumbnail = renderer.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
         
-        if (videoId && title) {
+        // Check if it's a music video (has musicVideoType)
+        const musicVideoType = renderer.navigationEndpoint?.watchEndpoint?.watchEndpointMusicSupportedConfigs?.watchEndpointMusicConfig?.musicVideoType;
+        
+        // Only include if it's a music video or has proper music structure
+        const isMusic = musicVideoType || 
+                       renderer.navigationEndpoint?.watchEndpoint?.playlistId ||
+                       title.length < 100; // News titles are usually very long
+        
+        if (videoId && title && isMusic) {
           queue.push({
             id: videoId,
             youtubeId: videoId,
@@ -587,10 +601,12 @@ app.get('/api/next/:videoId', async (req, res) => {
             artist,
             cover: thumbnail
           });
+        } else {
+          console.log('Filtered out non-music item:', title.substring(0, 50));
         }
       }
       
-      console.log(`✅ Found ${queue.length} songs in queue for ${videoId}`);
+      console.log(`✅ Found ${queue.length} music songs in queue for ${videoId}`);
       res.json(queue);
     } catch (parseError) {
       console.error('Error parsing queue:', parseError);
