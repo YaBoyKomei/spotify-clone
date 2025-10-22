@@ -1,4 +1,4 @@
-# 🎵 Spotify Clone - Music Streaming App
+# 🎵 Sonfy - Music Streaming App
 
 A modern, fully-featured music streaming application built with React and Node.js, integrating YouTube Music API for real-time music playback.
 
