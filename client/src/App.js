@@ -23,6 +23,8 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [queue, setQueue] = useState([]); // Queue of next songs
+  const [queueIndex, setQueueIndex] = useState(0); // Current position in queue
 
   useEffect(() => {
     if (currentView === 'home') {
@@ -98,9 +100,23 @@ function App() {
     }
   };
 
-  const playSong = (song) => {
+  const playSong = async (song) => {
     setCurrentSong(song);
     setIsPlaying(true);
+    setQueueIndex(0);
+    
+    // Fetch next songs in queue
+    if (song.youtubeId) {
+      try {
+        const response = await fetch(`/api/next/${song.youtubeId}`);
+        const nextSongs = await response.json();
+        setQueue(nextSongs);
+        console.log(`📋 Queue loaded: ${nextSongs.length} songs`);
+      } catch (error) {
+        console.error('Error loading queue:', error);
+        setQueue([]);
+      }
+    }
   };
 
   const togglePlay = () => {
@@ -109,8 +125,8 @@ function App() {
     }
   };
 
-  const playNext = () => {
-    if (!currentSong || songs.length === 0) return;
+  const playNext = async () => {
+    if (!currentSong) return;
     
     if (repeat === 'one') {
       // Replay the same song
@@ -119,17 +135,40 @@ function App() {
       return;
     }
     
+    // Try to play from queue first
+    if (queue.length > 0 && queueIndex < queue.length - 1) {
+      const nextIndex = queueIndex + 1;
+      setQueueIndex(nextIndex);
+      const nextSong = queue[nextIndex];
+      setCurrentSong(nextSong);
+      setIsPlaying(true);
+      
+      // Fetch queue for the new song
+      try {
+        const response = await fetch(`/api/next/${nextSong.youtubeId}`);
+        const nextSongs = await response.json();
+        setQueue(nextSongs);
+        setQueueIndex(0);
+        console.log(`📋 Queue updated: ${nextSongs.length} songs`);
+      } catch (error) {
+        console.error('Error loading queue:', error);
+      }
+      return;
+    }
+    
+    // Fallback to shuffle or sequential play
+    if (songs.length === 0) return;
+    
     if (shuffle) {
       // Play random song
       const randomIndex = Math.floor(Math.random() * songs.length);
-      setCurrentSong(songs[randomIndex]);
+      await playSong(songs[randomIndex]);
     } else {
-      // Play next song
+      // Play next song from current list
       const currentIndex = songs.findIndex(s => s.id === currentSong.id);
       const nextIndex = (currentIndex + 1) % songs.length;
-      setCurrentSong(songs[nextIndex]);
+      await playSong(songs[nextIndex]);
     }
-    setIsPlaying(true);
   };
 
   const playPrevious = () => {

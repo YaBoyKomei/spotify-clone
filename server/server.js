@@ -525,6 +525,83 @@ app.get('/api/section/:browseId', async (req, res) => {
   }
 });
 
+// Get next songs in queue for a video
+app.get('/api/next/:videoId', async (req, res) => {
+  const { videoId } = req.params;
+  
+  if (!videoId) {
+    return res.status(400).json({ error: 'Video ID is required' });
+  }
+
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const url = 'https://music.youtube.com/youtubei/v1/next?prettyPrint=false';
+    
+    const payload = {
+      enablePersistentPlaylistPanel: true,
+      videoId: videoId,
+      isAudioOnly: true,
+      context: {
+        client: {
+          clientName: 'WEB_REMIX',
+          clientVersion: '1.20251015.03.00',
+          hl: 'en',
+          gl: 'US',
+        }
+      }
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Next API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const queue = [];
+    
+    try {
+      const contents = data?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer?.contents || [];
+      
+      for (const item of contents) {
+        const renderer = item.playlistPanelVideoRenderer;
+        if (!renderer) continue;
+        
+        const videoId = renderer.videoId;
+        const title = renderer.title?.runs?.[0]?.text || '';
+        const artist = renderer.longBylineText?.runs?.[0]?.text || 'Unknown Artist';
+        const thumbnail = renderer.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
+        
+        if (videoId && title) {
+          queue.push({
+            id: videoId,
+            youtubeId: videoId,
+            title,
+            artist,
+            cover: thumbnail
+          });
+        }
+      }
+      
+      console.log(`✅ Found ${queue.length} songs in queue for ${videoId}`);
+      res.json(queue);
+    } catch (parseError) {
+      console.error('Error parsing queue:', parseError);
+      res.json([]);
+    }
+  } catch (error) {
+    console.error('Error fetching next songs:', error);
+    res.status(500).json({ error: 'Failed to fetch next songs' });
+  }
+});
+
 // Search songs
 app.get('/api/search', async (req, res) => {
   const query = req.query.q;
