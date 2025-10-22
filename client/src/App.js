@@ -127,9 +127,11 @@ function App() {
         console.log(`📡 Fetching queue for video ID: ${song.youtubeId}`);
         const response = await fetch(`/api/next/${song.youtubeId}`);
         const nextSongs = await response.json();
-        setQueue(nextSongs);
+        // Add current song at the beginning of the queue
+        const fullQueue = [song, ...nextSongs];
+        setQueue(fullQueue);
         setQueueIndex(0); // Reset to start of new queue
-        console.log(`📋 Queue loaded: ${nextSongs.length} songs`);
+        console.log(`📋 Queue loaded: ${fullQueue.length} songs (including current)`);
         if (nextSongs.length > 0) {
           console.log(`🎵 Next songs in queue:`);
           nextSongs.slice(0, 5).forEach((s, i) => {
@@ -143,7 +145,7 @@ function App() {
         }
       } catch (error) {
         console.error('❌ Error loading queue:', error);
-        setQueue([]);
+        setQueue([song]); // At least keep the current song
       }
     } else if (!fetchNewQueue) {
       console.log('🔒 Keeping current queue');
@@ -251,9 +253,11 @@ function App() {
       try {
         const response = await fetch(`/api/next/${prevSong.youtubeId}`);
         const nextSongs = await response.json();
-        setQueue(nextSongs);
+        // Add previous song at the beginning
+        const fullQueue = [prevSong, ...nextSongs];
+        setQueue(fullQueue);
         setQueueIndex(0);
-        console.log(`📋 Queue loaded for previous song: ${nextSongs.length} songs`);
+        console.log(`📋 Queue loaded for previous song: ${fullQueue.length} songs (including current)`);
       } catch (error) {
         console.error('❌ Error loading queue:', error);
       }
@@ -302,9 +306,11 @@ function App() {
     try {
       const response = await fetch(`/api/next/${currentSong.youtubeId}`);
       const nextSongs = await response.json();
-      setQueue(nextSongs);
+      // Add current song at the beginning
+      const fullQueue = [currentSong, ...nextSongs];
+      setQueue(fullQueue);
       setQueueIndex(0);
-      console.log(`✅ Queue refreshed: ${nextSongs.length} songs`);
+      console.log(`✅ Queue refreshed: ${fullQueue.length} songs (including current)`);
     } catch (error) {
       console.error('❌ Error refreshing queue:', error);
     }
