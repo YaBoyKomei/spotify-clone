@@ -126,10 +126,13 @@ function App() {
   };
 
   const playNext = async () => {
+    console.log('🎵 playNext called - Queue length:', queue.length, 'Queue index:', queueIndex, 'Repeat:', repeat, 'Shuffle:', shuffle);
+    
     if (!currentSong) return;
     
     if (repeat === 'one') {
       // Replay the same song
+      console.log('🔁 Repeat one - replaying current song');
       setIsPlaying(false);
       setTimeout(() => setIsPlaying(true), 100);
       return;
@@ -138,6 +141,7 @@ function App() {
     // Try to play from queue first
     if (queue.length > 0 && queueIndex < queue.length - 1) {
       const nextIndex = queueIndex + 1;
+      console.log(`▶️ Playing from queue: index ${nextIndex}/${queue.length - 1}`);
       setQueueIndex(nextIndex);
       const nextSong = queue[nextIndex];
       setCurrentSong(nextSong);
@@ -157,14 +161,17 @@ function App() {
     }
     
     // Fallback to shuffle or sequential play
+    console.log('📋 Queue empty or ended, using fallback');
     if (songs.length === 0) return;
     
     if (shuffle) {
       // Play random song
+      console.log('🔀 Shuffle mode - playing random song');
       const randomIndex = Math.floor(Math.random() * songs.length);
       await playSong(songs[randomIndex]);
     } else {
       // Play next song from current list
+      console.log('➡️ Sequential mode - playing next from list');
       const currentIndex = songs.findIndex(s => s.id === currentSong.id);
       const nextIndex = (currentIndex + 1) % songs.length;
       await playSong(songs[nextIndex]);
