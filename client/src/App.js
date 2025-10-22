@@ -48,6 +48,7 @@ function App() {
   const [selectedSongForPlaylist, setSelectedSongForPlaylist] = useState(null);
   const [showDeletePlaylist, setShowDeletePlaylist] = useState(false);
   const [playlistToDelete, setPlaylistToDelete] = useState(null);
+  const [showClearHistory, setShowClearHistory] = useState(false);
 
   // Save to localStorage whenever data changes
   useEffect(() => {
@@ -625,11 +626,7 @@ function App() {
             {listeningHistory.length > 0 && (
               <button 
                 className="delete-playlist-btn"
-                onClick={() => {
-                  if (window.confirm(`Clear all listening history? This will remove ${listeningHistory.length} songs.`)) {
-                    setListeningHistory([]);
-                  }
-                }}
+                onClick={() => setShowClearHistory(true)}
                 title="Clear History"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1032,6 +1029,39 @@ function App() {
                 }}
               >
                 Delete Playlist
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Clear History Confirmation Modal */}
+      {showClearHistory && (
+        <div className="modal-overlay" onClick={() => setShowClearHistory(false)}>
+          <div className="modal delete-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Clear Listening History?</h2>
+            <p className="modal-subtitle">
+              Are you sure you want to clear all listening history? This action cannot be undone.
+            </p>
+            <div className="modal-info">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <p>{listeningHistory.length} songs will be removed from your history</p>
+            </div>
+            <div className="modal-buttons">
+              <button onClick={() => setShowClearHistory(false)}>
+                Cancel
+              </button>
+              <button 
+                className="primary danger"
+                onClick={() => {
+                  setListeningHistory([]);
+                  setShowClearHistory(false);
+                }}
+              >
+                Clear History
               </button>
             </div>
           </div>
