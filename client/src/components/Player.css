@@ -536,6 +536,27 @@
   flex-direction: column;
   z-index: 100;
   animation: slideUp 0.3s ease-out;
+  touch-action: pan-y; /* Allow vertical scrolling */
+}
+
+/* Drag Handle */
+.queue-drag-handle {
+  padding: 8px 0;
+  display: flex;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none; /* Prevent scrolling on drag handle */
+}
+
+.queue-drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-indicator {
+  width: 40px;
+  height: 4px;
+  background: #3e3e3e;
+  border-radius: 2px;
 }
 
 @keyframes slideUp {

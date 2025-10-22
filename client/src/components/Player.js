@@ -18,6 +18,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const repeatRef = useRef(repeat);
   const playerContainerRef = useRef(null);
   const onNextRef = useRef(onNext);
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
 
   // Keep refs updated
   useEffect(() => {
@@ -43,6 +45,39 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   useEffect(() => {
     onNextRef.current = onNext;
   }, [onNext]);
+
+  // Handle swipe gestures for mobile
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    const swipeDistance = touchStartY.current - touchEndY.current;
+    const minSwipeDistance = 50; // Minimum distance for a swipe
+    
+    // Swipe up (positive distance)
+    if (swipeDistance > minSwipeDistance) {
+      console.log('👆 Swipe up detected - opening queue');
+      if (!showQueue) {
+        onToggleQueue();
+      }
+    }
+    // Swipe down (negative distance)
+    else if (swipeDistance < -minSwipeDistance) {
+      console.log('👇 Swipe down detected - closing queue');
+      if (showQueue) {
+        onToggleQueue();
+      }
+    }
+    
+    // Reset
+    touchStartY.current = 0;
+    touchEndY.current = 0;
+  };
 
   // Initialize YouTube Player
   useEffect(() => {
@@ -552,7 +587,12 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="player">
+    <div 
+      className="player"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {currentSong ? (
         <>
           {/* Progress bar at the top */}
@@ -649,7 +689,16 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       
       {/* Queue Panel */}
       {showQueue && currentSong && (
-        <div className="queue-panel">
+        <div 
+          className="queue-panel"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Drag handle for mobile */}
+          <div className="queue-drag-handle">
+            <div className="drag-indicator"></div>
+          </div>
           <div className="queue-header">
             <h3>Up Next</h3>
             <div className="queue-header-actions">
