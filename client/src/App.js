@@ -25,6 +25,8 @@ function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [queue, setQueue] = useState([]); // Queue of next songs
   const [queueIndex, setQueueIndex] = useState(0); // Current position in queue
+  const [playHistory, setPlayHistory] = useState([]); // History of played songs
+  const [historyIndex, setHistoryIndex] = useState(-1); // Current position in history
 
   useEffect(() => {
     if (currentView === 'home') {
@@ -100,10 +102,23 @@ function App() {
     }
   };
 
-  const playSong = async (song) => {
+  const playSong = async (song, addToHistory = true) => {
     console.log(`🎵 Playing song: "${song.title}" by ${song.artist} (ID: ${song.youtubeId})`);
     setCurrentSong(song);
     setIsPlaying(true);
+    
+    // Add to play history (unless we're navigating history)
+    if (addToHistory) {
+      setPlayHistory(prev => {
+        // Remove any songs after current position (if user went back then played new song)
+        const newHistory = prev.slice(0, historyIndex + 1);
+        // Add current song
+        newHistory.push(song);
+        console.log(`📚 Added to history. History length: ${newHistory.length}`);
+        return newHistory;
+      });
+      setHistoryIndex(prev => prev + 1);
+    }
     
     // Fetch next songs in queue
     if (song.youtubeId) {
@@ -163,6 +178,15 @@ function App() {
       setCurrentSong(nextSong);
       setIsPlaying(true);
       
+      // Add to history
+      setPlayHistory(prev => {
+        const newHistory = prev.slice(0, historyIndex + 1);
+        newHistory.push(nextSong);
+        console.log(`📚 Added to history. History length: ${newHistory.length}`);
+        return newHistory;
+      });
+      setHistoryIndex(prev => prev + 1);
+      
       // If we've reached the end of the queue, fetch a new queue
       if (queueIndex >= queue.length - 1) {
         try {
@@ -203,20 +227,39 @@ function App() {
     }
   };
 
-  const playPrevious = () => {
-    if (!currentSong || songs.length === 0) return;
+  const playPrevious = async () => {
+    console.log('⏮️ playPrevious called - History index:', historyIndex, 'History length:', playHistory.length);
     
-    if (shuffle) {
-      // Play random song
-      const randomIndex = Math.floor(Math.random() * songs.length);
-      setCurrentSong(songs[randomIndex]);
-    } else {
-      // Play previous song
-      const currentIndex = songs.findIndex(s => s.id === currentSong.id);
-      const prevIndex = currentIndex === 0 ? songs.length - 1 : currentIndex - 1;
-      setCurrentSong(songs[prevIndex]);
+    if (!currentSong) {
+      console.warn('⚠️ No current song');
+      return;
     }
-    setIsPlaying(true);
+    
+    // If we have history, go back
+    if (historyIndex > 0) {
+      const prevIndex = historyIndex - 1;
+      const prevSong = playHistory[prevIndex];
+      console.log(`⏮️ Playing from history: "${prevSong.title}" (index ${prevIndex})`);
+      setHistoryIndex(prevIndex);
+      setCurrentSong(prevSong);
+      setIsPlaying(true);
+      
+      // Fetch queue for the previous song
+      try {
+        const response = await fetch(`/api/next/${prevSong.youtubeId}`);
+        const nextSongs = await response.json();
+        setQueue(nextSongs);
+        setQueueIndex(0);
+        console.log(`📋 Queue loaded for previous song: ${nextSongs.length} songs`);
+      } catch (error) {
+        console.error('❌ Error loading queue:', error);
+      }
+    } else {
+      console.log('⚠️ No previous song in history');
+      // Fallback: replay current song from beginning
+      setIsPlaying(false);
+      setTimeout(() => setIsPlaying(true), 100);
+    }
   };
 
   const toggleShuffle = () => {
