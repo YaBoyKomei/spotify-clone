@@ -130,7 +130,7 @@ function App() {
         // Add current song at the beginning of the queue
         const fullQueue = [song, ...nextSongs];
         setQueue(fullQueue);
-        setQueueIndex(0); // Reset to start of new queue
+        setQueueIndex(0); // Current song is at index 0
         console.log(`📋 Queue loaded: ${fullQueue.length} songs (including current)`);
         if (nextSongs.length > 0) {
           console.log(`🎵 Next songs in queue:`);
@@ -175,11 +175,17 @@ function App() {
     }
     
     // Try to play from queue first
-    if (queue.length > 0 && queueIndex < queue.length) {
-      const nextSong = queue[queueIndex];
-      console.log(`▶️ Playing from queue: index ${queueIndex}/${queue.length - 1}`);
+    // Find current song index in queue
+    const currentSongIndex = queue.findIndex(s => s.id === currentSong.id);
+    const nextIndex = currentSongIndex + 1;
+    
+    console.log(`📍 Current song at index ${currentSongIndex}, next index: ${nextIndex}`);
+    
+    if (queue.length > 0 && nextIndex < queue.length) {
+      const nextSong = queue[nextIndex];
+      console.log(`▶️ Playing from queue: index ${nextIndex}/${queue.length - 1}`);
       console.log(`🎵 Next song: "${nextSong.title}" by ${nextSong.artist}`);
-      setQueueIndex(queueIndex + 1);
+      setQueueIndex(nextIndex);
       setCurrentSong(nextSong);
       setIsPlaying(true);
       
@@ -193,14 +199,15 @@ function App() {
       setHistoryIndex(prev => prev + 1);
       
       // If we've reached the end of the queue, fetch a new queue
-      if (queueIndex >= queue.length - 1) {
+      if (nextIndex >= queue.length - 1) {
         try {
           console.log(`📡 End of queue reached, fetching new queue for: ${nextSong.youtubeId}`);
           const response = await fetch(`/api/next/${nextSong.youtubeId}`);
           const nextSongs = await response.json();
-          setQueue(nextSongs);
+          const fullQueue = [nextSong, ...nextSongs];
+          setQueue(fullQueue);
           setQueueIndex(0);
-          console.log(`📋 Queue updated: ${nextSongs.length} songs`);
+          console.log(`📋 Queue updated: ${fullQueue.length} songs`);
           if (nextSongs.length > 0) {
             console.log(`  Next up: "${nextSongs[0].title}" by ${nextSongs[0].artist}`);
           }
