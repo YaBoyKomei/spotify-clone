@@ -16,6 +16,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const isLoadingNewSongRef = useRef(false); // Track if loading a new song
   const autoplayRef = useRef(autoplay);
   const repeatRef = useRef(repeat);
+  const playerContainerRef = useRef(null);
 
   // Keep refs updated
   useEffect(() => {
@@ -43,9 +44,14 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     if (playerInitialized.current) return;
 
     const initPlayer = () => {
-      if (!document.getElementById('youtube-player')) {
-        console.error('YouTube player div not found');
-        return;
+      // Create player div if it doesn't exist
+      let playerDiv = document.getElementById('youtube-player');
+      if (!playerDiv) {
+        playerDiv = document.createElement('div');
+        playerDiv.id = 'youtube-player';
+        playerDiv.style.cssText = 'position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; z-index: -9999;';
+        document.body.appendChild(playerDiv);
+        console.log('✅ Created youtube-player div');
       }
 
       try {
@@ -626,19 +632,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           <div className="player-song-title">Select a song to play</div>
         </div>
       )}
-      
-      {/* YouTube player - must be slightly visible to prevent auto-pause */}
-      {/* Keep outside conditional to prevent React from removing/recreating it */}
-      <div id="youtube-player" style={{ 
-        position: 'fixed', 
-        top: '0',
-        left: '0',
-        width: '1px',
-        height: '1px',
-        opacity: 0.01,
-        pointerEvents: 'none',
-        zIndex: -9999
-      }}></div>
     </div>
   );
 }
