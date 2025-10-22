@@ -661,35 +661,35 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             </div>
           </div>
           <div className="queue-list">
-            {/* Current Song */}
-            <div className="queue-item current-queue-item">
-              <img src={currentSong.cover} alt={currentSong.title} />
-              <div className="queue-item-info">
-                <div className="queue-item-title">{currentSong.title}</div>
-                <div className="queue-item-artist">{currentSong.artist}</div>
-              </div>
-              <span className="now-playing-badge">Now Playing</span>
-            </div>
-            
             {/* Queue Songs */}
             {queue.length > 0 ? (
-              queue.map((song, index) => (
-                <div 
-                  key={`${song.id}-${index}`} 
-                  className="queue-item"
-                  onClick={() => {
-                    onPlayFromQueue(song);
-                    onToggleQueue();
-                  }}
-                >
-                  <img src={song.cover} alt={song.title} />
-                  <div className="queue-item-info">
-                    <div className="queue-item-title">{song.title}</div>
-                    <div className="queue-item-artist">{song.artist}</div>
+              queue.map((song, index) => {
+                const isCurrentSong = currentSong && song.id === currentSong.id;
+                return (
+                  <div 
+                    key={`${song.id}-${index}`} 
+                    className={`queue-item ${isCurrentSong ? 'current-queue-item' : ''}`}
+                    onClick={() => {
+                      if (!isCurrentSong) {
+                        onPlayFromQueue(song);
+                        onToggleQueue();
+                      }
+                    }}
+                    style={{ cursor: isCurrentSong ? 'default' : 'pointer' }}
+                  >
+                    <img src={song.cover} alt={song.title} />
+                    <div className="queue-item-info">
+                      <div className="queue-item-title">{song.title}</div>
+                      <div className="queue-item-artist">{song.artist}</div>
+                    </div>
+                    {isCurrentSong ? (
+                      <span className="now-playing-badge">Now Playing</span>
+                    ) : (
+                      <span className="queue-item-number">{index + 1}</span>
+                    )}
                   </div>
-                  <span className="queue-item-number">{index + 1}</span>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="queue-empty">
                 <p>No songs in queue</p>
