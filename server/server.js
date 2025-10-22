@@ -570,15 +570,26 @@ app.get('/api/next/:videoId', async (req, res) => {
     try {
       const panelRenderer = data?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer;
       const contents = panelRenderer?.contents || [];
-      const playlistId = panelRenderer?.playlistId;
+      let playlistId = panelRenderer?.playlistId;
       
       console.log(`🔍 Processing ${contents.length} items from queue for videoId: ${videoId}`);
       console.log(`📋 PlaylistId: ${playlistId || 'none'}`);
       
       for (const item of contents) {
         const renderer = item.playlistPanelVideoRenderer;
+        
+        // Check for automix preview
+        if (!renderer && item.automixPreviewVideoRenderer) {
+          const automixPlaylistId = item.automixPreviewVideoRenderer?.content?.automixPlaylistVideoRenderer?.navigationEndpoint?.watchPlaylistEndpoint?.playlistId;
+          if (automixPlaylistId) {
+            console.log(`  🎵 Found automix playlist: ${automixPlaylistId}`);
+            playlistId = automixPlaylistId;
+          }
+          continue;
+        }
+        
         if (!renderer) {
-          console.log('  ⚠️ No playlistPanelVideoRenderer found (might be automixPreviewVideoRenderer)');
+          console.log('  ⚠️ No playlistPanelVideoRenderer found');
           continue;
         }
         
