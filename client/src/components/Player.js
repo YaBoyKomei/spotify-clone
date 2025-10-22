@@ -595,6 +595,12 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     >
       {currentSong ? (
         <>
+          {/* Time display above progress bar */}
+          <div className="time-display-top">
+            <span className="time">{formatTime(currentTime)}</span>
+            <span className="time">{formatTime(duration)}</span>
+          </div>
+
           {/* Progress bar at the top */}
           <div className="progress-bar-top">
             <input
@@ -658,10 +664,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 <AutoplayIcon />
               </button>
             </div>
-              <div className="time-display">
-                <span className="time">{formatTime(currentTime)}</span>
-                <span className="time">{formatTime(duration)}</span>
-              </div>
             </div>
             
             <div className="player-volume">
