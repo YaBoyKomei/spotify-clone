@@ -1271,7 +1271,7 @@
 .song-card .add-to-playlist-btn {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   background: rgba(0, 0, 0, 0.7);
   border: none;
   color: #fff;
