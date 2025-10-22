@@ -537,9 +537,70 @@ app.get('/api/next/:videoId', async (req, res) => {
     const fetch = (await import('node-fetch')).default;
     const url = 'https://music.youtube.com/youtubei/v1/next?prettyPrint=false';
     
-    const payload = {
+    // Step 1: Get radio playlist ID
+    console.log(`🎵 Step 1: Fetching radio playlist for videoId: ${videoId}`);
+    const firstPayload = {
       enablePersistentPlaylistPanel: true,
       videoId: videoId,
+      isAudioOnly: true,
+      context: {
+        client: {
+          clientName: 'WEB_REMIX',
+          clientVersion: '1.20251015.03.00',
+          hl: 'en',
+          gl: 'US',
+        }
+      }
+    };
+
+    const firstResponse = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      body: JSON.stringify(firstPayload)
+    });
+
+    if (!firstResponse.ok) {
+      throw new Error(`Next API error: ${firstResponse.status}`);
+    }
+
+    const firstData = await firstResponse.json();
+    
+    // Extract radio playlist ID from "Start radio" menu item
+    let radioPlaylistId = null;
+    try {
+      const contents = firstData?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer?.contents || [];
+      
+      for (const item of contents) {
+        const menuItems = item?.playlistPanelVideoRenderer?.menu?.menuRenderer?.items || [];
+        for (const menuItem of menuItems) {
+          const navEndpoint = menuItem?.menuNavigationItemRenderer?.navigationEndpoint?.watchEndpoint;
+          if (navEndpoint && navEndpoint.playlistId && navEndpoint.playlistId.startsWith('RDAMVM')) {
+            radioPlaylistId = navEndpoint.playlistId;
+            console.log(`📻 Found radio playlist: ${radioPlaylistId}`);
+            break;
+          }
+        }
+        if (radioPlaylistId) break;
+      }
+    } catch (err) {
+      console.error('Error extracting radio playlist:', err);
+    }
+    
+    // If no radio playlist found, return empty queue
+    if (!radioPlaylistId) {
+      console.log('⚠️ No radio playlist found');
+      return res.json([]);
+    }
+    
+    // Step 2: Get queue with radio playlist ID
+    console.log(`🎵 Step 2: Fetching queue with playlistId: ${radioPlaylistId}`);
+    const secondPayload = {
+      enablePersistentPlaylistPanel: true,
+      videoId: videoId,
+      playlistId: radioPlaylistId,
       isAudioOnly: true,
       context: {
         client: {
@@ -557,7 +618,7 @@ app.get('/api/next/:videoId', async (req, res) => {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(secondPayload)
     });
 
     if (!response.ok) {
