@@ -1125,12 +1125,45 @@
   }
 }
 
+/* Section title group */
+.section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* Section subtitle */
 .section-subtitle {
   font-size: 14px;
   color: #b3b3b3;
   font-weight: 400;
-  margin-left: 12px;
+}
+
+/* Delete playlist button */
+.delete-playlist-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid rgba(220, 38, 38, 0.5);
+  color: #dc2626;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-playlist-btn:hover {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: #dc2626;
+  transform: translateY(-2px);
+}
+
+.delete-playlist-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* Playlist divider */
