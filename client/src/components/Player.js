@@ -153,6 +153,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      // Don't destroy the player on unmount to avoid DOM errors
+      // The player will be reused across component lifecycles
     };
   }, [onNext]);
 
@@ -618,23 +620,25 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             </div>
           </div>
 
-          {/* YouTube player - must be slightly visible to prevent auto-pause */}
-          <div id="youtube-player" style={{ 
-            position: 'fixed', 
-            top: '0',
-            left: '0',
-            width: '1px',
-            height: '1px',
-            opacity: 0.01,
-            pointerEvents: 'none',
-            zIndex: -9999
-          }}></div>
         </>
       ) : (
         <div className="player-song-info">
           <div className="player-song-title">Select a song to play</div>
         </div>
       )}
+      
+      {/* YouTube player - must be slightly visible to prevent auto-pause */}
+      {/* Keep outside conditional to prevent React from removing/recreating it */}
+      <div id="youtube-player" style={{ 
+        position: 'fixed', 
+        top: '0',
+        left: '0',
+        width: '1px',
+        height: '1px',
+        opacity: 0.01,
+        pointerEvents: 'none',
+        zIndex: -9999
+      }}></div>
     </div>
   );
 }
