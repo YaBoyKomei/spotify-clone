@@ -104,7 +104,6 @@ function App() {
     console.log(`🎵 Playing song: "${song.title}" by ${song.artist} (ID: ${song.youtubeId})`);
     setCurrentSong(song);
     setIsPlaying(true);
-    setQueueIndex(0);
     
     // Fetch next songs in queue
     if (song.youtubeId) {
@@ -113,6 +112,7 @@ function App() {
         const response = await fetch(`/api/next/${song.youtubeId}`);
         const nextSongs = await response.json();
         setQueue(nextSongs);
+        setQueueIndex(0); // Reset to start of new queue
         console.log(`📋 Queue loaded: ${nextSongs.length} songs`);
         if (nextSongs.length > 0) {
           console.log(`🎵 Next songs in queue:`);
@@ -155,28 +155,29 @@ function App() {
     }
     
     // Try to play from queue first
-    if (queue.length > 0 && queueIndex < queue.length - 1) {
-      const nextIndex = queueIndex + 1;
-      const nextSong = queue[nextIndex];
-      console.log(`▶️ Playing from queue: index ${nextIndex}/${queue.length - 1}`);
+    if (queue.length > 0 && queueIndex < queue.length) {
+      const nextSong = queue[queueIndex];
+      console.log(`▶️ Playing from queue: index ${queueIndex}/${queue.length - 1}`);
       console.log(`🎵 Next song: "${nextSong.title}" by ${nextSong.artist}`);
-      setQueueIndex(nextIndex);
+      setQueueIndex(queueIndex + 1);
       setCurrentSong(nextSong);
       setIsPlaying(true);
       
-      // Fetch queue for the new song
-      try {
-        console.log(`📡 Fetching new queue for: ${nextSong.youtubeId}`);
-        const response = await fetch(`/api/next/${nextSong.youtubeId}`);
-        const nextSongs = await response.json();
-        setQueue(nextSongs);
-        setQueueIndex(0);
-        console.log(`📋 Queue updated: ${nextSongs.length} songs`);
-        if (nextSongs.length > 0) {
-          console.log(`  Next up: "${nextSongs[0].title}" by ${nextSongs[0].artist}`);
+      // If we've reached the end of the queue, fetch a new queue
+      if (queueIndex >= queue.length - 1) {
+        try {
+          console.log(`📡 End of queue reached, fetching new queue for: ${nextSong.youtubeId}`);
+          const response = await fetch(`/api/next/${nextSong.youtubeId}`);
+          const nextSongs = await response.json();
+          setQueue(nextSongs);
+          setQueueIndex(0);
+          console.log(`📋 Queue updated: ${nextSongs.length} songs`);
+          if (nextSongs.length > 0) {
+            console.log(`  Next up: "${nextSongs[0].title}" by ${nextSongs[0].artist}`);
+          }
+        } catch (error) {
+          console.error('❌ Error loading queue:', error);
         }
-      } catch (error) {
-        console.error('❌ Error loading queue:', error);
       }
       return;
     }
