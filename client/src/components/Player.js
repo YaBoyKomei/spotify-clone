@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
-import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon } from './Icons';
+import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon } from './Icons';
 
-function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue }) {
+function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue }) {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -725,24 +725,58 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                   <div 
                     key={`${song.id}-${index}`} 
                     className={`queue-item ${isCurrentSong ? 'current-queue-item' : ''}`}
-                    onClick={() => {
-                      if (!isCurrentSong) {
-                        onPlayFromQueue(song);
-                        onToggleQueue();
-                      }
-                    }}
-                    style={{ cursor: isCurrentSong ? 'default' : 'pointer' }}
                   >
-                    <img src={song.cover} alt={song.title} />
-                    <div className="queue-item-info">
+                    <img 
+                      src={song.cover} 
+                      alt={song.title}
+                      onClick={() => {
+                        if (!isCurrentSong) {
+                          onPlayFromQueue(song);
+                          onToggleQueue();
+                        }
+                      }}
+                      style={{ cursor: isCurrentSong ? 'default' : 'pointer' }}
+                    />
+                    <div 
+                      className="queue-item-info"
+                      onClick={() => {
+                        if (!isCurrentSong) {
+                          onPlayFromQueue(song);
+                          onToggleQueue();
+                        }
+                      }}
+                      style={{ cursor: isCurrentSong ? 'default' : 'pointer' }}
+                    >
                       <div className="queue-item-title">{song.title}</div>
                       <div className="queue-item-artist">{song.artist}</div>
                     </div>
-                    {isCurrentSong ? (
-                      <span className="now-playing-badge">Now Playing</span>
-                    ) : (
-                      <span className="queue-item-number">{index + 1}</span>
-                    )}
+                    <div className="queue-item-actions">
+                      <button
+                        className={`queue-action-btn ${likedSongs?.find(s => s.id === song.id) ? 'liked' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleLikeInQueue(song);
+                        }}
+                        title={likedSongs?.find(s => s.id === song.id) ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
+                      >
+                        <HeartIcon filled={!!likedSongs?.find(s => s.id === song.id)} />
+                      </button>
+                      <button
+                        className="queue-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToPlaylistFromQueue(song);
+                        }}
+                        title="Add to Playlist"
+                      >
+                        <PlusIcon />
+                      </button>
+                      {isCurrentSong ? (
+                        <span className="now-playing-badge">Now Playing</span>
+                      ) : (
+                        <span className="queue-item-number">{index + 1}</span>
+                      )}
+                    </div>
                   </div>
                 );
               })

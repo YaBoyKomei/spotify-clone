@@ -732,11 +732,54 @@
   text-overflow: ellipsis;
 }
 
+.queue-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.queue-action-btn {
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.queue-item:hover .queue-action-btn {
+  opacity: 1;
+}
+
+.queue-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.queue-action-btn.liked {
+  color: #1db954;
+  opacity: 1;
+}
+
+.queue-action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 .queue-item-number {
   font-size: 14px;
   color: #b3b3b3;
   font-weight: 500;
   flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .now-playing-badge {
@@ -746,6 +789,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .queue-empty {

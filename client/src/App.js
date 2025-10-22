@@ -884,6 +884,12 @@ function App() {
         onToggleQueue={toggleQueue}
         onPlayFromQueue={playFromQueue}
         onRefreshQueue={refreshQueue}
+        likedSongs={likedSongs}
+        onToggleLikeInQueue={toggleLike}
+        onAddToPlaylistFromQueue={(song) => {
+          setSelectedSongForPlaylist(song);
+          setShowAddToPlaylist(true);
+        }}
       />
       
       {/* Create Playlist Modal */}
