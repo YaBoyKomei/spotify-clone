@@ -46,6 +46,8 @@ function App() {
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const [selectedSongForPlaylist, setSelectedSongForPlaylist] = useState(null);
+  const [showDeletePlaylist, setShowDeletePlaylist] = useState(false);
+  const [playlistToDelete, setPlaylistToDelete] = useState(null);
 
   // Save to localStorage whenever data changes
   useEffect(() => {
@@ -670,10 +672,8 @@ function App() {
             <button 
               className="delete-playlist-btn"
               onClick={() => {
-                if (window.confirm(`Delete playlist "${playlist.name}"?`)) {
-                  deletePlaylist(playlistId);
-                  setCurrentView('home');
-                }
+                setPlaylistToDelete(playlist);
+                setShowDeletePlaylist(true);
               }}
               title="Delete Playlist"
             >
@@ -965,6 +965,46 @@ function App() {
                 setSelectedSongForPlaylist(null);
               }}>
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Playlist Confirmation Modal */}
+      {showDeletePlaylist && playlistToDelete && (
+        <div className="modal-overlay" onClick={() => setShowDeletePlaylist(false)}>
+          <div className="modal delete-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Delete Playlist?</h2>
+            <p className="modal-subtitle">
+              Are you sure you want to delete "{playlistToDelete.name}"? This action cannot be undone.
+            </p>
+            <div className="modal-info">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+              <p>{playlistToDelete.songs.length} songs will be removed from this playlist</p>
+            </div>
+            <div className="modal-buttons">
+              <button onClick={() => {
+                setShowDeletePlaylist(false);
+                setPlaylistToDelete(null);
+              }}>
+                Cancel
+              </button>
+              <button 
+                className="primary danger"
+                onClick={() => {
+                  deletePlaylist(playlistToDelete.id);
+                  setShowDeletePlaylist(false);
+                  setPlaylistToDelete(null);
+                  setCurrentView('home');
+                }}
+              >
+                Delete Playlist
               </button>
             </div>
           </div>
