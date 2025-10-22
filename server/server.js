@@ -570,15 +570,12 @@ app.get('/api/next/:videoId', async (req, res) => {
     try {
       const contents = data?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer?.contents || [];
       
-      console.log(`🔍 Processing ${contents.length} items from queue`);
+      console.log(`🔍 Processing ${contents.length} items from queue for videoId: ${videoId}`);
       
       for (const item of contents) {
         const renderer = item.playlistPanelVideoRenderer;
-        if (!renderer) continue;
-        
-        // Skip the currently playing song (marked as selected)
-        if (renderer.selected) {
-          console.log(`⏭️ Skipping current song: ${renderer.title?.runs?.[0]?.text}`);
+        if (!renderer) {
+          console.log('  ⚠️ No playlistPanelVideoRenderer found');
           continue;
         }
         
@@ -587,19 +584,34 @@ app.get('/api/next/:videoId', async (req, res) => {
         const artist = renderer.longBylineText?.runs?.[0]?.text || 'Unknown Artist';
         const thumbnail = renderer.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
         
+        console.log(`  📝 Item: "${title}" by ${artist}`);
+        console.log(`     - videoId: ${itemVideoId}`);
+        console.log(`     - selected: ${renderer.selected}`);
+        
+        // Skip the currently playing song (marked as selected)
+        if (renderer.selected) {
+          console.log(`     ⏭️ SKIPPED: Current song`);
+          continue;
+        }
+        
         // Filter out non-music items
         const musicVideoType = renderer.navigationEndpoint?.watchEndpoint?.watchEndpointMusicSupportedConfigs?.watchEndpointMusicConfig?.musicVideoType;
         const playlistId = renderer.navigationEndpoint?.watchEndpoint?.playlistId;
+        
+        console.log(`     - musicVideoType: ${musicVideoType || 'none'}`);
+        console.log(`     - playlistId: ${playlistId || 'none'}`);
+        console.log(`     - title length: ${title.length}`);
         
         // Check if it's a music item
         const isMusic = musicVideoType || playlistId || title.length < 100;
         
         if (!isMusic) {
-          console.log(`🚫 Filtered out non-music item: ${title}`);
+          console.log(`     🚫 FILTERED OUT: Not music (no musicVideoType, no playlistId, title too long)`);
           continue;
         }
         
         if (itemVideoId && title) {
+          console.log(`     ✅ ADDED to queue`);
           queue.push({
             id: itemVideoId,
             youtubeId: itemVideoId,
@@ -607,6 +619,8 @@ app.get('/api/next/:videoId', async (req, res) => {
             artist,
             cover: thumbnail
           });
+        } else {
+          console.log(`     ⚠️ SKIPPED: Missing videoId or title`);
         }
       }
       
