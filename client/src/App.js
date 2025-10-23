@@ -121,8 +121,27 @@ function App() {
           return () => carousel.removeEventListener('scroll', updateScrollState);
         }
       });
+      
+      // Also initialize Most Played carousel
+      const mostPlayedCarousel = document.getElementById('carousel-most-played');
+      if (mostPlayedCarousel) {
+        const updateMostPlayedScrollState = () => {
+          const isAtStart = mostPlayedCarousel.scrollLeft <= 0;
+          const isAtEnd = mostPlayedCarousel.scrollLeft + mostPlayedCarousel.clientWidth >= mostPlayedCarousel.scrollWidth - 1;
+          
+          setScrollStates(prev => ({
+            ...prev,
+            'most-played': { isAtStart, isAtEnd }
+          }));
+        };
+
+        updateMostPlayedScrollState();
+        mostPlayedCarousel.addEventListener('scroll', updateMostPlayedScrollState);
+        
+        return () => mostPlayedCarousel.removeEventListener('scroll', updateMostPlayedScrollState);
+      }
     }
-  }, [sections, currentView]);
+  }, [sections, currentView, playCount]);
 
   const updateScrollState = (index) => {
     const carousel = document.getElementById(`carousel-${index}`);
@@ -619,7 +638,25 @@ function App() {
               <h2 className="section-title">Most Played</h2>
             </div>
             <div className="section-carousel">
-              <div className="songs-carousel">
+              {scrollStates['most-played'] && !scrollStates['most-played'].isAtStart && (
+                <button 
+                  className="scroll-button left" 
+                  onClick={() => scrollCarousel('most-played', 'left')}
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeftIcon />
+                </button>
+              )}
+              {scrollStates['most-played'] && !scrollStates['most-played'].isAtEnd && (
+                <button 
+                  className="scroll-button right" 
+                  onClick={() => scrollCarousel('most-played', 'right')}
+                  aria-label="Scroll right"
+                >
+                  <ChevronRightIcon />
+                </button>
+              )}
+              <div className="songs-carousel" id="carousel-most-played">
                 {mostPlayedSongs.map(({ song, count }) => (
                   <div key={song.id} className="song-card-wrapper">
                     <div className="play-count-badge">{count}× played</div>

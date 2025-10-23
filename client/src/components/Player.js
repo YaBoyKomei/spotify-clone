@@ -19,6 +19,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const repeatRef = useRef(repeat);
   const playerContainerRef = useRef(null);
   const onNextRef = useRef(onNext);
+  const onPreviousRef = useRef(onPrevious);
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
   const [draggedIndex, setDraggedIndex] = useState(null);
@@ -56,6 +57,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   useEffect(() => {
     onNextRef.current = onNext;
   }, [onNext]);
+
+  useEffect(() => {
+    onPreviousRef.current = onPrevious;
+  }, [onPrevious]);
 
   // Handle swipe gestures for mobile (only for player and queue header)
   const handlePlayerTouchStart = (e) => {
@@ -360,7 +365,87 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     };
   }, []); // Empty deps - player only initializes once, callbacks use refs
 
-  // Setup Media Session API for background playback
+  // Setup Media Session API handlers (always, even without a song)
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) {
+      console.warn('⚠️ Media Session API not supported');
+      return;
+    }
+
+    console.log('🎵 Setting up Media Session handlers');
+
+    // Always set up action handlers so buttons aren't grayed out
+    navigator.mediaSession.setActionHandler('play', () => {
+      console.log('📱 Media Session: Play');
+      manualPauseRef.current = false;
+      lastActionTimeRef.current = Date.now();
+      if (playerRef.current && playerRef.current.playVideo) {
+        playerRef.current.playVideo();
+      }
+      if (!isPlayingRef.current) {
+        onTogglePlay();
+      }
+    });
+
+    navigator.mediaSession.setActionHandler('pause', () => {
+      console.log('📱 Media Session: Pause');
+      manualPauseRef.current = true;
+      lastActionTimeRef.current = Date.now();
+      if (playerRef.current && playerRef.current.pauseVideo) {
+        playerRef.current.pauseVideo();
+      }
+      if (isPlayingRef.current) {
+        onTogglePlay();
+      }
+    });
+
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      console.log('📱 Media Session: Previous track button clicked!');
+      lastActionTimeRef.current = Date.now();
+      manualPauseRef.current = false;
+      try {
+        if (typeof onPreviousRef.current === 'function') {
+          onPreviousRef.current();
+          console.log('✅ Previous track executed');
+        }
+      } catch (error) {
+        console.error('❌ Error calling onPrevious:', error);
+      }
+    });
+
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      console.log('📱 Media Session: Next track button clicked!');
+      lastActionTimeRef.current = Date.now();
+      manualPauseRef.current = false;
+      try {
+        if (typeof onNextRef.current === 'function') {
+          onNextRef.current();
+          console.log('✅ Next track executed');
+        }
+      } catch (error) {
+        console.error('❌ Error calling onNext:', error);
+      }
+    });
+
+    navigator.mediaSession.setActionHandler('seekbackward', () => {
+      if (playerRef.current && playerRef.current.seekTo && playerRef.current.getCurrentTime) {
+        const current = playerRef.current.getCurrentTime();
+        playerRef.current.seekTo(Math.max(0, current - 10), true);
+      }
+    });
+
+    navigator.mediaSession.setActionHandler('seekforward', () => {
+      if (playerRef.current && playerRef.current.seekTo && playerRef.current.getCurrentTime && playerRef.current.getDuration) {
+        const current = playerRef.current.getCurrentTime();
+        const total = playerRef.current.getDuration();
+        playerRef.current.seekTo(Math.min(total, current + 10), true);
+      }
+    });
+
+    console.log('✅ Media Session handlers registered');
+  }, [onTogglePlay]); // Only depend on onTogglePlay, handlers use refs
+
+  // Update Media Session metadata when song changes
   useEffect(() => {
     if (!currentSong || !('mediaSession' in navigator)) return;
 
@@ -383,86 +468,21 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     } catch (error) {
       console.error('Error setting Media Session metadata:', error);
     }
-
-    navigator.mediaSession.setActionHandler('play', () => {
-      console.log('📱 Media Session: Play requested, current state:', isPlayingRef.current);
-      manualPauseRef.current = false; // Clear manual pause flag
-      lastActionTimeRef.current = Date.now();
-      
-      // Always toggle to play state
-      if (!isPlayingRef.current) {
-        console.log('📱 Calling onTogglePlay to start playback');
-        onTogglePlay();
-      } else {
-        console.log('📱 Already playing, ensuring player is playing');
-        if (playerRef.current && playerRef.current.playVideo) {
-          playerRef.current.playVideo();
-        }
+    // Set position state to enable previous/next buttons
+    try {
+      if (duration > 0) {
+        navigator.mediaSession.setPositionState({
+          duration: duration,
+          playbackRate: 1,
+          position: 0
+        });
       }
-    });
+    } catch (error) {
+      console.log('Could not set position state:', error);
+    }
 
-    navigator.mediaSession.setActionHandler('pause', () => {
-      console.log('📱 Media Session: Pause requested, current state:', isPlayingRef.current);
-      manualPauseRef.current = true; // Mark as manual pause
-      lastActionTimeRef.current = Date.now();
-      
-      // Always toggle to pause state
-      if (isPlayingRef.current) {
-        console.log('📱 Calling onTogglePlay to pause playback');
-        onTogglePlay();
-      } else {
-        console.log('📱 Already paused, ensuring player is paused');
-        if (playerRef.current && playerRef.current.pauseVideo) {
-          playerRef.current.pauseVideo();
-        }
-      }
-    });
-
-    navigator.mediaSession.setActionHandler('previoustrack', () => {
-      console.log('📱 Media Session: Previous track requested');
-      lastActionTimeRef.current = Date.now();
-      manualPauseRef.current = false; // Ensure we don't treat this as a pause
-      try {
-        onPrevious();
-        console.log('✅ Previous track called successfully');
-      } catch (error) {
-        console.error('❌ Error calling onPrevious:', error);
-      }
-    });
-
-    navigator.mediaSession.setActionHandler('nexttrack', () => {
-      console.log('📱 Media Session: Next track requested');
-      lastActionTimeRef.current = Date.now();
-      manualPauseRef.current = false; // Ensure we don't treat this as a pause
-      try {
-        onNext();
-        console.log('✅ Next track called successfully');
-      } catch (error) {
-        console.error('❌ Error calling onNext:', error);
-      }
-    });
-
-    navigator.mediaSession.setActionHandler('seekbackward', () => {
-      console.log('📱 Media Session: Seek backward');
-      if (playerRef.current && playerRef.current.seekTo && playerRef.current.getCurrentTime) {
-        const current = playerRef.current.getCurrentTime();
-        const newTime = Math.max(0, current - 10);
-        playerRef.current.seekTo(newTime, true);
-      }
-    });
-
-    navigator.mediaSession.setActionHandler('seekforward', () => {
-      console.log('📱 Media Session: Seek forward');
-      if (playerRef.current && playerRef.current.seekTo && playerRef.current.getCurrentTime && playerRef.current.getDuration) {
-        const current = playerRef.current.getCurrentTime();
-        const total = playerRef.current.getDuration();
-        const newTime = Math.min(total, current + 10);
-        playerRef.current.seekTo(newTime, true);
-      }
-    });
-
-    console.log('📱 Media Session API initialized');
-  }, [currentSong, onTogglePlay, onNext, onPrevious]);
+    console.log('📱 Media Session API initialized with handlers');
+  }, [currentSong, onTogglePlay, duration]);
 
   // Update Media Session playback state
   useEffect(() => {
@@ -599,10 +619,13 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             
             // Keep checking and resuming playback while hidden
             keepAliveInterval = setInterval(() => {
-              // Don't resume if user just took an action (within last 2 seconds)
+              // Don't resume if user just took an action (within last 3 seconds for safety)
               const timeSinceLastAction = Date.now() - lastActionTimeRef.current;
               
-              if (isPlayingRef.current && !manualPauseRef.current && timeSinceLastAction > 2000) {
+              // Check Media Session state as well
+              const mediaSessionPaused = navigator.mediaSession && navigator.mediaSession.playbackState === 'paused';
+              
+              if (isPlayingRef.current && !manualPauseRef.current && !mediaSessionPaused && timeSinceLastAction > 3000) {
                 try {
                   const state = player.getPlayerState();
                   // Only resume if paused (2), not if buffering (3) or ended (0)
@@ -613,7 +636,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 } catch (error) {
                   console.error('Error in keep-alive:', error);
                 }
-              } else if (manualPauseRef.current) {
+              } else if (manualPauseRef.current || mediaSessionPaused) {
                 // Stop keep-alive if user manually paused
                 console.log('⏸️ Manual pause detected, stopping keep-alive');
                 if (keepAliveInterval) {
@@ -621,7 +644,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                   keepAliveInterval = null;
                 }
               }
-            }, 1500); // Check every 1.5 seconds
+            }, 2000); // Check every 2 seconds
             
           } catch (error) {
             console.error('Error maintaining playback:', error);
