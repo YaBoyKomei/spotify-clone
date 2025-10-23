@@ -776,6 +776,39 @@ if (process.env.NODE_ENV === 'production') {
     next();
   });
   
+  // Debug route to check build files
+  app.get('/debug-build', (req, res) => {
+    const fs = require('fs');
+    const buildPath = path.join(__dirname, '../client/build');
+    
+    try {
+      const files = fs.readdirSync(buildPath, { recursive: true });
+      const indexContent = fs.readFileSync(path.join(buildPath, 'index.html'), 'utf8');
+      
+      res.json({
+        buildPath,
+        files: files.slice(0, 20), // First 20 files
+        indexHtmlPreview: indexContent.substring(0, 1000)
+      });
+    } catch (error) {
+      res.json({ error: error.message });
+    }
+  });
+  
+  // Simple test route
+  app.get('/test', (req, res) => {
+    res.send(`
+      <html>
+        <head><title>Sonfy Test</title></head>
+        <body>
+          <h1>🎵 Sonfy Server is Working!</h1>
+          <p>If you see this, the server is running correctly.</p>
+          <script>console.log('Test JavaScript is working!');</script>
+        </body>
+      </html>
+    `);
+  });
+  
   // Serve static files with proper headers
   app.use(express.static(buildPath, {
     setHeaders: (res, path) => {
