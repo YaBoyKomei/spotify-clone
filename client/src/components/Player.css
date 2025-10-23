@@ -232,9 +232,9 @@
 }
 
 .play-button {
-  background: #fff;
+  background: #a78bfa;
   border: none;
-  color: #000;
+  color: #fff;
   cursor: pointer;
   border-radius: 50%;
   width: 48px;
@@ -243,12 +243,13 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.4);
 }
 
 .play-button:hover {
+  background: #8b5cf6;
   transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 20px rgba(167, 139, 250, 0.6);
 }
 
 .play-button:active {
