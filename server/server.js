@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const compression = require('compression');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -832,7 +833,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 
   // Add compression for better performance
-  const compression = require('compression');
   app.use(compression());
 }
 
