@@ -953,7 +953,10 @@ function App() {
         <div className="main-header">
           <div className="sonfy-brand">
             <h1 className="sonfy-title">
-              <span className="sonfy-logo">🎵</span>
+              <svg className="sonfy-logo" width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor"/>
+                <circle cx="10" cy="17" r="2" fill="currentColor"/>
+              </svg>
               Sonfy
             </h1>
             <p className="sonfy-tagline">Your Ultimate Music Streaming Experience</p>
