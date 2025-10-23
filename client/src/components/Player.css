@@ -544,7 +544,7 @@
 /* Queue Panel */
 .queue-panel {
   position: fixed;
-  bottom: 90px;
+  bottom: 100px;
   right: 0;
   width: 400px;
   max-height: 60vh;
@@ -553,17 +553,19 @@
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  z-index: 100;
+  z-index: 9998;
   animation: slideUp 0.3s ease-out;
 }
 
 /* Drag Handle */
 .queue-drag-handle {
-  padding: 8px 0;
+  padding: 12px 0;
   display: flex;
   justify-content: center;
   cursor: grab;
   touch-action: none; /* Prevent scrolling on drag handle */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .queue-drag-handle:active {
@@ -575,6 +577,11 @@
   height: 4px;
   background: #3e3e3e;
   border-radius: 2px;
+  transition: background 0.2s;
+}
+
+.queue-drag-handle:active .drag-indicator {
+  background: #b3b3b3;
 }
 
 @keyframes slideUp {
@@ -595,6 +602,8 @@
   padding: 16px 20px;
   border-bottom: 1px solid #282828;
   touch-action: none; /* Allow swipe gestures on header */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .queue-header h3 {
@@ -660,7 +669,9 @@
   overflow-y: auto;
   flex: 1;
   padding: 8px 0;
-  touch-action: pan-y; /* Allow vertical scrolling, prevent swipe gestures */
+  touch-action: pan-y; /* Allow vertical scrolling */
+  overscroll-behavior: contain; /* Prevent scroll chaining */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .queue-list::-webkit-scrollbar {
@@ -804,16 +815,116 @@
   font-size: 14px;
 }
 
+/* Drag Handle */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3e3e3e;
+  cursor: grab;
+  padding: 0 8px;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.queue-item:hover .drag-handle {
+  color: #b3b3b3;
+}
+
+.queue-item[draggable="true"] {
+  cursor: grab;
+}
+
+.queue-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Dragging States */
+.queue-item.dragging {
+  opacity: 0.5;
+  background: #1e1e1e;
+  transform: scale(0.98);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.queue-item.drag-over {
+  border-top: 3px solid #a78bfa;
+  background: rgba(167, 139, 250, 0.15);
+  transition: all 0.2s ease;
+}
+
+/* Touch drag feedback */
+@media (hover: none) and (pointer: coarse) {
+  .queue-item.dragging {
+    opacity: 0.7;
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(167, 139, 250, 0.4);
+  }
+  
+  .queue-item.drag-over {
+    border-top: 4px solid #a78bfa;
+    background: rgba(167, 139, 250, 0.2);
+  }
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .queue-panel {
     width: 100%;
-    max-height: 70vh;
-    bottom: 100px; /* Ensure it's above the player on mobile */
+    max-height: 65vh;
+    bottom: 170px; /* Position above mobile player (min-height: 170px) */
   }
   
   /* Always show queue action buttons on mobile */
   .queue-action-btn {
     opacity: 1;
   }
+  
+  /* Show drag handle on mobile */
+  .drag-handle {
+    color: #b3b3b3;
+  }
+}
+
+@media (max-width: 480px) {
+  .queue-panel {
+    bottom: 200px; /* Position above mobile player (min-height: 200px) */
+    max-height: 60vh;
+  }
+}
+
+/* Long press hint */
+.queue-item:not(.current-queue-item)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(167, 139, 250, 0);
+  pointer-events: none;
+  transition: background 0.5s ease;
+}
+
+.queue-item:not(.current-queue-item):active::before {
+  background: rgba(167, 139, 250, 0.1);
+}
+
+/* Prevent text selection during drag */
+.queue-item.dragging * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Touch action for queue items */
+.queue-item:not(.current-queue-item) {
+  touch-action: none;
+  position: relative;
 }

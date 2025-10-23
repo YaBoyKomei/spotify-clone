@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
 import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon } from './Icons';
 
-function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue }) {
+function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -20,6 +20,16 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const onNextRef = useRef(onNext);
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  
+  // Touch drag state
+  const [touchDragActive, setTouchDragActive] = useState(false);
+  const touchStartYPos = useRef(0);
+  const touchCurrentYPos = useRef(0);
+  const longPressTimer = useRef(null);
+  const isDraggingTouch = useRef(false);
+  const draggedElement = useRef(null);
 
   // Keep refs updated
   useEffect(() => {
@@ -46,29 +56,48 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     onNextRef.current = onNext;
   }, [onNext]);
 
-  // Handle swipe gestures for mobile
-  const handleTouchStart = (e) => {
+  // Handle swipe gestures for mobile (only for player and queue header)
+  const handlePlayerTouchStart = (e) => {
     touchStartY.current = e.touches[0].clientY;
   };
 
-  const handleTouchMove = (e) => {
+  const handlePlayerTouchMove = (e) => {
     touchEndY.current = e.touches[0].clientY;
   };
 
-  const handleTouchEnd = () => {
+  const handlePlayerTouchEnd = () => {
     const swipeDistance = touchStartY.current - touchEndY.current;
     const minSwipeDistance = 50; // Minimum distance for a swipe
     
-    // Swipe up (positive distance)
+    // Swipe up (positive distance) - only open queue if not already open
     if (swipeDistance > minSwipeDistance) {
-      console.log('👆 Swipe up detected - opening queue');
+      console.log('👆 Swipe up detected on player - opening queue');
       if (!showQueue) {
         onToggleQueue();
       }
     }
-    // Swipe down (negative distance)
-    else if (swipeDistance < -minSwipeDistance) {
-      console.log('👇 Swipe down detected - closing queue');
+    
+    // Reset
+    touchStartY.current = 0;
+    touchEndY.current = 0;
+  };
+
+  // Handle swipe down on queue header/drag handle to close
+  const handleQueueHeaderTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleQueueHeaderTouchMove = (e) => {
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleQueueHeaderTouchEnd = () => {
+    const swipeDistance = touchStartY.current - touchEndY.current;
+    const minSwipeDistance = 50; // Minimum distance for a swipe
+    
+    // Swipe down (negative distance) - close queue
+    if (swipeDistance < -minSwipeDistance) {
+      console.log('👇 Swipe down detected on header - closing queue');
       if (showQueue) {
         onToggleQueue();
       }
@@ -77,6 +106,96 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     // Reset
     touchStartY.current = 0;
     touchEndY.current = 0;
+  };
+
+  // Touch drag handlers for queue reordering
+  const handleQueueItemTouchStart = (e, index, isCurrentSong) => {
+    if (isCurrentSong) return;
+    
+    const touch = e.touches[0];
+    touchStartYPos.current = touch.clientY;
+    touchCurrentYPos.current = touch.clientY;
+    draggedElement.current = e.currentTarget;
+    
+    // Start long press timer
+    longPressTimer.current = setTimeout(() => {
+      console.log('🔒 Long press detected - starting drag');
+      setDraggedIndex(index);
+      setTouchDragActive(true);
+      isDraggingTouch.current = true;
+      
+      // Add haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 500); // 500ms long press
+  };
+
+  const handleQueueItemTouchMove = (e, index) => {
+    if (!isDraggingTouch.current) {
+      // Cancel long press if user moves before timer completes
+      if (longPressTimer.current) {
+        const touch = e.touches[0];
+        const moveDistance = Math.abs(touch.clientY - touchStartYPos.current);
+        if (moveDistance > 10) {
+          clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
+        }
+      }
+      return;
+    }
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    touchCurrentYPos.current = touch.clientY;
+    
+    // Find which item we're over
+    const queueList = document.querySelector('.queue-list');
+    if (!queueList) return;
+    
+    const items = Array.from(queueList.querySelectorAll('.queue-item'));
+    let newDragOverIndex = null;
+    
+    items.forEach((item, idx) => {
+      const rect = item.getBoundingClientRect();
+      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+        newDragOverIndex = idx;
+      }
+    });
+    
+    if (newDragOverIndex !== null && newDragOverIndex !== dragOverIndex) {
+      setDragOverIndex(newDragOverIndex);
+    }
+  };
+
+  const handleQueueItemTouchEnd = (e, index) => {
+    // Clear long press timer
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    
+    if (!isDraggingTouch.current) return;
+    
+    e.preventDefault();
+    
+    // Perform reorder if we have valid indices
+    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+      console.log(`🔄 Touch reorder: ${draggedIndex} → ${dragOverIndex}`);
+      onReorderQueue(draggedIndex, dragOverIndex);
+      
+      // Haptic feedback
+      if (navigator.vibrate) {
+        navigator.vibrate(30);
+      }
+    }
+    
+    // Reset state
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    setTouchDragActive(false);
+    isDraggingTouch.current = false;
+    draggedElement.current = null;
   };
 
   // Initialize YouTube Player
@@ -589,9 +708,9 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   return (
     <div 
       className="player"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      onTouchStart={handlePlayerTouchStart}
+      onTouchMove={handlePlayerTouchMove}
+      onTouchEnd={handlePlayerTouchEnd}
     >
       {currentSong ? (
         <>
@@ -695,17 +814,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           {/* Drag handle for mobile */}
           <div 
             className="queue-drag-handle"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            onTouchStart={handleQueueHeaderTouchStart}
+            onTouchMove={handleQueueHeaderTouchMove}
+            onTouchEnd={handleQueueHeaderTouchEnd}
           >
             <div className="drag-indicator"></div>
           </div>
           <div 
             className="queue-header"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            onTouchStart={handleQueueHeaderTouchStart}
+            onTouchMove={handleQueueHeaderTouchMove}
+            onTouchEnd={handleQueueHeaderTouchEnd}
           >
             <h3>Up Next</h3>
             <div className="queue-header-actions">
@@ -726,11 +845,54 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             {queue.length > 0 ? (
               queue.map((song, index) => {
                 const isCurrentSong = currentSong && song.id === currentSong.id;
+                const isDragging = draggedIndex === index;
+                const isDragOver = dragOverIndex === index;
+                
                 return (
                   <div 
                     key={`${song.id}-${index}`} 
-                    className={`queue-item ${isCurrentSong ? 'current-queue-item' : ''}`}
+                    className={`queue-item ${isCurrentSong ? 'current-queue-item' : ''} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+                    draggable={!isCurrentSong}
+                    onDragStart={(e) => {
+                      if (!isCurrentSong) {
+                        setDraggedIndex(index);
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/html', e.currentTarget);
+                      }
+                    }}
+                    onDragOver={(e) => {
+                      if (!isCurrentSong && draggedIndex !== null) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        setDragOverIndex(index);
+                      }
+                    }}
+                    onDragLeave={() => {
+                      setDragOverIndex(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (draggedIndex !== null && draggedIndex !== index && !isCurrentSong) {
+                        onReorderQueue(draggedIndex, index);
+                      }
+                      setDraggedIndex(null);
+                      setDragOverIndex(null);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedIndex(null);
+                      setDragOverIndex(null);
+                    }}
+                    onTouchStart={(e) => handleQueueItemTouchStart(e, index, isCurrentSong)}
+                    onTouchMove={(e) => handleQueueItemTouchMove(e, index)}
+                    onTouchEnd={(e) => handleQueueItemTouchEnd(e, index)}
                   >
+                    {!isCurrentSong && (
+                      <div className="drag-handle" title="Drag to reorder">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-16h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/>
+                        </svg>
+                      </div>
+                    )}
                     <img 
                       src={song.cover} 
                       alt={song.title}

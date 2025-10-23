@@ -389,6 +389,17 @@ function App() {
     }
   };
 
+  const reorderQueue = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return;
+    
+    const newQueue = [...queue];
+    const [movedSong] = newQueue.splice(fromIndex, 1);
+    newQueue.splice(toIndex, 0, movedSong);
+    
+    setQueue(newQueue);
+    console.log(`🔄 Reordered queue: moved song from position ${fromIndex + 1} to ${toIndex + 1}`);
+  };
+
   const toggleLike = (song) => {
     if (likedSongs.find(s => s.id === song.id)) {
       setLikedSongs(likedSongs.filter(s => s.id !== song.id));
@@ -514,6 +525,31 @@ function App() {
       !section.title.toLowerCase().includes('podcast')
     );
 
+    // Calculate most played songs from listening history
+    const getMostPlayedSongs = () => {
+      const playCount = {};
+      
+      listeningHistory.forEach(song => {
+        if (playCount[song.id]) {
+          playCount[song.id].count++;
+        } else {
+          playCount[song.id] = {
+            song: song,
+            count: 1
+          };
+        }
+      });
+      
+      // Convert to array and sort by count
+      const sortedSongs = Object.values(playCount)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 20); // Top 20 songs
+      
+      return sortedSongs;
+    };
+
+    const mostPlayedSongs = getMostPlayedSongs();
+
     return (
       <div className="home-view">
         {filteredSections.map((section, index) => {
@@ -571,6 +607,35 @@ function App() {
             </div>
           );
         })}
+        
+        {/* Most Played Section */}
+        {mostPlayedSongs.length > 0 && (
+          <div className="music-section">
+            <div className="section-header">
+              <h2 className="section-title">Most Played</h2>
+            </div>
+            <div className="section-carousel">
+              <div className="songs-carousel">
+                {mostPlayedSongs.map(({ song, count }) => (
+                  <div key={song.id} className="song-card-wrapper">
+                    <div className="play-count-badge">{count}× played</div>
+                    <SongCard
+                      song={song}
+                      currentSong={currentSong}
+                      isLiked={!!likedSongs.find(s => s.id === song.id)}
+                      onPlay={playSong}
+                      onToggleLike={toggleLike}
+                      onAddToPlaylist={(song) => {
+                        setSelectedSongForPlaylist(song);
+                        setShowAddToPlaylist(true);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -902,6 +967,7 @@ function App() {
         onToggleQueue={toggleQueue}
         onPlayFromQueue={playFromQueue}
         onRefreshQueue={refreshQueue}
+        onReorderQueue={reorderQueue}
         likedSongs={likedSongs}
         onToggleLikeInQueue={toggleLike}
         onAddToPlaylistFromQueue={(song) => {

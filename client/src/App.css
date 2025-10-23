@@ -1400,3 +1400,25 @@
     opacity: 1;
   }
 }
+
+/* Most Played Section */
+.song-card-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.play-count-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  letter-spacing: 0.3px;
+}
