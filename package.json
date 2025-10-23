@@ -7,10 +7,8 @@
     "start": "node server/server.js",
     "server": "node server/server.js",
     "client": "cd client && npm start",
-    "build": "npm run install-all && cd client && npm run build",
-    "install-all": "cd server && npm install && cd ../client && npm install && cd ..",
-    "postinstall": "npm run build",
-    "heroku-postbuild": "npm run build"
+    "build": "cd client && npm install && npm run build && cd ../server && npm install",
+    "install-all": "cd server && npm install && cd ../client && npm install && cd .."
   },
   "engines": {
     "node": ">=18.0.0",

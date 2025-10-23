@@ -774,6 +774,18 @@ if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {
     const indexPath = path.join(__dirname, '../client/build/index.html');
     console.log('📄 Serving index.html from:', indexPath);
+    
+    // Check if file exists
+    const fs = require('fs');
+    if (!fs.existsSync(indexPath)) {
+      console.error('❌ index.html not found at:', indexPath);
+      return res.status(404).send(`
+        <h1>Build Error</h1>
+        <p>The React build files are missing. Please check the build process.</p>
+        <p>Expected file: ${indexPath}</p>
+      `);
+    }
+    
     res.sendFile(indexPath, (err) => {
       if (err) {
         console.error('❌ Error serving index.html:', err);
