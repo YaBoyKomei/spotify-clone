@@ -207,8 +207,8 @@
 @media (max-width: 480px) {
   .sonfy-title {
     font-size: 1.8rem;
-    flex-direction: column;
-    gap: 5px;
+    flex-direction: row;
+    gap: 8px;
   }
   
   .sonfy-logo svg {
