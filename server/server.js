@@ -796,10 +796,35 @@ if (process.env.NODE_ENV === 'production') {
     res.send('<h1>🎵 Sonfy Server Works!</h1><script>console.log("JS works!");</script>');
   });
   
+  // Test if JS file is served correctly
+  app.get('/test-js', (req, res) => {
+    const fs = require('fs');
+    const jsFiles = fs.readdirSync(path.join(buildPath, 'static/js'));
+    const mainJsFile = jsFiles.find(f => f.startsWith('main.') && f.endsWith('.js'));
+    
+    if (mainJsFile) {
+      const jsPath = path.join(buildPath, 'static/js', mainJsFile);
+      const jsContent = fs.readFileSync(jsPath, 'utf8');
+      res.json({
+        fileName: mainJsFile,
+        fileSize: jsContent.length,
+        firstChars: jsContent.substring(0, 100),
+        isJavaScript: jsContent.startsWith('!function') || jsContent.startsWith('(function') || jsContent.includes('React')
+      });
+    } else {
+      res.json({ error: 'No main JS file found' });
+    }
+  });
+  
   // Serve static files FIRST - this is crucial
   app.use(express.static(buildPath, {
-    maxAge: '1d',
+    maxAge: 0, // Disable caching for debugging
     setHeaders: (res, filePath) => {
+      // Force no cache
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       if (filePath.endsWith('.js')) {
         res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
       } else if (filePath.endsWith('.css')) {
