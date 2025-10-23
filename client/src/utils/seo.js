@@ -67,23 +67,23 @@ export const addStructuredData = (data) => {
 export const updateSEOForView = (view, data = {}) => {
   switch (view) {
     case 'search':
-      updatePageTitle('Search Music');
-      updateMetaDescription('Search for your favorite songs, artists, and albums on Sonfy. Discover new music and create playlists with millions of tracks available.');
+      updatePageTitle('Search Music on Sonfy');
+      updateMetaDescription('Search for your favorite songs, artists, and albums on Sonfy. Discover new music and create playlists with millions of tracks available on the Sonfy music platform.');
       updateCanonicalUrl('/?view=search');
       updateOpenGraphTags({
-        title: 'Search Music | Sonfy',
-        description: 'Search for your favorite songs, artists, and albums on Sonfy. Discover new music and create playlists with millions of tracks available.',
+        title: 'Search Music on Sonfy | Free Music Streaming',
+        description: 'Search for your favorite songs, artists, and albums on Sonfy. Discover new music and create playlists with millions of tracks available on the Sonfy music platform.',
         url: 'https://sonfy.onrender.com/?view=search'
       });
       break;
       
     case 'liked':
-      updatePageTitle('Liked Songs');
-      updateMetaDescription('Access your favorite songs collection on Sonfy. All your liked tracks in one place for easy listening and playlist creation.');
+      updatePageTitle('My Liked Songs - Sonfy Music');
+      updateMetaDescription('Access your favorite songs collection on Sonfy. All your liked tracks in one place for easy listening and playlist creation on the Sonfy music streaming platform.');
       updateCanonicalUrl('/?view=liked');
       updateOpenGraphTags({
-        title: 'Liked Songs | Sonfy',
-        description: 'Access your favorite songs collection on Sonfy. All your liked tracks in one place for easy listening and playlist creation.',
+        title: 'My Liked Songs - Sonfy Music | Free Streaming',
+        description: 'Access your favorite songs collection on Sonfy. All your liked tracks in one place for easy listening and playlist creation on the Sonfy music streaming platform.',
         url: 'https://sonfy.onrender.com/?view=liked'
       });
       break;
@@ -111,13 +111,24 @@ export const updateSEOForView = (view, data = {}) => {
       });
       break;
       
+    case 'about':
+      updatePageTitle('About Sonfy - Free Music Streaming Platform');
+      updateMetaDescription('Learn about Sonfy, the ultimate free music streaming platform. Discover how Sonfy revolutionizes online music with unlimited streaming, playlist creation, and high-quality audio.');
+      updateCanonicalUrl('/?view=about');
+      updateOpenGraphTags({
+        title: 'About Sonfy - Free Music Streaming Platform',
+        description: 'Learn about Sonfy, the ultimate free music streaming platform. Discover how Sonfy revolutionizes online music with unlimited streaming, playlist creation, and high-quality audio.',
+        url: 'https://sonfy.onrender.com/?view=about'
+      });
+      break;
+      
     default: // home
       updatePageTitle();
-      updateMetaDescription('Stream millions of songs for free with Sonfy. Discover new music, create playlists, and enjoy high-quality audio streaming. No ads, no limits - just pure music experience.');
+      updateMetaDescription('Sonfy is the ultimate free music streaming platform. Stream millions of songs, create playlists, and discover new music with Sonfy\'s high-quality audio streaming. The official Sonfy music app - no ads, no limits.');
       updateCanonicalUrl('/');
       updateOpenGraphTags({
-        title: 'Sonfy - Free Music Streaming App | Listen to Songs Online',
-        description: 'Stream millions of songs for free with Sonfy. Discover new music, create playlists, and enjoy high-quality audio streaming. No ads, no limits - just pure music experience.',
+        title: 'Sonfy - Official Music Streaming App | Free Online Music Player',
+        description: 'Sonfy is the ultimate free music streaming platform. Stream millions of songs, create playlists, and discover new music with Sonfy\'s high-quality audio streaming. The official Sonfy music app.',
         url: 'https://sonfy.onrender.com/'
       });
       break;
