@@ -765,29 +765,26 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-// Serve static files from React build in production
+// Production configuration
 if (process.env.NODE_ENV === 'production') {
   const buildPath = path.join(__dirname, '../client/build');
   console.log('📁 Serving static files from:', buildPath);
   
-  // Add logging middleware to debug static file requests
+  // Add logging middleware
   app.use((req, res, next) => {
     console.log(`📥 Request: ${req.method} ${req.path}`);
     next();
   });
   
-  // Debug route to check build files
+  // Debug routes (remove these after fixing)
   app.get('/debug-build', (req, res) => {
     const fs = require('fs');
-    const buildPath = path.join(__dirname, '../client/build');
-    
     try {
       const files = fs.readdirSync(buildPath, { recursive: true });
       const indexContent = fs.readFileSync(path.join(buildPath, 'index.html'), 'utf8');
-      
       res.json({
         buildPath,
-        files: files.slice(0, 20), // First 20 files
+        files: files.slice(0, 20),
         indexHtmlPreview: indexContent.substring(0, 1000)
       });
     } catch (error) {
@@ -795,51 +792,31 @@ if (process.env.NODE_ENV === 'production') {
     }
   });
   
-  // Simple test route
   app.get('/test', (req, res) => {
-    res.send(`
-      <html>
-        <head><title>Sonfy Test</title></head>
-        <body>
-          <h1>🎵 Sonfy Server is Working!</h1>
-          <p>If you see this, the server is running correctly.</p>
-          <script>console.log('Test JavaScript is working!');</script>
-        </body>
-      </html>
-    `);
+    res.send('<h1>🎵 Sonfy Server Works!</h1><script>console.log("JS works!");</script>');
   });
   
-  // Serve static files with proper headers
+  // Serve static files FIRST - this is crucial
   app.use(express.static(buildPath, {
-    setHeaders: (res, path) => {
-      if (path.endsWith('.js')) {
-        res.setHeader('Content-Type', 'application/javascript');
-      } else if (path.endsWith('.css')) {
-        res.setHeader('Content-Type', 'text/css');
+    maxAge: '1d',
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      } else if (filePath.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
       }
     }
   }));
   
-  // Catch-all route to serve React app for non-static routes
+  // Catch-all for React Router (ONLY for non-file requests)
   app.get('*', (req, res) => {
-    // Only serve index.html for non-static file requests
-    if (req.path.startsWith('/static/') || req.path.includes('.')) {
-      console.log(`❌ Static file not found: ${req.path}`);
-      return res.status(404).send('Static file not found');
-    }
-    
-    const indexPath = path.join(__dirname, '../client/build/index.html');
-    console.log('📄 Serving index.html for route:', req.path);
-    
-    res.sendFile(indexPath, (err) => {
-      if (err) {
-        console.error('❌ Error serving index.html:', err);
-        res.status(500).send('Error loading application. Please check server logs.');
-      }
-    });
+    const indexPath = path.join(buildPath, 'index.html');
+    console.log('📄 Serving index.html for:', req.path);
+    res.sendFile(indexPath);
   });
+  
 } else {
-  // Development mode - just show a message
+  // Development mode
   app.get('/', (req, res) => {
     res.json({ 
       message: 'Server is running in development mode',
