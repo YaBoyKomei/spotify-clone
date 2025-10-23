@@ -29,6 +29,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [queue, setQueue] = useState([]); // Queue of next songs
   const [queueIndex, setQueueIndex] = useState(0); // Current position in queue
   const [playHistory, setPlayHistory] = useState(() => {
@@ -122,6 +123,17 @@ function App() {
   useEffect(() => {
     preloadCriticalResources();
   }, []);
+
+  // Reset search state when entering search view
+  useEffect(() => {
+    if (currentView === 'search') {
+      // Don't reset if user already has a query and results
+      if (!searchQuery && !hasSearched) {
+        setSearchResults([]);
+        setHasSearched(false);
+      }
+    }
+  }, [currentView, searchQuery, hasSearched]);
 
   // Initialize scroll states for carousels
   useEffect(() => {
@@ -550,10 +562,12 @@ function App() {
   const performSearch = async () => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
+      setHasSearched(false);
       return;
     }
 
     setIsSearching(true);
+    setHasSearched(true);
     try {
       const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await response.json();
@@ -575,6 +589,7 @@ function App() {
   const clearSearch = () => {
     setSearchQuery('');
     setSearchResults([]);
+    setHasSearched(false);
   };
 
   const renderHomeView = () => {
@@ -1019,7 +1034,7 @@ function App() {
                   ))}
                 </div>
               </div>
-            ) : searchQuery ? (
+            ) : hasSearched && searchResults.length === 0 ? (
               <div className="empty-state">
                 <p>No results found for "{searchQuery}"</p>
               </div>
