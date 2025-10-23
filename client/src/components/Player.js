@@ -400,13 +400,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     });
 
     navigator.mediaSession.setActionHandler('previoustrack', () => {
-      console.log('📱 Media Session: Previous track button clicked!');
+      console.log('🔥🔥🔥 PREVIOUS BUTTON CLICKED! 🔥🔥🔥');
+      console.log('onPreviousRef:', onPreviousRef.current);
       lastActionTimeRef.current = Date.now();
       manualPauseRef.current = false;
       try {
         if (typeof onPreviousRef.current === 'function') {
+          console.log('Calling onPrevious...');
           onPreviousRef.current();
           console.log('✅ Previous track executed');
+        } else {
+          console.error('❌ onPreviousRef.current is NOT a function!', typeof onPreviousRef.current);
         }
       } catch (error) {
         console.error('❌ Error calling onPrevious:', error);
@@ -414,13 +418,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     });
 
     navigator.mediaSession.setActionHandler('nexttrack', () => {
-      console.log('📱 Media Session: Next track button clicked!');
+      console.log('🔥🔥🔥 NEXT BUTTON CLICKED! 🔥🔥🔥');
+      console.log('onNextRef:', onNextRef.current);
       lastActionTimeRef.current = Date.now();
       manualPauseRef.current = false;
       try {
         if (typeof onNextRef.current === 'function') {
+          console.log('Calling onNext...');
           onNextRef.current();
           console.log('✅ Next track executed');
+        } else {
+          console.error('❌ onNextRef.current is NOT a function!', typeof onNextRef.current);
         }
       } catch (error) {
         console.error('❌ Error calling onNext:', error);
@@ -617,34 +625,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               iframe.style.zIndex = '-9999';
             }
             
-            // Keep checking and resuming playback while hidden
-            keepAliveInterval = setInterval(() => {
-              // Don't resume if user just took an action (within last 3 seconds for safety)
-              const timeSinceLastAction = Date.now() - lastActionTimeRef.current;
-              
-              // Check Media Session state as well
-              const mediaSessionPaused = navigator.mediaSession && navigator.mediaSession.playbackState === 'paused';
-              
-              if (isPlayingRef.current && !manualPauseRef.current && !mediaSessionPaused && timeSinceLastAction > 3000) {
-                try {
-                  const state = player.getPlayerState();
-                  // Only resume if paused (2), not if buffering (3) or ended (0)
-                  if (state === 2) {
-                    console.log('🔄 Resuming playback in background');
-                    player.playVideo();
-                  }
-                } catch (error) {
-                  console.error('Error in keep-alive:', error);
-                }
-              } else if (manualPauseRef.current || mediaSessionPaused) {
-                // Stop keep-alive if user manually paused
-                console.log('⏸️ Manual pause detected, stopping keep-alive');
-                if (keepAliveInterval) {
-                  clearInterval(keepAliveInterval);
-                  keepAliveInterval = null;
-                }
-              }
-            }, 2000); // Check every 2 seconds
+            // Disabled keep-alive to prevent auto-resume issues
+            // Background playback will work naturally with Media Session API
             
           } catch (error) {
             console.error('Error maintaining playback:', error);
