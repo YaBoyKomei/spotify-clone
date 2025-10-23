@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
-import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon } from './Icons';
+import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon } from './Icons';
 
 function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [songEnded, setSongEnded] = useState(false);
   const intervalRef = useRef(null);
   const playerInitialized = useRef(false);
   const isPlayingRef = useRef(isPlaying);
@@ -304,16 +305,22 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                   // Replay the same song
                   event.target.seekTo(0);
                   event.target.playVideo();
+                  setSongEnded(false);
                 } else if (autoplayRef.current || repeatRef.current === 'all') {
                   // Auto-play next song if autoplay is on or repeat all is on
                   console.log('▶️ Auto-playing next song');
+                  setSongEnded(false);
                   onNextRef.current();
                 } else {
-                  // Stop playing and show play button
+                  // Stop playing and show refresh button
                   console.log('⏹️ Autoplay is off - stopping playback');
                   if (isPlayingRef.current) {
                     onTogglePlay(); // This will set isPlaying to false
                   }
+                  // Set songEnded after a small delay to ensure state updates
+                  setTimeout(() => {
+                    setSongEnded(true);
+                  }, 100);
                 }
               }
             },
@@ -413,6 +420,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
     navigator.mediaSession.setActionHandler('previoustrack', () => {
       console.log('📱 Media Session: Previous track requested');
+      lastActionTimeRef.current = Date.now();
+      manualPauseRef.current = false; // Ensure we don't treat this as a pause
       try {
         onPrevious();
         console.log('✅ Previous track called successfully');
@@ -423,6 +432,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
     navigator.mediaSession.setActionHandler('nexttrack', () => {
       console.log('📱 Media Session: Next track requested');
+      lastActionTimeRef.current = Date.now();
+      manualPauseRef.current = false; // Ensure we don't treat this as a pause
       try {
         onNext();
         console.log('✅ Next track called successfully');
@@ -507,6 +518,9 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       // Load the video
       player.loadVideoById(currentSong.youtubeId);
       
+      // Reset songEnded when loading new song
+      setSongEnded(false);
+      
       // Explicitly play if should be playing
       if (isPlayingRef.current) {
         setTimeout(() => {
@@ -541,6 +555,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
       if (isPlaying) {
         manualPauseRef.current = false; // Clear manual pause when playing
+        setSongEnded(false); // Reset songEnded when user plays
         player.playVideo();
         console.log('▶️ Playing video');
       } else {
@@ -584,24 +599,29 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             
             // Keep checking and resuming playback while hidden
             keepAliveInterval = setInterval(() => {
-              if (isPlayingRef.current && !manualPauseRef.current) {
+              // Don't resume if user just took an action (within last 2 seconds)
+              const timeSinceLastAction = Date.now() - lastActionTimeRef.current;
+              
+              if (isPlayingRef.current && !manualPauseRef.current && timeSinceLastAction > 2000) {
                 try {
                   const state = player.getPlayerState();
-                  if (state !== 1) { // Not playing
-                    console.log('🔄 Resuming playback in background (state:', state, ')');
+                  // Only resume if paused (2), not if buffering (3) or ended (0)
+                  if (state === 2) {
+                    console.log('🔄 Resuming playback in background');
                     player.playVideo();
                   }
                 } catch (error) {
                   console.error('Error in keep-alive:', error);
                 }
-              } else {
-                // Stop keep-alive if user paused
+              } else if (manualPauseRef.current) {
+                // Stop keep-alive if user manually paused
+                console.log('⏸️ Manual pause detected, stopping keep-alive');
                 if (keepAliveInterval) {
                   clearInterval(keepAliveInterval);
                   keepAliveInterval = null;
                 }
               }
-            }, 1000); // Check every second
+            }, 1500); // Check every 1.5 seconds
             
           } catch (error) {
             console.error('Error maintaining playback:', error);
@@ -818,8 +838,23 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               <button onClick={onPrevious} title="Previous" className="control-btn">
                 <SkipBackIcon />
               </button>
-              <button className="play-button" onClick={onTogglePlay} title={isPlaying ? 'Pause' : 'Play'}>
-                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+              <button 
+                className="play-button" 
+                onClick={() => {
+                  if (songEnded && player) {
+                    // Replay from beginning
+                    player.seekTo(0);
+                    setSongEnded(false);
+                    if (!isPlaying) {
+                      onTogglePlay();
+                    }
+                  } else {
+                    onTogglePlay();
+                  }
+                }} 
+                title={songEnded ? 'Replay' : isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
               </button>
               <button onClick={onNext} title="Next" className="control-btn">
                 <SkipForwardIcon />
