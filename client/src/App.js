@@ -973,7 +973,6 @@ function App() {
               </div>
               Sonfy
             </h1>
-            <p className="sonfy-tagline">Your Ultimate Music Streaming Experience</p>
           </div>
         </div>
 
