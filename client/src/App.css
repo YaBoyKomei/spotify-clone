@@ -366,10 +366,7 @@
 .songs-carousel .like-button.liked {
   background: rgba(167, 139, 250, 0.2);
   border-color: rgba(167, 139, 250, 0.6);
-  color: transparent;
-  background-image: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #f59e0b 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
+  color: #ec4899;
   opacity: 1;
 }
 
@@ -634,10 +631,7 @@
   opacity: 1;
   background: rgba(167, 139, 250, 0.15);
   border-color: rgba(167, 139, 250, 0.5);
-  color: transparent;
-  background-image: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #f59e0b 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
+  color: #ec4899;
 }
 
 .songs-grid-full .like-button.liked:hover {
