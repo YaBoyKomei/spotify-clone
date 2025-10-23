@@ -8,12 +8,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from React build in production
-if (process.env.NODE_ENV === 'production') {
-  const buildPath = path.join(__dirname, '../client/build');
-  console.log('📁 Serving static files from:', buildPath);
-  app.use(express.static(buildPath));
-}
+// Note: Static files will be served after API routes
 
 // Parse songs from YouTube Music API response with sections
 function parseSongsFromData(data) {
@@ -770,22 +765,16 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-// Catch-all route to serve React app in production
+// Serve static files from React build in production
 if (process.env.NODE_ENV === 'production') {
+  const buildPath = path.join(__dirname, '../client/build');
+  console.log('📁 Serving static files from:', buildPath);
+  app.use(express.static(buildPath));
+  
+  // Catch-all route to serve React app for non-API routes
   app.get('*', (req, res) => {
     const indexPath = path.join(__dirname, '../client/build/index.html');
     console.log('📄 Serving index.html from:', indexPath);
-    
-    // Check if file exists
-    const fs = require('fs');
-    if (!fs.existsSync(indexPath)) {
-      console.error('❌ index.html not found at:', indexPath);
-      return res.status(404).send(`
-        <h1>Build Error</h1>
-        <p>The React build files are missing. Please check the build process.</p>
-        <p>Expected file: ${indexPath}</p>
-      `);
-    }
     
     res.sendFile(indexPath, (err) => {
       if (err) {
