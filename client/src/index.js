@@ -46,7 +46,7 @@ root.render(
 );
 
 // Register service worker for offline functionality and caching
-registerServiceWorker();
+// registerServiceWorker(); // Temporarily disabled for debugging
 
 // Track Web Vitals for performance monitoring
 trackWebVitals();

@@ -769,12 +769,34 @@ app.get('/api/search', async (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   const buildPath = path.join(__dirname, '../client/build');
   console.log('📁 Serving static files from:', buildPath);
-  app.use(express.static(buildPath));
   
-  // Catch-all route to serve React app for non-API routes
+  // Add logging middleware to debug static file requests
+  app.use((req, res, next) => {
+    console.log(`📥 Request: ${req.method} ${req.path}`);
+    next();
+  });
+  
+  // Serve static files with proper headers
+  app.use(express.static(buildPath, {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      } else if (path.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css');
+      }
+    }
+  }));
+  
+  // Catch-all route to serve React app for non-static routes
   app.get('*', (req, res) => {
+    // Only serve index.html for non-static file requests
+    if (req.path.startsWith('/static/') || req.path.includes('.')) {
+      console.log(`❌ Static file not found: ${req.path}`);
+      return res.status(404).send('Static file not found');
+    }
+    
     const indexPath = path.join(__dirname, '../client/build/index.html');
-    console.log('📄 Serving index.html from:', indexPath);
+    console.log('📄 Serving index.html for route:', req.path);
     
     res.sendFile(indexPath, (err) => {
       if (err) {
