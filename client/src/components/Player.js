@@ -558,12 +558,14 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     if (!player) return;
 
     let resumeTimeout;
+    let keepAliveInterval;
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
         isPageHiddenRef.current = true;
         console.log('📱 Page hidden - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
-        // Try to keep playing even when hidden
+        
+        // Keep playing in background
         if (isPlayingRef.current && !manualPauseRef.current) {
           try {
             // Force the player to stay playing
@@ -575,10 +577,32 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               iframe.style.left = '0';
               iframe.style.width = '1px';
               iframe.style.height = '1px';
-              iframe.style.opacity = '0.01'; // Slightly visible to prevent pause
+              iframe.style.opacity = '0.01';
               iframe.style.pointerEvents = 'none';
               iframe.style.zIndex = '-9999';
             }
+            
+            // Keep checking and resuming playback while hidden
+            keepAliveInterval = setInterval(() => {
+              if (isPlayingRef.current && !manualPauseRef.current) {
+                try {
+                  const state = player.getPlayerState();
+                  if (state !== 1) { // Not playing
+                    console.log('🔄 Resuming playback in background (state:', state, ')');
+                    player.playVideo();
+                  }
+                } catch (error) {
+                  console.error('Error in keep-alive:', error);
+                }
+              } else {
+                // Stop keep-alive if user paused
+                if (keepAliveInterval) {
+                  clearInterval(keepAliveInterval);
+                  keepAliveInterval = null;
+                }
+              }
+            }, 1000); // Check every second
+            
           } catch (error) {
             console.error('Error maintaining playback:', error);
           }
@@ -586,20 +610,26 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       } else {
         isPageHiddenRef.current = false;
         console.log('📱 Page visible - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
+        
+        // Clear keep-alive interval
+        if (keepAliveInterval) {
+          clearInterval(keepAliveInterval);
+          keepAliveInterval = null;
+        }
+        
         // Restore iframe settings
         const iframe = document.getElementById('youtube-player');
         if (iframe) {
           iframe.style.opacity = '0.01';
         }
         
-        // Sync state when page becomes visible again - only if should be playing and not manually paused
+        // Sync state when page becomes visible again
         if (isPlayingRef.current && !manualPauseRef.current) {
           resumeTimeout = setTimeout(() => {
             try {
-              // Double check the ref again in case it changed
               if (isPlayingRef.current && !manualPauseRef.current) {
                 const state = player.getPlayerState();
-                if (state !== 1) { // Not playing
+                if (state !== 1) {
                   player.playVideo();
                   console.log('🔄 Resumed playback on visibility');
                 }
@@ -618,7 +648,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       if (isPlayingRef.current && !manualPauseRef.current) {
         setTimeout(() => {
           try {
-            // Double check the ref again
             if (isPlayingRef.current && !manualPauseRef.current) {
               const state = player.getPlayerState();
               if (state !== 1) {
@@ -640,6 +669,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
       if (resumeTimeout) clearTimeout(resumeTimeout);
+      if (keepAliveInterval) clearInterval(keepAliveInterval);
     };
   }, [player]);
 
