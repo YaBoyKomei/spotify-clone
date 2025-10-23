@@ -606,6 +606,11 @@ function App() {
 
     return (
       <div className="home-view">
+        <div className="welcome-section">
+          <h2 className="welcome-title">Welcome to Sonfy</h2>
+          <p className="welcome-subtitle">Discover millions of songs, create playlists, and enjoy high-quality music streaming - all for free!</p>
+        </div>
+        
         {filteredSections.map((section, index) => {
           const scrollState = scrollStates[index] || { isAtStart: true, isAtEnd: false };
 
@@ -944,10 +949,21 @@ function App() {
         }}
       />
       <div className="main-content">
+        {/* Sonfy Header */}
+        <div className="main-header">
+          <div className="sonfy-brand">
+            <h1 className="sonfy-title">
+              <span className="sonfy-logo">🎵</span>
+              Sonfy
+            </h1>
+            <p className="sonfy-tagline">Your Ultimate Music Streaming Experience</p>
+          </div>
+        </div>
+
         {currentView === 'search' ? (
           <div className="search-view">
             <div className="search-header">
-              <h1>Search</h1>
+              <h1>Search on Sonfy</h1>
               <div className="search-input-wrapper">
                 <div className="search-input-container">
                   <SearchIcon />

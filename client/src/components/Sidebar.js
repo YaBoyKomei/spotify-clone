@@ -9,7 +9,10 @@ function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playl
       <div className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-logo logo">
         <MusicIcon />
-        <h2>Sonfy</h2>
+        <div className="logo-text">
+          <h2>Sonfy</h2>
+          <span className="logo-subtitle">Music Streaming</span>
+        </div>
       </div>
       <nav className="sidebar-nav nav-menu">
         <div 
