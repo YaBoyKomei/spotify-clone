@@ -1,6 +1,15 @@
-# 🎵 Sonfy - Music Streaming App
+# 🎵 Sonfy - Free Music Streaming App | Listen to Songs Online
 
-A modern, fully-featured music streaming application built with React and Node.js, integrating YouTube Music API for real-time music playback.
+A modern, fully-featured music streaming application built with React and Node.js, integrating YouTube Music API for real-time music playback. Stream millions of songs for free with high-quality audio, create playlists, and discover new music - all optimized for search engines and accessibility.
+
+## 🔍 SEO Features
+
+- **Search Engine Optimized**: Complete meta tags, structured data, and semantic HTML
+- **Progressive Web App (PWA)**: Installable with offline capabilities
+- **Performance Optimized**: Lazy loading, image optimization, and caching
+- **Accessibility Compliant**: WCAG 2.1 AA standards with screen reader support
+- **Mobile-First Design**: Responsive across all devices with touch-friendly controls
+- **Social Media Ready**: Open Graph and Twitter Card meta tags for rich sharing
 
 ## ✨ Features
 
@@ -179,6 +188,37 @@ spotify-clone/
 - `GET /api/songs` - Get trending songs by sections
 - `GET /api/search?q=query` - Search for songs
 - `GET /api/section/:browseId` - Get more songs from a section
+- `GET /sitemap.xml` - XML sitemap for search engines
+- `GET /robots.txt` - Robots.txt for web crawlers
+
+## 🔍 SEO Optimization Features
+
+### Technical SEO
+- **Structured Data**: JSON-LD markup for music content
+- **Meta Tags**: Complete Open Graph and Twitter Card implementation
+- **Sitemap**: XML sitemap for better search engine indexing
+- **Robots.txt**: Proper crawler directives
+- **Canonical URLs**: Prevent duplicate content issues
+- **Performance**: Lazy loading, image optimization, and caching
+
+### Content SEO
+- **Semantic HTML**: Proper heading structure and ARIA labels
+- **Alt Text**: Descriptive alt attributes for all images
+- **Schema Markup**: MusicRecording and WebApplication schemas
+- **Mobile Optimization**: Responsive design with mobile-first approach
+
+### Performance SEO
+- **Core Web Vitals**: Optimized LCP, FID, and CLS scores
+- **Service Worker**: Offline functionality and caching
+- **Image Optimization**: WebP format and responsive images
+- **Compression**: Gzip compression for faster loading
+
+### Accessibility SEO
+- **WCAG 2.1 AA**: Full accessibility compliance
+- **Keyboard Navigation**: Complete keyboard support
+- **Screen Readers**: ARIA labels and semantic markup
+- **Focus Management**: Visible focus indicators
+- **Reduced Motion**: Respects user motion preferences
 
 ## 🐛 Troubleshooting
 

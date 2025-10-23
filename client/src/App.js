@@ -6,6 +6,7 @@ import Player from './components/Player';
 import SongCard from './components/SongCard';
 import { HeartIcon, SearchIcon } from './components/Icons';
 import { ChevronLeftIcon, ChevronRightIcon } from './components/ScrollButton';
+import { updateSEOForView, addSongStructuredData, preloadCriticalResources } from './utils/seo';
 
 function App() {
   const [songs, setSongs] = useState([]);
@@ -95,10 +96,37 @@ function App() {
     }
   }, [currentView]);
 
+  // SEO optimization: Update meta tags when view changes
+  useEffect(() => {
+    const currentPlaylist = currentView.startsWith('playlist-') 
+      ? playlists.find(p => p.id === currentView.replace('playlist-', ''))
+      : null;
+    
+    updateSEOForView(
+      currentView.startsWith('playlist-') ? 'playlist' : currentView,
+      currentPlaylist ? { 
+        playlistName: currentPlaylist.name, 
+        playlistId: currentPlaylist.id 
+      } : {}
+    );
+  }, [currentView, playlists]);
+
+  // SEO optimization: Add structured data when song changes
+  useEffect(() => {
+    if (currentSong) {
+      addSongStructuredData(currentSong);
+    }
+  }, [currentSong]);
+
+  // SEO optimization: Preload critical resources on mount
+  useEffect(() => {
+    preloadCriticalResources();
+  }, []);
+
   // Initialize scroll states for carousels
   useEffect(() => {
     if (sections.length > 0 && currentView === 'home') {
-      const filteredSections = sections.filter(section => 
+      const filteredSections = sections.filter(section =>
         !section.title.toLowerCase().includes('episode') &&
         !section.title.toLowerCase().includes('podcast')
       );
@@ -109,7 +137,7 @@ function App() {
           const updateScrollState = () => {
             const isAtStart = carousel.scrollLeft <= 0;
             const isAtEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 1;
-            
+
             setScrollStates(prev => ({
               ...prev,
               [index]: { isAtStart, isAtEnd }
@@ -118,18 +146,18 @@ function App() {
 
           updateScrollState();
           carousel.addEventListener('scroll', updateScrollState);
-          
+
           return () => carousel.removeEventListener('scroll', updateScrollState);
         }
       });
-      
+
       // Also initialize Most Played carousel
       const mostPlayedCarousel = document.getElementById('carousel-most-played');
       if (mostPlayedCarousel) {
         const updateMostPlayedScrollState = () => {
           const isAtStart = mostPlayedCarousel.scrollLeft <= 0;
           const isAtEnd = mostPlayedCarousel.scrollLeft + mostPlayedCarousel.clientWidth >= mostPlayedCarousel.scrollWidth - 1;
-          
+
           setScrollStates(prev => ({
             ...prev,
             'most-played': { isAtStart, isAtEnd }
@@ -138,7 +166,7 @@ function App() {
 
         updateMostPlayedScrollState();
         mostPlayedCarousel.addEventListener('scroll', updateMostPlayedScrollState);
-        
+
         return () => mostPlayedCarousel.removeEventListener('scroll', updateMostPlayedScrollState);
       }
     }
@@ -149,7 +177,7 @@ function App() {
     if (carousel) {
       const isAtStart = carousel.scrollLeft <= 0;
       const isAtEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 1;
-      
+
       setScrollStates(prev => ({
         ...prev,
         [index]: { isAtStart, isAtEnd }
@@ -165,7 +193,7 @@ function App() {
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
       });
-      
+
       setTimeout(() => updateScrollState(index), 300);
     }
   };
@@ -174,7 +202,7 @@ function App() {
     console.log(`🎵 Playing song: "${song.title}" by ${song.artist} (ID: ${song.youtubeId})`);
     setCurrentSong(song);
     setIsPlaying(true);
-    
+
     // Add to play history (unless we're navigating history)
     if (addToHistory) {
       setPlayHistory(prev => {
@@ -186,28 +214,28 @@ function App() {
         return newHistory;
       });
       setHistoryIndex(prev => prev + 1);
-      
+
       // Add to listening history (persistent) - unique songs only
       setListeningHistory(prev => {
         // Check if song already exists in recent history
         const existingIndex = prev.findIndex(s => s.id === song.id);
         let newHistory = [...prev];
-        
+
         if (existingIndex !== -1) {
           // Remove old entry
           newHistory.splice(existingIndex, 1);
         }
-        
+
         // Add to end (most recent)
         newHistory.push({
           ...song,
           playedAt: new Date().toISOString()
         });
-        
+
         // Keep only last 100
         return newHistory.slice(-100);
       });
-      
+
       // Track play count separately
       setPlayCount(prev => ({
         ...prev,
@@ -217,7 +245,7 @@ function App() {
         }
       }));
     }
-    
+
     // Fetch next songs in queue only if requested
     if (fetchNewQueue && song.youtubeId) {
       try {
@@ -250,9 +278,11 @@ function App() {
   };
 
   const togglePlay = () => {
-    if (currentSong) {
-      setIsPlaying(!isPlaying);
-    }
+    console.log('🎮 togglePlay called');
+    setIsPlaying(prev => {
+      console.log('🎮 Toggling isPlaying from', prev, 'to', !prev);
+      return !prev;
+    });
   };
 
   const playNext = async () => {
@@ -262,13 +292,13 @@ function App() {
     console.log('  - Queue index:', queueIndex);
     console.log('  - Repeat:', repeat);
     console.log('  - Shuffle:', shuffle);
-    
+
     if (!currentSong) {
       console.warn('⚠️ No current song, cannot play next');
       console.warn('  - This might be a stale closure issue');
       return;
     }
-    
+
     if (repeat === 'one') {
       // Replay the same song
       console.log('🔁 Repeat one - replaying current song');
@@ -276,14 +306,14 @@ function App() {
       setTimeout(() => setIsPlaying(true), 100);
       return;
     }
-    
+
     // Try to play from queue first
     // Find current song index in queue
     const currentSongIndex = queue.findIndex(s => s.id === currentSong.id);
     const nextIndex = currentSongIndex + 1;
-    
+
     console.log(`📍 Current song at index ${currentSongIndex}, next index: ${nextIndex}`);
-    
+
     if (queue.length > 0 && nextIndex < queue.length) {
       const nextSong = queue[nextIndex];
       console.log(`▶️ Playing from queue: index ${nextIndex}/${queue.length - 1}`);
@@ -291,7 +321,7 @@ function App() {
       setQueueIndex(nextIndex);
       setCurrentSong(nextSong);
       setIsPlaying(true);
-      
+
       // Add to history
       setPlayHistory(prev => {
         const newHistory = prev.slice(0, historyIndex + 1);
@@ -300,7 +330,7 @@ function App() {
         return newHistory;
       });
       setHistoryIndex(prev => prev + 1);
-      
+
       // If we've reached the end of the queue, fetch a new queue
       if (nextIndex >= queue.length - 1) {
         try {
@@ -320,14 +350,14 @@ function App() {
       }
       return;
     }
-    
+
     // Fallback to shuffle or sequential play
     console.log('📋 Queue empty or ended, using fallback');
     if (songs.length === 0) {
       console.warn('⚠️ No songs available for fallback');
       return;
     }
-    
+
     if (shuffle) {
       // Play random song
       console.log('🔀 Shuffle mode - playing random song');
@@ -344,12 +374,12 @@ function App() {
 
   const playPrevious = async () => {
     console.log('⏮️ playPrevious called - History index:', historyIndex, 'History length:', playHistory.length);
-    
+
     if (!currentSong) {
       console.warn('⚠️ No current song');
       return;
     }
-    
+
     // If we have history, go back
     if (historyIndex > 0) {
       const prevIndex = historyIndex - 1;
@@ -358,7 +388,7 @@ function App() {
       setHistoryIndex(prevIndex);
       setCurrentSong(prevSong);
       setIsPlaying(true);
-      
+
       // Fetch queue for the previous song
       try {
         const response = await fetch(`/api/next/${prevSong.youtubeId}`);
@@ -411,7 +441,7 @@ function App() {
 
   const refreshQueue = async () => {
     if (!currentSong || !currentSong.youtubeId) return;
-    
+
     console.log(`🔄 Refreshing queue for: "${currentSong.title}"`);
     try {
       const response = await fetch(`/api/next/${currentSong.youtubeId}`);
@@ -428,11 +458,11 @@ function App() {
 
   const reorderQueue = (fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;
-    
+
     const newQueue = [...queue];
     const [movedSong] = newQueue.splice(fromIndex, 1);
     newQueue.splice(toIndex, 0, movedSong);
-    
+
     setQueue(newQueue);
     console.log(`🔄 Reordered queue: moved song from position ${fromIndex + 1} to ${toIndex + 1}`);
   };
@@ -496,10 +526,10 @@ function App() {
 
   const loadMoreSection = async (section) => {
     if (!section.browseId) return;
-    
+
     setLoading(true);
     setExpandedSection(section);
-    
+
     try {
       const response = await fetch(`/api/section/${section.browseId}`);
       const data = await response.json();
@@ -557,7 +587,7 @@ function App() {
       );
     }
 
-    const filteredSections = sections.filter(section => 
+    const filteredSections = sections.filter(section =>
       !section.title.toLowerCase().includes('episode') &&
       !section.title.toLowerCase().includes('podcast')
     );
@@ -568,7 +598,7 @@ function App() {
       const sortedSongs = Object.values(playCount)
         .sort((a, b) => b.count - a.count)
         .slice(0, 20); // Top 20 songs
-      
+
       return sortedSongs;
     };
 
@@ -578,13 +608,13 @@ function App() {
       <div className="home-view">
         {filteredSections.map((section, index) => {
           const scrollState = scrollStates[index] || { isAtStart: true, isAtEnd: false };
-          
+
           return (
             <div key={index} className="music-section">
               <div className="section-header">
                 <h2 className="section-title">{section.title}</h2>
                 {section.browseId && (
-                  <button 
+                  <button
                     className="more-button"
                     onClick={() => loadMoreSection(section)}
                   >
@@ -594,8 +624,8 @@ function App() {
               </div>
               <div className="section-carousel">
                 {!scrollState.isAtStart && (
-                  <button 
-                    className="scroll-button left" 
+                  <button
+                    className="scroll-button left"
                     onClick={() => scrollCarousel(index, 'left')}
                     aria-label="Scroll left"
                   >
@@ -603,8 +633,8 @@ function App() {
                   </button>
                 )}
                 {!scrollState.isAtEnd && (
-                  <button 
-                    className="scroll-button right" 
+                  <button
+                    className="scroll-button right"
                     onClick={() => scrollCarousel(index, 'right')}
                     aria-label="Scroll right"
                   >
@@ -631,7 +661,7 @@ function App() {
             </div>
           );
         })}
-        
+
         {/* Most Played Section */}
         {mostPlayedSongs.length > 0 && (
           <div className="music-section">
@@ -640,8 +670,8 @@ function App() {
             </div>
             <div className="section-carousel">
               {scrollStates['most-played'] && !scrollStates['most-played'].isAtStart && (
-                <button 
-                  className="scroll-button left" 
+                <button
+                  className="scroll-button left"
                   onClick={() => scrollCarousel('most-played', 'left')}
                   aria-label="Scroll left"
                 >
@@ -649,8 +679,8 @@ function App() {
                 </button>
               )}
               {scrollStates['most-played'] && !scrollStates['most-played'].isAtEnd && (
-                <button 
-                  className="scroll-button right" 
+                <button
+                  className="scroll-button right"
                   onClick={() => scrollCarousel('most-played', 'right')}
                   aria-label="Scroll right"
                 >
@@ -721,7 +751,7 @@ function App() {
   const renderHistoryView = () => {
     // Reverse to show most recent first
     const reversedHistory = [...listeningHistory].reverse();
-    
+
     return (
       <div className="home-view">
         <div className="music-section">
@@ -731,7 +761,7 @@ function App() {
               <span className="section-subtitle">Last 100 songs</span>
             </div>
             {listeningHistory.length > 0 && (
-              <button 
+              <button
                 className="delete-playlist-btn"
                 onClick={() => setShowClearHistory(true)}
                 title="Clear History"
@@ -775,7 +805,7 @@ function App() {
 
   const renderPlaylistView = (playlistId) => {
     const playlist = playlists.find(p => p.id === playlistId);
-    
+
     if (!playlist) {
       return (
         <div className="home-view">
@@ -785,7 +815,7 @@ function App() {
         </div>
       );
     }
-    
+
     return (
       <div className="home-view">
         <div className="music-section">
@@ -794,7 +824,7 @@ function App() {
               <h2 className="section-title">{playlist.name}</h2>
               <span className="section-subtitle">{playlist.songs.length} songs</span>
             </div>
-            <button 
+            <button
               className="delete-playlist-btn"
               onClick={() => {
                 setPlaylistToDelete(playlist);
@@ -895,7 +925,7 @@ function App() {
         <span></span>
         <span></span>
       </button>
-      
+
       <Sidebar
         currentView={currentView}
         onViewChange={(view) => {
@@ -936,8 +966,8 @@ function App() {
                     </button>
                   )}
                 </div>
-                <button 
-                  className="search-button" 
+                <button
+                  className="search-button"
                   onClick={performSearch}
                   disabled={!searchQuery.trim() || isSearching}
                 >
@@ -945,7 +975,7 @@ function App() {
                 </button>
               </div>
             </div>
-            
+
             {isSearching ? (
               <div className="loading-state">
                 <div className="spinner"></div>
@@ -1017,7 +1047,7 @@ function App() {
           setShowAddToPlaylist(true);
         }}
       />
-      
+
       {/* Create Playlist Modal */}
       {showCreatePlaylist && (
         <div className="modal-overlay" onClick={() => setShowCreatePlaylist(false)}>
@@ -1041,7 +1071,7 @@ function App() {
             />
             <div className="modal-buttons">
               <button onClick={() => setShowCreatePlaylist(false)}>Cancel</button>
-              <button 
+              <button
                 className="primary"
                 onClick={() => {
                   const input = document.getElementById('playlist-name-input');
@@ -1059,7 +1089,7 @@ function App() {
           </div>
         </div>
       )}
-      
+
       {/* Add to Playlist Modal */}
       {showAddToPlaylist && selectedSongForPlaylist && (
         <div className="modal-overlay" onClick={() => setShowAddToPlaylist(false)}>
@@ -1083,7 +1113,7 @@ function App() {
                     }}
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/>
+                      <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z" />
                     </svg>
                     <span>{playlist.name}</span>
                     <span className="song-count">({playlist.songs.length})</span>
@@ -1102,7 +1132,7 @@ function App() {
           </div>
         </div>
       )}
-      
+
       {/* Delete Playlist Confirmation Modal */}
       {showDeletePlaylist && playlistToDelete && (
         <div className="modal-overlay" onClick={() => setShowDeletePlaylist(false)}>
@@ -1127,7 +1157,7 @@ function App() {
               }}>
                 Cancel
               </button>
-              <button 
+              <button
                 className="primary danger"
                 onClick={() => {
                   deletePlaylist(playlistToDelete.id);
@@ -1142,7 +1172,7 @@ function App() {
           </div>
         </div>
       )}
-      
+
       {/* Clear History Confirmation Modal */}
       {showClearHistory && (
         <div className="modal-overlay" onClick={() => setShowClearHistory(false)}>
@@ -1162,7 +1192,7 @@ function App() {
               <button onClick={() => setShowClearHistory(false)}>
                 Cancel
               </button>
-              <button 
+              <button
                 className="primary danger"
                 onClick={() => {
                   setListeningHistory([]);

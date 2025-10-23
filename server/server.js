@@ -791,6 +791,39 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// SEO middleware for production
+if (process.env.NODE_ENV === 'production') {
+  // Add security headers
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    next();
+  });
+
+  // Add caching headers for static assets
+  app.use('/static', (req, res, next) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    next();
+  });
+
+  // Serve sitemap.xml
+  app.get('/sitemap.xml', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build/sitemap.xml'));
+  });
+
+  // Serve robots.txt
+  app.get('/robots.txt', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build/robots.txt'));
+  });
+
+  // Add compression for better performance
+  const compression = require('compression');
+  app.use(compression());
+}
+
 app.listen(PORT, () => {
   console.log(`🎵 Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);

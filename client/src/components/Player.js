@@ -272,36 +272,36 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               console.log('Player state changed:', event.data, 'Page hidden:', isPageHiddenRef.current, 'Loading:', isLoadingNewSongRef.current);
               // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering, 5: cued
               
-              // Only sync state if page is visible and not loading a new song
-              if (!isPageHiddenRef.current && !isLoadingNewSongRef.current) {
-                // Check if this is from external control (like Bluetooth headphones)
-                const timeSinceLastAction = Date.now() - lastActionTimeRef.current;
-                const isExternalControl = timeSinceLastAction > 1000; // More than 1 second since last action
-                
-                // If player is paused (2) and we think it should be playing
-                if (event.data === 2 && isPlayingRef.current) {
-                  console.log('⚠️ Player paused while isPlaying is true', isExternalControl ? '(External control)' : '(Internal)');
-                  manualPauseRef.current = true;
-                  lastActionTimeRef.current = Date.now();
-                  // Update the UI state to match
-                  onTogglePlay();
-                }
-                
-                // If player is playing (1) and we think it should be paused
-                if (event.data === 1 && !isPlayingRef.current) {
-                  console.log('⚠️ Player playing while isPlaying is false', isExternalControl ? '(External control)' : '(Internal)');
-                  manualPauseRef.current = false;
-                  lastActionTimeRef.current = Date.now();
-                  // Update the UI state to match
-                  onTogglePlay();
-                }
-              } else {
-                if (isPageHiddenRef.current) {
-                  console.log('📱 Page is hidden, skipping state sync');
-                }
-                if (isLoadingNewSongRef.current) {
-                  console.log('🔄 Loading new song, skipping state sync');
-                }
+              // Skip sync only if loading a new song
+              if (isLoadingNewSongRef.current) {
+                console.log('🔄 Loading new song, skipping state sync');
+                return;
+              }
+              
+              // Check if this is from external control (like notification)
+              const timeSinceLastAction = Date.now() - lastActionTimeRef.current;
+              const isExternalControl = timeSinceLastAction > 1000; // More than 1 second since last action
+              
+              // If player is paused (2) and we think it should be playing
+              if (event.data === 2 && isPlayingRef.current) {
+                console.log('⚠️ Player paused - syncing UI state');
+                manualPauseRef.current = true;
+                lastActionTimeRef.current = Date.now();
+                // Update ref immediately to prevent race conditions
+                isPlayingRef.current = false;
+                // Call toggle to update React state
+                setTimeout(() => onTogglePlay(), 0);
+              }
+              
+              // If player is playing (1) and we think it should be paused
+              if (event.data === 1 && !isPlayingRef.current) {
+                console.log('⚠️ Player playing - syncing UI state');
+                manualPauseRef.current = false;
+                lastActionTimeRef.current = Date.now();
+                // Update ref immediately to prevent race conditions
+                isPlayingRef.current = true;
+                // Call toggle to update React state
+                setTimeout(() => onTogglePlay(), 0);
               }
               
               if (event.data === 0) { // ended
@@ -670,9 +670,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     // Also handle focus/blur events
     const handleFocus = () => {
       console.log('📱 Window focused - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
-      if (isPlayingRef.current && !manualPauseRef.current) {
+      
+      // Don't auto-resume if user manually paused
+      if (manualPauseRef.current) {
+        console.log('⏸️ Manual pause active, not resuming');
+        return;
+      }
+      
+      if (isPlayingRef.current) {
         setTimeout(() => {
           try {
+            // Double check manual pause again
             if (isPlayingRef.current && !manualPauseRef.current) {
               const state = player.getPlayerState();
               if (state !== 1) {
