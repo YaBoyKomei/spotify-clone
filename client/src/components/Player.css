@@ -159,11 +159,11 @@
 }
 
 .player-like-btn.liked {
-  color: #ef4444;
+  color: #a78bfa;
 }
 
 .player-like-btn.liked:hover {
-  color: #dc2626;
+  color: #8b5cf6;
 }
 
 .player-like-btn svg {
@@ -636,7 +636,7 @@
 
 .queue-refresh-btn:hover {
   background: #282828;
-  color: #1db954;
+  color: #a78bfa;
   transform: rotate(180deg);
 }
 
@@ -777,7 +777,7 @@
 }
 
 .queue-action-btn.liked {
-  color: #1db954;
+  color: #a78bfa;
   opacity: 1;
 }
 
@@ -796,7 +796,7 @@
 
 .now-playing-badge {
   font-size: 11px;
-  color: #1db954;
+  color: #a78bfa;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
