@@ -335,14 +335,17 @@ function App() {
       setCurrentSong(nextSong);
       setIsPlaying(true);
 
-      // Add to history
-      setPlayHistory(prev => {
-        const newHistory = prev.slice(0, historyIndex + 1);
-        newHistory.push(nextSong);
-        console.log(`📚 Added to history. History length: ${newHistory.length}`);
-        return newHistory;
-      });
-      setHistoryIndex(prev => prev + 1);
+      // Don't add auto-played songs to history
+      console.log(`🚫 Auto-played song - not adding to history`);
+
+      // Update play count for auto-played songs
+      setPlayCount(prev => ({
+        ...prev,
+        [nextSong.id]: {
+          song: nextSong,
+          count: (prev[nextSong.id]?.count || 0) + 1
+        }
+      }));
 
       // If we've reached the end of the queue, fetch a new queue
       if (nextIndex >= queue.length - 1) {
@@ -372,16 +375,16 @@ function App() {
     }
 
     if (shuffle) {
-      // Play random song
-      console.log('🔀 Shuffle mode - playing random song');
+      // Play random song - don't add to history (auto-played)
+      console.log('🔀 Shuffle mode - playing random song (auto-play)');
       const randomIndex = Math.floor(Math.random() * songs.length);
-      await playSong(songs[randomIndex]);
+      await playSong(songs[randomIndex], false, true);
     } else {
-      // Play next song from current list
-      console.log('➡️ Sequential mode - playing next from list');
+      // Play next song from current list - don't add to history (auto-played)
+      console.log('➡️ Sequential mode - playing next from list (auto-play)');
       const currentIndex = songs.findIndex(s => s.id === currentSong.id);
       const nextIndex = (currentIndex + 1) % songs.length;
-      await playSong(songs[nextIndex]);
+      await playSong(songs[nextIndex], false, true);
     }
   };
 
