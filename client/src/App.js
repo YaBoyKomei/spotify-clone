@@ -335,10 +335,37 @@ function App() {
       setCurrentSong(nextSong);
       setIsPlaying(true);
 
-      // Don't add auto-played songs to history
-      console.log(`🚫 Auto-played song - not adding to history`);
+      // Add to history (including auto-played songs)
+      setPlayHistory(prev => {
+        const newHistory = prev.slice(0, historyIndex + 1);
+        newHistory.push(nextSong);
+        console.log(`📚 Added to history. History length: ${newHistory.length}`);
+        return newHistory;
+      });
+      setHistoryIndex(prev => prev + 1);
 
-      // Update play count for auto-played songs
+      // Add to listening history (persistent) - unique songs only
+      setListeningHistory(prev => {
+        // Check if song already exists in recent history
+        const existingIndex = prev.findIndex(s => s.id === nextSong.id);
+        let newHistory = [...prev];
+
+        if (existingIndex !== -1) {
+          // Remove old entry
+          newHistory.splice(existingIndex, 1);
+        }
+
+        // Add to end (most recent)
+        newHistory.push({
+          ...nextSong,
+          playedAt: new Date().toISOString()
+        });
+
+        // Keep only last 100
+        return newHistory.slice(-100);
+      });
+
+      // Track play count
       setPlayCount(prev => ({
         ...prev,
         [nextSong.id]: {
@@ -375,16 +402,16 @@ function App() {
     }
 
     if (shuffle) {
-      // Play random song - don't add to history (auto-played)
-      console.log('🔀 Shuffle mode - playing random song (auto-play)');
+      // Play random song
+      console.log('🔀 Shuffle mode - playing random song');
       const randomIndex = Math.floor(Math.random() * songs.length);
-      await playSong(songs[randomIndex], false, true);
+      await playSong(songs[randomIndex]);
     } else {
-      // Play next song from current list - don't add to history (auto-played)
-      console.log('➡️ Sequential mode - playing next from list (auto-play)');
+      // Play next song from current list
+      console.log('➡️ Sequential mode - playing next from list');
       const currentIndex = songs.findIndex(s => s.id === currentSong.id);
       const nextIndex = (currentIndex + 1) % songs.length;
-      await playSong(songs[nextIndex], false, true);
+      await playSong(songs[nextIndex]);
     }
   };
 
