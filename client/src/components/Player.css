@@ -822,13 +822,16 @@
   justify-content: center;
   color: #3e3e3e;
   cursor: grab;
-  padding: 0 8px;
+  padding: 0 12px;
   transition: color 0.2s;
   flex-shrink: 0;
+  min-width: 40px;
+  min-height: 48px; /* Larger touch target for mobile */
 }
 
 .drag-handle:active {
   cursor: grabbing;
+  color: #a78bfa;
 }
 
 .queue-item:hover .drag-handle {
@@ -923,8 +926,109 @@
   -ms-user-select: none;
 }
 
-/* Touch action for queue items */
-.queue-item:not(.current-queue-item) {
-  touch-action: none;
+/* Touch action for queue items - allow scrolling */
+.queue-item {
+  touch-action: pan-y; /* Allow vertical scrolling */
   position: relative;
+}
+
+/* Only drag handle prevents scrolling */
+.queue-item .drag-handle {
+  touch-action: none;
+}
+
+/* Swipe Up Indicator - Modern Design */
+.swipe-up-indicator {
+  position: absolute;
+  top: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+.swipe-chevrons {
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.swipe-chevron {
+  width: 32px;
+  height: 32px;
+  animation: chevronFloat 2.5s ease-in-out infinite;
+}
+
+.swipe-chevron svg {
+  width: 100%;
+  height: 100%;
+  stroke: url(#chevronGradient);
+  stroke-width: 3.5;
+  filter: drop-shadow(0 0 10px rgba(167, 139, 250, 0.7));
+}
+
+.swipe-up-text {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: textPulse 2.5s ease-in-out infinite;
+  opacity: 0;
+}
+
+@keyframes chevronFloat {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateY(8px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes textPulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Gradient definition for SVG */
+.swipe-gradient-def {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Hide indicator when queue is open */
+.player:has(+ .queue-panel) .swipe-up-indicator,
+.queue-panel ~ .player .swipe-up-indicator {
+  display: none;
+}
+
+/* Only show on mobile/tablet */
+@media (min-width: 1024px) {
+  .swipe-up-indicator {
+    display: none;
+  }
+}
+
+/* Add glow effect on mobile */
+@media (hover: none) and (pointer: coarse) {
+  .swipe-chevron svg {
+    filter: drop-shadow(0 0 14px rgba(167, 139, 250, 0.9));
+  }
 }

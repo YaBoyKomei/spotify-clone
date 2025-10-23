@@ -43,6 +43,10 @@ function App() {
     const saved = localStorage.getItem('listeningHistory');
     return saved ? JSON.parse(saved) : [];
   });
+  const [playCount, setPlayCount] = useState(() => {
+    const saved = localStorage.getItem('playCount');
+    return saved ? JSON.parse(saved) : {};
+  });
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const [selectedSongForPlaylist, setSelectedSongForPlaylist] = useState(null);
@@ -67,6 +71,10 @@ function App() {
     }
     localStorage.setItem('listeningHistory', JSON.stringify(limitedHistory));
   }, [listeningHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('playCount', JSON.stringify(playCount));
+  }, [playCount]);
 
   useEffect(() => {
     if (currentView === 'home') {
@@ -159,7 +167,7 @@ function App() {
       });
       setHistoryIndex(prev => prev + 1);
       
-      // Add to listening history (persistent)
+      // Add to listening history (persistent) - unique songs only
       setListeningHistory(prev => {
         // Check if song already exists in recent history
         const existingIndex = prev.findIndex(s => s.id === song.id);
@@ -179,6 +187,15 @@ function App() {
         // Keep only last 100
         return newHistory.slice(-100);
       });
+      
+      // Track play count separately
+      setPlayCount(prev => ({
+        ...prev,
+        [song.id]: {
+          song: song,
+          count: (prev[song.id]?.count || 0) + 1
+        }
+      }));
     }
     
     // Fetch next songs in queue only if requested
@@ -525,21 +542,8 @@ function App() {
       !section.title.toLowerCase().includes('podcast')
     );
 
-    // Calculate most played songs from listening history
+    // Get most played songs from play count tracker
     const getMostPlayedSongs = () => {
-      const playCount = {};
-      
-      listeningHistory.forEach(song => {
-        if (playCount[song.id]) {
-          playCount[song.id].count++;
-        } else {
-          playCount[song.id] = {
-            song: song,
-            count: 1
-          };
-        }
-      });
-      
       // Convert to array and sort by count
       const sortedSongs = Object.values(playCount)
         .sort((a, b) => b.count - a.count)

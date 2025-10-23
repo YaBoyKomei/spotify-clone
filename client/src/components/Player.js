@@ -58,14 +58,28 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
   // Handle swipe gestures for mobile (only for player and queue header)
   const handlePlayerTouchStart = (e) => {
+    // Don't trigger on buttons or interactive elements
+    if (e.target.closest('button') || e.target.closest('input')) {
+      return;
+    }
+    
     touchStartY.current = e.touches[0].clientY;
+    touchEndY.current = e.touches[0].clientY; // Initialize to same value
   };
 
   const handlePlayerTouchMove = (e) => {
-    touchEndY.current = e.touches[0].clientY;
+    // Only update if we have a valid start position
+    if (touchStartY.current !== 0) {
+      touchEndY.current = e.touches[0].clientY;
+    }
   };
 
   const handlePlayerTouchEnd = () => {
+    // Only process if we have valid touch positions
+    if (touchStartY.current === 0) {
+      return;
+    }
+    
     const swipeDistance = touchStartY.current - touchEndY.current;
     const minSwipeDistance = 50; // Minimum distance for a swipe
     
@@ -84,14 +98,28 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
   // Handle swipe down on queue header/drag handle to close
   const handleQueueHeaderTouchStart = (e) => {
+    // Don't trigger on buttons
+    if (e.target.closest('button')) {
+      return;
+    }
+    
     touchStartY.current = e.touches[0].clientY;
+    touchEndY.current = e.touches[0].clientY; // Initialize to same value
   };
 
   const handleQueueHeaderTouchMove = (e) => {
-    touchEndY.current = e.touches[0].clientY;
+    // Only update if we have a valid start position
+    if (touchStartY.current !== 0) {
+      touchEndY.current = e.touches[0].clientY;
+    }
   };
 
   const handleQueueHeaderTouchEnd = () => {
+    // Only process if we have valid touch positions
+    if (touchStartY.current === 0) {
+      return;
+    }
+    
     const swipeDistance = touchStartY.current - touchEndY.current;
     const minSwipeDistance = 50; // Minimum distance for a swipe
     
@@ -108,18 +136,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     touchEndY.current = 0;
   };
 
-  // Touch drag handlers for queue reordering
-  const handleQueueItemTouchStart = (e, index, isCurrentSong) => {
-    if (isCurrentSong) return;
+  // Touch drag handlers for queue reordering (only on drag handle)
+  const handleDragHandleTouchStart = (e, index) => {
+    e.stopPropagation(); // Prevent event bubbling
     
     const touch = e.touches[0];
     touchStartYPos.current = touch.clientY;
     touchCurrentYPos.current = touch.clientY;
-    draggedElement.current = e.currentTarget;
     
     // Start long press timer
     longPressTimer.current = setTimeout(() => {
-      console.log('🔒 Long press detected - starting drag');
+      console.log('🔒 Long press detected on drag handle - starting drag');
       setDraggedIndex(index);
       setTouchDragActive(true);
       isDraggingTouch.current = true;
@@ -128,10 +155,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
-    }, 500); // 500ms long press
+    }, 300); // 300ms long press (shorter for better UX)
   };
 
-  const handleQueueItemTouchMove = (e, index) => {
+  const handleDragHandleTouchMove = (e) => {
     if (!isDraggingTouch.current) {
       // Cancel long press if user moves before timer completes
       if (longPressTimer.current) {
@@ -146,6 +173,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     }
     
     e.preventDefault();
+    e.stopPropagation();
     const touch = e.touches[0];
     touchCurrentYPos.current = touch.clientY;
     
@@ -168,7 +196,9 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     }
   };
 
-  const handleQueueItemTouchEnd = (e, index) => {
+  const handleDragHandleTouchEnd = (e, index) => {
+    e.stopPropagation();
+    
     // Clear long press timer
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
@@ -625,9 +655,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       return;
     }
 
-    let checkCount = 0;
-    let lastCheckTime = Date.now();
-
     const updateTime = () => {
       try {
         if (player.getCurrentTime && player.getDuration) {
@@ -637,31 +664,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           if (current !== undefined && total !== undefined && !isNaN(current) && !isNaN(total)) {
             setCurrentTime(current);
             setDuration(total);
-          }
-
-          // Check if player is still playing every 3 seconds (reduced frequency)
-          checkCount++;
-          if (checkCount >= 15) { // Every 3 seconds (15 * 200ms)
-            checkCount = 0;
-            const now = Date.now();
-            
-            // Only check if enough time has passed, we should be playing, and not manually paused
-            if (now - lastCheckTime >= 3000 && isPlayingRef.current && !manualPauseRef.current) {
-              lastCheckTime = now;
-              
-              // Don't resume if user just paused (within last 5 seconds)
-              if (now - lastActionTimeRef.current < 5000) {
-                return;
-              }
-              
-              const state = player.getPlayerState();
-              
-              // Only resume if paused (2) or buffering (3), not if ended (0) or unstarted (-1)
-              if ((state === 2 || state === 3) && isPlayingRef.current && !manualPauseRef.current) {
-                console.log('⚠️ Player paused unexpectedly (state:', state, '), resuming...');
-                player.playVideo();
-              }
-            }
           }
         }
       } catch (error) {
@@ -712,6 +714,30 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       onTouchMove={handlePlayerTouchMove}
       onTouchEnd={handlePlayerTouchEnd}
     >
+      {/* Swipe Up Indicator */}
+      {!showQueue && currentSong && (
+        <div className="swipe-up-indicator">
+          {/* SVG Gradient Definition */}
+          <svg className="swipe-gradient-def" width="0" height="0">
+            <defs>
+              <linearGradient id="chevronGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#a78bfa" stopOpacity="1" />
+                <stop offset="50%" stopColor="#8b5cf6" stopOpacity="1" />
+                <stop offset="100%" stopColor="#7c3aed" stopOpacity="1" />
+              </linearGradient>
+            </defs>
+          </svg>
+          
+          <div className="swipe-chevrons">
+            <div className="swipe-chevron">
+              <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 15l-6-6-6 6"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {currentSong ? (
         <>
           {/* Time display above progress bar */}
@@ -882,12 +908,15 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                       setDraggedIndex(null);
                       setDragOverIndex(null);
                     }}
-                    onTouchStart={(e) => handleQueueItemTouchStart(e, index, isCurrentSong)}
-                    onTouchMove={(e) => handleQueueItemTouchMove(e, index)}
-                    onTouchEnd={(e) => handleQueueItemTouchEnd(e, index)}
                   >
                     {!isCurrentSong && (
-                      <div className="drag-handle" title="Drag to reorder">
+                      <div 
+                        className="drag-handle" 
+                        title="Hold to reorder"
+                        onTouchStart={(e) => handleDragHandleTouchStart(e, index)}
+                        onTouchMove={(e) => handleDragHandleTouchMove(e)}
+                        onTouchEnd={(e) => handleDragHandleTouchEnd(e, index)}
+                      >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-16h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/>
                         </svg>
