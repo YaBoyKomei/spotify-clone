@@ -4,11 +4,12 @@ import Sidebar from './components/Sidebar';
 import Player from './components/Player';
 // import AudioPlayer from './components/AudioPlayer';
 import SongCard from './components/SongCard';
-import { HeartIcon, SearchIcon, MusicIcon } from './components/Icons';
+import { SearchIcon, MusicIcon } from './components/Icons';
 import { ChevronLeftIcon, ChevronRightIcon } from './components/ScrollButton';
 import { updateSEOForView, addSongStructuredData, preloadCriticalResources } from './utils/seo';
 
 function App() {
+  console.log('🎵 Sonfy App starting...');
   const [songs, setSongs] = useState([]);
   const [sections, setSections] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
