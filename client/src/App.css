@@ -171,18 +171,24 @@
 /* Mobile responsive styles for Sonfy branding */
 @media (max-width: 768px) {
   .main-header {
-    margin-bottom: 30px;
-    padding: 15px 0;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    margin-bottom: 0;
+    padding: 0;
+    width: auto;
   }
   
   .sonfy-title {
-    font-size: 2.2rem;
+    font-size: 1.5rem;
     gap: 8px;
   }
   
   .sonfy-logo svg {
-    width: 40px;
-    height: 40px;
+    width: 28px;
+    height: 28px;
   }
   
   .sonfy-tagline {
@@ -1314,9 +1320,9 @@
     display: flex;
   }
 
-  /* Add padding to main content to avoid overlap with hamburger */
+  /* Add padding to main content to avoid overlap with hamburger and logo */
   .main-content {
-    padding-top: 80px;
+    padding-top: 100px;
   }
 
   .main-content h1 {
