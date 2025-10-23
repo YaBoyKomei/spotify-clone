@@ -108,12 +108,18 @@
 }
 
 .sonfy-logo {
-  width: 56px;
-  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #a78bfa;
   filter: drop-shadow(0 0 15px rgba(167, 139, 250, 0.6));
   animation: pulse 2s ease-in-out infinite alternate;
   flex-shrink: 0;
+}
+
+.sonfy-logo svg {
+  width: 56px;
+  height: 56px;
 }
 
 .sonfy-tagline {
@@ -175,7 +181,7 @@
     gap: 8px;
   }
   
-  .sonfy-logo {
+  .sonfy-logo svg {
     width: 40px;
     height: 40px;
   }
@@ -206,7 +212,7 @@
     gap: 5px;
   }
   
-  .sonfy-logo {
+  .sonfy-logo svg {
     width: 32px;
     height: 32px;
   }
