@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Sidebar from './components/Sidebar';
 import Player from './components/Player';
+// import AudioPlayer from './components/AudioPlayer';
 import SongCard from './components/SongCard';
 import { HeartIcon, SearchIcon } from './components/Icons';
 import { ChevronLeftIcon, ChevronRightIcon } from './components/ScrollButton';
