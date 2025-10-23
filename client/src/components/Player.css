@@ -809,6 +809,7 @@
   .queue-panel {
     width: 100%;
     max-height: 70vh;
+    bottom: 100px; /* Ensure it's above the player on mobile */
   }
   
   /* Always show queue action buttons on mobile */
