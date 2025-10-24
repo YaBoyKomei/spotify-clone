@@ -24,7 +24,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const touchEndY = useRef(0);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
-  
+
   // Touch drag state
   const [touchDragActive, setTouchDragActive] = useState(false);
   const touchStartYPos = useRef(0);
@@ -68,7 +68,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     if (e.target.closest('button') || e.target.closest('input')) {
       return;
     }
-    
+
     touchStartY.current = e.touches[0].clientY;
     touchEndY.current = e.touches[0].clientY; // Initialize to same value
   };
@@ -85,10 +85,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     if (touchStartY.current === 0) {
       return;
     }
-    
+
     const swipeDistance = touchStartY.current - touchEndY.current;
     const minSwipeDistance = 50; // Minimum distance for a swipe
-    
+
     // Swipe up (positive distance) - only open queue if not already open
     if (swipeDistance > minSwipeDistance) {
       console.log('👆 Swipe up detected on player - opening queue');
@@ -96,7 +96,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         onToggleQueue();
       }
     }
-    
+
     // Reset
     touchStartY.current = 0;
     touchEndY.current = 0;
@@ -108,7 +108,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     if (e.target.closest('button')) {
       return;
     }
-    
+
     touchStartY.current = e.touches[0].clientY;
     touchEndY.current = e.touches[0].clientY; // Initialize to same value
   };
@@ -125,10 +125,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     if (touchStartY.current === 0) {
       return;
     }
-    
+
     const swipeDistance = touchStartY.current - touchEndY.current;
     const minSwipeDistance = 50; // Minimum distance for a swipe
-    
+
     // Swipe down (negative distance) - close queue
     if (swipeDistance < -minSwipeDistance) {
       console.log('👇 Swipe down detected on header - closing queue');
@@ -136,7 +136,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         onToggleQueue();
       }
     }
-    
+
     // Reset
     touchStartY.current = 0;
     touchEndY.current = 0;
@@ -145,18 +145,18 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   // Touch drag handlers for queue reordering (only on drag handle)
   const handleDragHandleTouchStart = (e, index) => {
     e.stopPropagation(); // Prevent event bubbling
-    
+
     const touch = e.touches[0];
     touchStartYPos.current = touch.clientY;
     touchCurrentYPos.current = touch.clientY;
-    
+
     // Start long press timer
     longPressTimer.current = setTimeout(() => {
       console.log('🔒 Long press detected on drag handle - starting drag');
       setDraggedIndex(index);
       setTouchDragActive(true);
       isDraggingTouch.current = true;
-      
+
       // Add haptic feedback if available
       if (navigator.vibrate) {
         navigator.vibrate(50);
@@ -177,26 +177,26 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       }
       return;
     }
-    
+
     e.preventDefault();
     e.stopPropagation();
     const touch = e.touches[0];
     touchCurrentYPos.current = touch.clientY;
-    
+
     // Find which item we're over
     const queueList = document.querySelector('.queue-list');
     if (!queueList) return;
-    
+
     const items = Array.from(queueList.querySelectorAll('.queue-item'));
     let newDragOverIndex = null;
-    
+
     items.forEach((item, idx) => {
       const rect = item.getBoundingClientRect();
       if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
         newDragOverIndex = idx;
       }
     });
-    
+
     if (newDragOverIndex !== null && newDragOverIndex !== dragOverIndex) {
       setDragOverIndex(newDragOverIndex);
     }
@@ -204,28 +204,28 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
   const handleDragHandleTouchEnd = (e, index) => {
     e.stopPropagation();
-    
+
     // Clear long press timer
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    
+
     if (!isDraggingTouch.current) return;
-    
+
     e.preventDefault();
-    
+
     // Perform reorder if we have valid indices
     if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
       console.log(`🔄 Touch reorder: ${draggedIndex} → ${dragOverIndex}`);
       onReorderQueue(draggedIndex, dragOverIndex);
-      
+
       // Haptic feedback
       if (navigator.vibrate) {
         navigator.vibrate(30);
       }
     }
-    
+
     // Reset state
     setDraggedIndex(null);
     setDragOverIndex(null);
@@ -271,17 +271,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             onStateChange: (event) => {
               console.log('Player state changed:', event.data, 'Page hidden:', isPageHiddenRef.current, 'Loading:', isLoadingNewSongRef.current);
               // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering, 5: cued
-              
+
               // Skip sync only if loading a new song
               if (isLoadingNewSongRef.current) {
                 console.log('🔄 Loading new song, skipping state sync');
                 return;
               }
-              
+
               // Check if this is from external control (like notification)
               const timeSinceLastAction = Date.now() - lastActionTimeRef.current;
               const isExternalControl = timeSinceLastAction > 1000; // More than 1 second since last action
-              
+
               // If player is paused (2) and we think it should be playing
               if (event.data === 2 && isPlayingRef.current) {
                 console.log('⚠️ Player paused - syncing UI state');
@@ -292,7 +292,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 // Call toggle to update React state
                 setTimeout(() => onTogglePlay(), 0);
               }
-              
+
               // If player is playing (1) and we think it should be paused
               if (event.data === 1 && !isPlayingRef.current) {
                 console.log('⚠️ Player playing - syncing UI state');
@@ -303,7 +303,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 // Call toggle to update React state
                 setTimeout(() => onTogglePlay(), 0);
               }
-              
+
               if (event.data === 0) { // ended
                 console.log('🎵 Song ended - Repeat:', repeatRef.current, 'Autoplay:', autoplayRef.current);
                 if (repeatRef.current === 'one') {
@@ -346,7 +346,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       tag.src = 'https://www.youtube.com/iframe_api';
       const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-      
+
       window.onYouTubeIframeAPIReady = () => {
         console.log('YouTube API loaded');
         initPlayer();
@@ -458,7 +458,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     if (!currentSong || !('mediaSession' in navigator)) return;
 
     console.log('🎵 Updating Media Session metadata for:', currentSong.title);
-    
+
     try {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentSong.title,
@@ -521,15 +521,15 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     if (!player || !currentSong || !currentSong.youtubeId) return;
 
     console.log('🎵 Loading song:', currentSong.title, currentSong.youtubeId, 'Should play:', isPlayingRef.current);
-    
+
     try {
       // Mark that we're loading a new song
       isLoadingNewSongRef.current = true;
-      
+
       // Reset position state for new song
       setCurrentTime(0);
       setDuration(0);
-      
+
       // Reset Media Session position
       if ('mediaSession' in navigator) {
         try {
@@ -542,13 +542,13 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           console.log('Could not reset position state');
         }
       }
-      
+
       // Load the video
       player.loadVideoById(currentSong.youtubeId);
-      
+
       // Reset songEnded when loading new song
       setSongEnded(false);
-      
+
       // Explicitly play if should be playing
       if (isPlayingRef.current) {
         setTimeout(() => {
@@ -607,7 +607,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       if (document.hidden) {
         isPageHiddenRef.current = true;
         console.log('📱 Page hidden - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
-        
+
         // Keep playing in background
         if (isPlayingRef.current && !manualPauseRef.current) {
           try {
@@ -624,10 +624,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               iframe.style.pointerEvents = 'none';
               iframe.style.zIndex = '-9999';
             }
-            
+
             // Disabled keep-alive to prevent auto-resume issues
             // Background playback will work naturally with Media Session API
-            
+
           } catch (error) {
             console.error('Error maintaining playback:', error);
           }
@@ -635,19 +635,19 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       } else {
         isPageHiddenRef.current = false;
         console.log('📱 Page visible - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
-        
+
         // Clear keep-alive interval
         if (keepAliveInterval) {
           clearInterval(keepAliveInterval);
           keepAliveInterval = null;
         }
-        
+
         // Restore iframe settings
         const iframe = document.getElementById('youtube-player');
         if (iframe) {
           iframe.style.opacity = '0.01';
         }
-        
+
         // Sync state when page becomes visible again
         if (isPlayingRef.current && !manualPauseRef.current) {
           resumeTimeout = setTimeout(() => {
@@ -670,13 +670,13 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     // Also handle focus/blur events
     const handleFocus = () => {
       console.log('📱 Window focused - current playing state:', isPlayingRef.current, 'manual pause:', manualPauseRef.current);
-      
+
       // Don't auto-resume if user manually paused
       if (manualPauseRef.current) {
         console.log('⏸️ Manual pause active, not resuming');
         return;
       }
-      
+
       if (isPlayingRef.current) {
         setTimeout(() => {
           try {
@@ -723,7 +723,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         if (player.getCurrentTime && player.getDuration) {
           const current = player.getCurrentTime();
           const total = player.getDuration();
-          
+
           if (current !== undefined && total !== undefined && !isNaN(current) && !isNaN(total)) {
             setCurrentTime(current);
             setDuration(total);
@@ -736,7 +736,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
     // Update immediately
     updateTime();
-    
+
     // Then update every 200ms
     intervalRef.current = setInterval(updateTime, 200);
 
@@ -757,9 +757,9 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
   const handleSeek = (e) => {
     if (!player || !duration) return;
-    
+
     const newTime = (parseFloat(e.target.value) / 100) * duration;
-    
+
     try {
       player.seekTo(newTime, true);
       setCurrentTime(newTime);
@@ -771,7 +771,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div 
+    <div
       className="player"
       onTouchStart={handlePlayerTouchStart}
       onTouchMove={handlePlayerTouchMove}
@@ -790,17 +790,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               </linearGradient>
             </defs>
           </svg>
-          
+
           <div className="swipe-chevrons">
             <div className="swipe-chevron">
               <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 15l-6-6-6 6"/>
+                <path d="M18 15l-6-6-6 6" />
               </svg>
             </div>
           </div>
         </div>
       )}
-      
+
       {currentSong ? (
         <>
           {/* Time display above progress bar */}
@@ -830,7 +830,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 <div className="player-song-title">{currentSong.title}</div>
                 <div className="player-song-artist">{currentSong.artist}</div>
               </div>
-              <button 
+              <button
                 className={`player-like-btn ${isLiked ? 'liked' : ''}`}
                 onClick={onToggleLike}
                 title={isLiked ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
@@ -838,63 +838,63 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 <HeartIcon filled={isLiked} />
               </button>
             </div>
-            
+
             <div className="player-controls">
               <div className="control-buttons">
-              <button 
-                onClick={onToggleShuffle} 
-                title={shuffle ? 'Shuffle Off' : 'Shuffle On'} 
-                className={`control-btn ${shuffle ? 'active' : ''}`}
-              >
-                <ShuffleIcon />
-              </button>
-              <button onClick={onPrevious} title="Previous" className="control-btn">
-                <SkipBackIcon />
-              </button>
-              <button 
-                className="play-button" 
-                onClick={() => {
-                  if (songEnded && player) {
-                    // Replay from beginning
-                    player.seekTo(0);
-                    setSongEnded(false);
-                    if (!isPlaying) {
+                <button
+                  onClick={onToggleShuffle}
+                  title={shuffle ? 'Shuffle Off' : 'Shuffle On'}
+                  className={`control-btn ${shuffle ? 'active' : ''}`}
+                >
+                  <ShuffleIcon />
+                </button>
+                <button onClick={onPrevious} title="Previous" className="control-btn">
+                  <SkipBackIcon />
+                </button>
+                <button
+                  className="play-button"
+                  onClick={() => {
+                    if (songEnded && player) {
+                      // Replay from beginning
+                      player.seekTo(0);
+                      setSongEnded(false);
+                      if (!isPlaying) {
+                        onTogglePlay();
+                      }
+                    } else {
                       onTogglePlay();
                     }
-                  } else {
-                    onTogglePlay();
-                  }
-                }} 
-                title={songEnded ? 'Replay' : isPlaying ? 'Pause' : 'Play'}
-              >
-                {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
-              </button>
-              <button onClick={onNext} title="Next" className="control-btn">
-                <SkipForwardIcon />
-              </button>
-              <button 
-                onClick={onToggleRepeat} 
-                title={repeat === 'off' ? 'Repeat Off' : repeat === 'all' ? 'Repeat All' : 'Repeat One'} 
-                className={`control-btn ${repeat !== 'off' ? 'active' : ''}`}
-              >
-                {repeat === 'one' ? <RepeatOneIcon /> : <RepeatIcon />}
-              </button>
-              <button 
-                onClick={onToggleAutoplay} 
-                title={autoplay ? 'Autoplay On' : 'Autoplay Off'} 
-                className={`control-btn ${autoplay ? 'active' : ''}`}
-              >
-                <AutoplayIcon />
-              </button>
+                  }}
+                  title={songEnded ? 'Replay' : isPlaying ? 'Pause' : 'Play'}
+                >
+                  {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
+                </button>
+                <button onClick={onNext} title="Next" className="control-btn">
+                  <SkipForwardIcon />
+                </button>
+                <button
+                  onClick={onToggleRepeat}
+                  title={repeat === 'off' ? 'Repeat Off' : repeat === 'all' ? 'Repeat All' : 'Repeat One'}
+                  className={`control-btn ${repeat !== 'off' ? 'active' : ''}`}
+                >
+                  {repeat === 'one' ? <RepeatOneIcon /> : <RepeatIcon />}
+                </button>
+                <button
+                  onClick={onToggleAutoplay}
+                  title={autoplay ? 'Autoplay On' : 'Autoplay Off'}
+                  className={`control-btn ${autoplay ? 'active' : ''}`}
+                >
+                  <AutoplayIcon />
+                </button>
+              </div>
             </div>
-            </div>
-            
+
             <div className="player-volume">
               <button className="volume-btn" title="Volume">
                 <VolumeIcon />
               </button>
-              <button 
-                className="queue-toggle-btn" 
+              <button
+                className="queue-toggle-btn"
                 onClick={onToggleQueue}
                 title={showQueue ? "Hide Queue" : "Show Queue"}
               >
@@ -911,12 +911,12 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           <div className="player-song-title">Select a song to play</div>
         </div>
       )}
-      
+
       {/* Queue Panel */}
       {showQueue && currentSong && (
         <div className="queue-panel">
           {/* Drag handle for mobile */}
-          <div 
+          <div
             className="queue-drag-handle"
             onTouchStart={handleQueueHeaderTouchStart}
             onTouchMove={handleQueueHeaderTouchMove}
@@ -924,7 +924,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           >
             <div className="drag-indicator"></div>
           </div>
-          <div 
+          <div
             className="queue-header"
             onTouchStart={handleQueueHeaderTouchStart}
             onTouchMove={handleQueueHeaderTouchMove}
@@ -932,13 +932,13 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           >
             <h3>Up Next</h3>
             <div className="queue-header-actions">
-              <button 
-                className="queue-refresh-btn" 
+              <button
+                className="queue-refresh-btn"
                 onClick={onRefreshQueue}
                 title="Refresh Queue"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
                 </svg>
               </button>
               <button className="queue-close-btn" onClick={onToggleQueue}>✕</button>
@@ -951,10 +951,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 const isCurrentSong = currentSong && song.id === currentSong.id;
                 const isDragging = draggedIndex === index;
                 const isDragOver = dragOverIndex === index;
-                
+
                 return (
-                  <div 
-                    key={`${song.id}-${index}`} 
+                  <div
+                    key={`${song.id}-${index}`}
                     className={`queue-item ${isCurrentSong ? 'current-queue-item' : ''} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
                     draggable={!isCurrentSong}
                     onDragStart={(e) => {
@@ -988,20 +988,20 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                     }}
                   >
                     {!isCurrentSong && (
-                      <div 
-                        className="drag-handle" 
+                      <div
+                        className="drag-handle"
                         title="Hold to reorder"
                         onTouchStart={(e) => handleDragHandleTouchStart(e, index)}
                         onTouchMove={(e) => handleDragHandleTouchMove(e)}
                         onTouchEnd={(e) => handleDragHandleTouchEnd(e, index)}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-16h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/>
+                          <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-16h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z" />
                         </svg>
                       </div>
                     )}
-                    <img 
-                      src={song.cover} 
+                    <img
+                      src={song.cover}
                       alt={song.title}
                       onClick={() => {
                         if (!isCurrentSong) {
@@ -1011,7 +1011,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                       }}
                       style={{ cursor: isCurrentSong ? 'default' : 'pointer' }}
                     />
-                    <div 
+                    <div
                       className="queue-item-info"
                       onClick={() => {
                         if (!isCurrentSong) {
@@ -1062,10 +1062,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           </div>
         </div>
       )}
-      
+
       {/* Developer Signature */}
       <div className="player-signature">
-        <span>Made by YaBoy Komei</span>
+        <span>YaBoy Komei</span>
       </div>
     </div>
   );
