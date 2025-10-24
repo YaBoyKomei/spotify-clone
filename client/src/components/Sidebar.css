@@ -215,21 +215,27 @@
 /* Mobile scrollbar styling */
 @media (max-width: 768px) {
   .playlists::-webkit-scrollbar {
-    width: 2px;
+    width: 3px;
   }
   
-  .sidebar::-webkit-scrollbar {
-    width: 2px;
-  }
-  
-  .sidebar::-webkit-scrollbar-track {
+  .playlists::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 1px;
+    border-radius: 2px;
   }
   
-  .sidebar::-webkit-scrollbar-thumb {
-    background: rgba(167, 139, 250, 0.5);
-    border-radius: 1px;
+  .playlists::-webkit-scrollbar-thumb {
+    background: rgba(167, 139, 250, 0.6);
+    border-radius: 2px;
+  }
+  
+  .playlists::-webkit-scrollbar-thumb:hover {
+    background: rgba(167, 139, 250, 0.8);
+  }
+
+  /* Force scrolling on mobile */
+  .playlists {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(167, 139, 250, 0.6) rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -305,14 +311,9 @@
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 10002;
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow-y: scroll !important;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-    scroll-behavior: smooth;
-    touch-action: pan-y;
-    transform: translateZ(0);
-    will-change: scroll-position;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .sidebar.open {
@@ -322,90 +323,119 @@
 
   .logo {
     display: flex;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
+    flex-shrink: 0;
   }
 
   .nav-menu {
     flex-direction: column;
     gap: 8px;
+    flex-shrink: 0;
+    margin-bottom: 16px;
   }
 
   .playlists {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     flex: 1;
-    overflow: visible;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    scroll-behavior: smooth;
+    touch-action: pan-y;
+    transform: translateZ(0);
+    will-change: scroll-position;
     padding-right: 8px;
     margin-right: -8px;
+    min-height: 0;
   }
 
   .nav-item {
     flex-direction: row;
-    gap: 16px;
-    padding: 12px 16px;
+    gap: 12px;
+    padding: 10px 12px;
     border-radius: 8px;
     min-width: auto;
+    flex-shrink: 0;
   }
 
   .nav-item svg {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
   }
 
   .nav-item span {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .count {
     display: inline;
     margin-left: 4px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.6);
   }
 
-  .sidebar-footer {
-    display: block;
-    margin-top: 32px;
+  .developer-signature {
+    flex-shrink: 0;
+    margin-top: 16px;
+    padding-top: 16px;
   }
 }
 
 /* Mobile portrait (480px) */
 @media (max-width: 480px) {
   .sidebar {
-    padding: 20px 16px;
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-    scroll-behavior: smooth;
+    padding: 16px 12px;
   }
 
-  .sidebar-nav {
-    padding: 6px 0;
+  .logo {
+    margin-bottom: 20px;
+  }
+
+  .logo h2 {
+    font-size: 1.5rem;
+  }
+
+  .nav-menu {
+    margin-bottom: 12px;
   }
 
   .nav-item {
-    padding: 6px 8px;
-    gap: 2px;
+    padding: 8px 10px;
+    gap: 10px;
   }
 
   .nav-item svg {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
   }
 
   .nav-item span {
-    font-size: 0.65rem;
+    font-size: 0.85rem;
   }
 
-  .liked-count {
-    font-size: 0.6rem;
-    min-width: 14px;
-    height: 14px;
-    padding: 0 3px;
+  .playlist-header {
+    padding: 6px 10px;
+  }
+
+  .playlist-section-title {
+    font-size: 0.75rem;
   }
 
   .playlists {
-    overflow: visible;
+    gap: 2px;
+    padding-right: 6px;
+    margin-right: -6px;
+  }
+
+  .developer-signature {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+
+  .developer-signature span {
+    font-size: 0.7rem;
   }
 }

@@ -9,12 +9,23 @@ function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playl
     const sidebar = sidebarRef.current;
     if (!sidebar) return;
 
+    // Find the playlists container
+    const playlistsContainer = sidebar.querySelector('.playlists');
+    
     // Prevent touch events from being blocked on mobile
     const handleTouchStart = (e) => {
+      // Allow scrolling in playlists container
+      if (playlistsContainer && playlistsContainer.contains(e.target)) {
+        return;
+      }
       e.stopPropagation();
     };
 
     const handleTouchMove = (e) => {
+      // Allow scrolling in playlists container
+      if (playlistsContainer && playlistsContainer.contains(e.target)) {
+        return;
+      }
       e.stopPropagation();
     };
 
