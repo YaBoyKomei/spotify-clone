@@ -33,6 +33,27 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const isDraggingTouch = useRef(false);
   const draggedElement = useRef(null);
   const wakeLockRef = useRef(null);
+  const audioElementRef = useRef(null);
+
+  // Initialize audio element for background playback detection
+  useEffect(() => {
+    // Create a silent audio element that browsers can detect for background playback
+    const audio = new Audio();
+    audio.loop = true;
+    audio.volume = 0.01; // Very low volume, almost silent
+    
+    // Use a silent audio file or data URL
+    audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    
+    audioElementRef.current = audio;
+    
+    return () => {
+      if (audioElementRef.current) {
+        audioElementRef.current.pause();
+        audioElementRef.current = null;
+      }
+    };
+  }, []);
 
   // Keep refs updated
   useEffect(() => {
@@ -591,6 +612,13 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         player.playVideo();
         console.log('▶️ Playing video');
 
+        // Play silent audio to keep media session active
+        if (audioElementRef.current) {
+          audioElementRef.current.play().catch(err => {
+            console.log('Silent audio play failed:', err);
+          });
+        }
+
         // Request wake lock to prevent screen from sleeping during playback
         if ('wakeLock' in navigator) {
           navigator.wakeLock.request('screen').then(wakeLock => {
@@ -604,6 +632,11 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         manualPauseRef.current = true; // Set manual pause when pausing
         player.pauseVideo();
         console.log('⏸️ Pausing video');
+
+        // Pause silent audio
+        if (audioElementRef.current) {
+          audioElementRef.current.pause();
+        }
 
         // Release wake lock when paused
         if (wakeLockRef.current) {
@@ -649,6 +682,13 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             // Ensure Media Session stays active
             if ('mediaSession' in navigator) {
               navigator.mediaSession.playbackState = 'playing';
+            }
+
+            // Keep silent audio playing for background detection
+            if (audioElementRef.current && audioElementRef.current.paused) {
+              audioElementRef.current.play().catch(err => {
+                console.log('Background audio play failed:', err);
+              });
             }
 
             // Keep audio context active for background playback
