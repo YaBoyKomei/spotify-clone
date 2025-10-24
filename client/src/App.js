@@ -54,6 +54,7 @@ function App() {
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const [selectedSongForPlaylist, setSelectedSongForPlaylist] = useState(null);
+  const [showClearPlaylistsModal, setShowClearPlaylistsModal] = useState(false);
   const [showDeletePlaylist, setShowDeletePlaylist] = useState(false);
   const [playlistToDelete, setPlaylistToDelete] = useState(null);
   const [showClearHistory, setShowClearHistory] = useState(false);
@@ -540,11 +541,14 @@ function App() {
   };
 
   const clearAllPlaylists = () => {
-    if (window.confirm('Are you sure you want to delete all playlists? This action cannot be undone.')) {
-      setPlaylists([]);
-      setCurrentView('home');
-      console.log('🗑️ All playlists cleared');
-    }
+    setShowClearPlaylistsModal(true);
+  };
+
+  const confirmClearAllPlaylists = () => {
+    setPlaylists([]);
+    setCurrentView('home');
+    setShowClearPlaylistsModal(false);
+    console.log('🗑️ All playlists cleared');
   };
 
   const addToPlaylist = (playlistId, song) => {
@@ -1260,6 +1264,35 @@ function App() {
                 }}
               >
                 Delete Playlist
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear All Playlists Confirmation Modal */}
+      {showClearPlaylistsModal && (
+        <div className="modal-overlay" onClick={() => setShowClearPlaylistsModal(false)}>
+          <div className="modal delete-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Clear All Playlists?</h2>
+            <p className="modal-subtitle">
+              Are you sure you want to delete all playlists? This action cannot be undone.
+            </p>
+            <div className="modal-info">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              </svg>
+              <p>{playlists.length} playlists will be permanently deleted</p>
+            </div>
+            <div className="modal-buttons">
+              <button onClick={() => setShowClearPlaylistsModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="primary danger"
+                onClick={confirmClearAllPlaylists}
+              >
+                Clear All Playlists
               </button>
             </div>
           </div>
