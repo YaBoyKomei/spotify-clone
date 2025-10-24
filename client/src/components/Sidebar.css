@@ -1,24 +1,13 @@
 .sidebar {
-  position: fixed;
-  top: 0;
-  left: -280px;
-  bottom: 0;
   width: 280px;
-  height: 100vh;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(20px);
   padding: 32px 20px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
+  height: 100vh;
   overflow: hidden;
-  z-index: 10002;
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sidebar.open {
-  left: 0;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
 }
 
 /* Ensure smooth scrolling on all devices */
@@ -280,37 +269,56 @@
    RESPONSIVE DESIGN - SIDEBAR
    ============================================ */
 
-/* Sidebar Overlay - Show on all screen sizes when sidebar is open */
+/* Sidebar Overlay */
 .sidebar-overlay {
-  display: block;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-  z-index: 10001;
-  animation: fadeIn 0.3s ease;
-  touch-action: manipulation;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  display: none;
 }
 
 /* Tablet and below (768px) */
 @media (max-width: 768px) {
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 10001;
+    animation: fadeIn 0.3s ease;
+    touch-action: manipulation;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
   .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    bottom: 0;
+    width: 280px;
+    height: 100vh;
     padding: 24px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 10002;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+
+  .sidebar.open {
+    left: 0;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
   }
 
   .logo {
