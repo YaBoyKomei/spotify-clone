@@ -68,11 +68,11 @@ function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playl
             <span>{playlist.name}</span>
           </div>
         ))}
-        
-        {/* Developer Signature */}
-        <div className="developer-signature">
-          <span>Made by YaBoy Komei</span>
-        </div>
+      </div>
+      
+      {/* Developer Signature */}
+      <div className="developer-signature">
+        <span>Made by YaBoy Komei</span>
       </div>
       </div>
     </>
