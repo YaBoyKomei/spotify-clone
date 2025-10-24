@@ -282,13 +282,22 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             playsinline: 1,
             enablejsapi: 1,
             origin: window.location.origin,
-            widget_referrer: window.location.origin
+            widget_referrer: window.location.origin,
+            vq: 'hd720' // Prefer HD quality for better audio
           },
           events: {
             onReady: (event) => {
               console.log('✅ YouTube Player is ready');
               setPlayer(event.target);
               playerInitialized.current = true;
+              
+              // Set quality preference for better audio
+              try {
+                event.target.setPlaybackQualityRange('hd720', 'hd1080');
+                console.log('🎵 Set quality range to HD for better audio');
+              } catch (error) {
+                console.log('Could not set quality range:', error);
+              }
             },
             onStateChange: (event) => {
               console.log('Player state changed:', event.data, 'Page hidden:', isPageHiddenRef.current, 'Loading:', isLoadingNewSongRef.current);
@@ -570,6 +579,28 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
       // Load the video
       player.loadVideoById(currentSong.youtubeId);
+
+      // Set quality to HD for better audio after video loads
+      setTimeout(() => {
+        try {
+          const availableQualities = player.getAvailableQualityLevels();
+          console.log('📺 Available qualities:', availableQualities);
+          
+          // Try to set the highest quality available (hd1080, hd720, large, medium)
+          if (availableQualities.includes('hd1080')) {
+            player.setPlaybackQuality('hd1080');
+            console.log('🎵 Set quality to 1080p for best audio');
+          } else if (availableQualities.includes('hd720')) {
+            player.setPlaybackQuality('hd720');
+            console.log('🎵 Set quality to 720p for better audio');
+          } else if (availableQualities.includes('large')) {
+            player.setPlaybackQuality('large');
+            console.log('🎵 Set quality to large (480p)');
+          }
+        } catch (error) {
+          console.log('Could not set quality:', error);
+        }
+      }, 1000);
 
       // Reset songEnded when loading new song
       setSongEnded(false);
