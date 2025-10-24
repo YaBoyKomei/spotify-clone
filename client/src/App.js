@@ -521,6 +521,13 @@ function App() {
   };
 
   const createPlaylist = (name) => {
+    // Check if playlist name already exists
+    const existingPlaylist = playlists.find(p => p.name.toLowerCase() === name.toLowerCase());
+    if (existingPlaylist) {
+      console.warn(`⚠️ Playlist "${name}" already exists`);
+      return null; // Return null to indicate failure
+    }
+
     const newPlaylist = {
       id: Date.now().toString(),
       name: name,
@@ -1126,8 +1133,15 @@ function App() {
                   const name = e.target.value.trim();
                   if (name) {
                     const newPlaylist = createPlaylist(name);
-                    setShowCreatePlaylist(false);
-                    setCurrentView(`playlist-${newPlaylist.id}`);
+                    if (newPlaylist) {
+                      setShowCreatePlaylist(false);
+                      setCurrentView(`playlist-${newPlaylist.id}`);
+                    } else {
+                      // Show error for duplicate name
+                      e.target.style.borderColor = '#ef4444';
+                      e.target.placeholder = 'Playlist name already exists!';
+                      e.target.value = '';
+                    }
                   }
                 }
               }}
@@ -1141,8 +1155,15 @@ function App() {
                   const name = input.value.trim();
                   if (name) {
                     const newPlaylist = createPlaylist(name);
-                    setShowCreatePlaylist(false);
-                    setCurrentView(`playlist-${newPlaylist.id}`);
+                    if (newPlaylist) {
+                      setShowCreatePlaylist(false);
+                      setCurrentView(`playlist-${newPlaylist.id}`);
+                    } else {
+                      // Show error for duplicate name
+                      input.style.borderColor = '#ef4444';
+                      input.placeholder = 'Playlist name already exists!';
+                      input.value = '';
+                    }
                   }
                 }}
               >
