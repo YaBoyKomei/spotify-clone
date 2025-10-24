@@ -1047,11 +1047,12 @@
 /* Developer Signature in Player */
 .player-signature {
   position: absolute;
-  bottom: 8px;
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
   z-index: 10001;
+  pointer-events: none;
 }
 
 .player-signature span {
@@ -1074,7 +1075,7 @@
 /* Mobile adjustments for signature */
 @media (max-width: 768px) {
   .player-signature {
-    bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   }
   
   .player-signature span {
@@ -1084,7 +1085,7 @@
 
 @media (max-width: 480px) {
   .player-signature {
-    bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   }
   
   .player-signature span {
