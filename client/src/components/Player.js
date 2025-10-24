@@ -858,9 +858,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                       // Replay from beginning
                       player.seekTo(0);
                       setSongEnded(false);
-                      if (!isPlaying) {
-                        onTogglePlay();
-                      }
+                      // Force start playing when replaying
+                      onTogglePlay();
                     } else {
                       onTogglePlay();
                     }
