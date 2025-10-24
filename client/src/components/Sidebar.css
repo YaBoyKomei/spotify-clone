@@ -239,30 +239,7 @@
   }
 }
 
-/* Developer Signature */
-.developer-signature {
-  margin-top: auto;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: center;
-}
 
-.developer-signature span {
-  font-size: 0.75rem;
-  color: rgba(167, 139, 250, 0.6);
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #f59e0b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  transition: all 0.3s ease;
-}
-
-.developer-signature:hover span {
-  color: rgba(167, 139, 250, 1);
-  transform: scale(1.05);
-}
 
 
 /* ============================================
@@ -379,8 +356,9 @@
 
   .developer-signature {
     flex-shrink: 0;
-    margin-top: 16px;
-    padding-top: 16px;
+    margin-top: auto;
+    padding-top: 20px;
+    padding-bottom: 8px;
   }
 }
 
@@ -430,10 +408,7 @@
     margin-right: -6px;
   }
 
-  .developer-signature {
-    margin-top: 12px;
-    padding-top: 12px;
-  }
+
 
   .developer-signature span {
     font-size: 0.7rem;

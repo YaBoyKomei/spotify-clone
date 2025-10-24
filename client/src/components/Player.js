@@ -1062,6 +1062,11 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           </div>
         </div>
       )}
+      
+      {/* Developer Signature */}
+      <div className="player-signature">
+        <span>Made by YaBoy Komei</span>
+      </div>
     </div>
   );
 }

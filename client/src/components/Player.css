@@ -1038,3 +1038,52 @@
     filter: drop-shadow(0 0 14px rgba(167, 139, 250, 0.9));
   }
 }
+
+/* Developer Signature in Player */
+.player-signature {
+  position: absolute;
+  bottom: 8px;
+  right: 16px;
+  text-align: center;
+  z-index: 10001;
+}
+
+.player-signature span {
+  font-size: 0.7rem;
+  color: rgba(167, 139, 250, 0.6);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all 0.3s ease;
+}
+
+.player-signature:hover span {
+  color: rgba(167, 139, 250, 1);
+  transform: scale(1.05);
+}
+
+/* Mobile adjustments for signature */
+@media (max-width: 768px) {
+  .player-signature {
+    bottom: 6px;
+    right: 12px;
+  }
+  
+  .player-signature span {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-signature {
+    bottom: 4px;
+    right: 8px;
+  }
+  
+  .player-signature span {
+    font-size: 0.6rem;
+  }
+}
