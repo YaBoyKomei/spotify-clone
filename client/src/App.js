@@ -986,7 +986,7 @@ function App() {
 
   return (
     <div className="app">
-      <button className="hamburger-menu" onClick={toggleSidebar} aria-label="Toggle menu">
+      <button className={`hamburger-menu ${isSidebarOpen ? 'hidden' : ''}`} onClick={toggleSidebar} aria-label="Toggle menu">
         <span></span>
         <span></span>
         <span></span>

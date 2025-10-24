@@ -1346,6 +1346,13 @@
   transition: all 0.3s ease;
 }
 
+/* Hide hamburger menu when sidebar is open */
+.hamburger-menu.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+}
+
 @media (max-width: 768px) {
   .hamburger-menu {
     display: flex;
