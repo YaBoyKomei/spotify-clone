@@ -1091,3 +1091,29 @@
     font-size: 0.6rem;
   }
 }
+/* Decora
+tive Bottom Strip */
+.player-bottom-strip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #a78bfa 0%, #ec4899 50%, #f59e0b 100%);
+  z-index: 10003;
+  box-shadow: 0 -2px 10px rgba(167, 139, 250, 0.5);
+}
+
+/* Mobile adjustments for bottom strip */
+@media (max-width: 768px) {
+  .player-bottom-strip {
+    height: 3px;
+    bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+
+@media (max-width: 480px) {
+  .player-bottom-strip {
+    height: 3px;
+  }
+}

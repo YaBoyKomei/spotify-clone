@@ -1170,6 +1170,9 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       <div className="player-signature">
         <span>YaBoy Komei</span>
       </div>
+
+      {/* Decorative Bottom Strip */}
+      <div className="player-bottom-strip"></div>
     </div>
   );
 }
