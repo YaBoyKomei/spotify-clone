@@ -1043,7 +1043,8 @@
 .player-signature {
   position: absolute;
   bottom: 8px;
-  right: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
   z-index: 10001;
 }
@@ -1069,7 +1070,6 @@
 @media (max-width: 768px) {
   .player-signature {
     bottom: 6px;
-    right: 12px;
   }
   
   .player-signature span {
@@ -1080,7 +1080,6 @@
 @media (max-width: 480px) {
   .player-signature {
     bottom: 4px;
-    right: 8px;
   }
   
   .player-signature span {
