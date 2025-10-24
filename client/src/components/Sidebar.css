@@ -230,7 +230,7 @@
     backdrop-filter: blur(4px);
     z-index: 10001;
     animation: fadeIn 0.3s ease;
-    touch-action: none; /* Prevent scrolling on overlay */
+    touch-action: manipulation;
   }
 
   @keyframes fadeIn {
@@ -254,10 +254,14 @@
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 10002;
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow-y: auto;
+    overflow-y: scroll !important;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    overscroll-behavior-y: contain;
+    scroll-behavior: smooth;
+    touch-action: pan-y;
+    transform: translateZ(0);
+    will-change: scroll-position;
   }
 
   .sidebar.open {
@@ -280,12 +284,7 @@
     flex-direction: column;
     gap: 8px;
     flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    max-height: calc(100vh - 300px);
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
+    overflow: visible;
     padding-right: 8px;
     margin-right: -8px;
   }
@@ -326,8 +325,8 @@
     padding: 20px 16px;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+    scroll-behavior: smooth;
   }
 
   .sidebar-nav {
@@ -356,10 +355,6 @@
   }
 
   .playlists {
-    max-height: calc(100vh - 250px);
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
+    overflow: visible;
   }
 }

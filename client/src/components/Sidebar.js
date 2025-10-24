@@ -1,12 +1,36 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import './Sidebar.css';
 import { HomeIcon, SearchIcon, PlusIcon, HeartIcon, MusicIcon } from './Icons';
 
 function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playlists, historyCount, onCreatePlaylist }) {
+  const sidebarRef = useRef(null);
+
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+
+    // Prevent touch events from being blocked on mobile
+    const handleTouchStart = (e) => {
+      e.stopPropagation();
+    };
+
+    const handleTouchMove = (e) => {
+      e.stopPropagation();
+    };
+
+    sidebar.addEventListener('touchstart', handleTouchStart, { passive: true });
+    sidebar.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    return () => {
+      sidebar.removeEventListener('touchstart', handleTouchStart);
+      sidebar.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
   return (
     <>
       {isOpen && <div className="sidebar-overlay" onClick={onClose}></div>}
-      <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <div ref={sidebarRef} className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-logo logo">
         <MusicIcon />
         <div className="logo-text">
