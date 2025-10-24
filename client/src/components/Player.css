@@ -1,6 +1,7 @@
 .player {
   position: fixed;
   bottom: 0;
+  bottom: env(safe-area-inset-bottom, 0);
   left: 0;
   right: 0;
   height: 100px;
@@ -382,10 +383,13 @@
   .player {
     height: auto;
     min-height: 170px;
+    min-height: calc(170px + env(safe-area-inset-bottom, 0px));
     bottom: 0;
+    bottom: env(safe-area-inset-bottom, 0);
     position: fixed;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .player-content {
@@ -393,7 +397,7 @@
     gap: 8px;
     padding: 16px;
     padding-top: 20px;
-    padding-bottom: 35px;
+    padding-bottom: calc(35px + env(safe-area-inset-bottom, 0px));
   }
 
   .player-song-info {
@@ -438,6 +442,7 @@
 @media (max-width: 480px) {
   .player {
     min-height: 200px;
+    min-height: calc(200px + env(safe-area-inset-bottom, 0px));
   }
 
   .player-content {
@@ -886,7 +891,7 @@
   .queue-panel {
     width: 100%;
     max-height: 65vh;
-    bottom: 170px; /* Position above mobile player (min-height: 170px) */
+    bottom: calc(170px + env(safe-area-inset-bottom, 0px)); /* Position above mobile player */
   }
   
   /* Always show queue action buttons on mobile */
@@ -902,7 +907,7 @@
 
 @media (max-width: 480px) {
   .queue-panel {
-    bottom: 200px; /* Position above mobile player (min-height: 200px) */
+    bottom: calc(200px + env(safe-area-inset-bottom, 0px)); /* Position above mobile player */
     max-height: 60vh;
   }
 }
@@ -1069,7 +1074,7 @@
 /* Mobile adjustments for signature */
 @media (max-width: 768px) {
   .player-signature {
-    bottom: 6px;
+    bottom: calc(6px + env(safe-area-inset-bottom, 0px));
   }
   
   .player-signature span {
@@ -1079,7 +1084,7 @@
 
 @media (max-width: 480px) {
   .player-signature {
-    bottom: 4px;
+    bottom: calc(4px + env(safe-area-inset-bottom, 0px));
   }
   
   .player-signature span {
