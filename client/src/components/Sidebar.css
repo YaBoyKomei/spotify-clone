@@ -10,6 +10,11 @@
   overflow: hidden;
 }
 
+/* Ensure smooth scrolling on all devices */
+.sidebar * {
+  -webkit-overflow-scrolling: touch;
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -156,6 +161,27 @@
   background: rgba(167, 139, 250, 0.7);
 }
 
+/* Mobile scrollbar styling */
+@media (max-width: 768px) {
+  .playlists::-webkit-scrollbar {
+    width: 2px;
+  }
+  
+  .sidebar::-webkit-scrollbar {
+    width: 2px;
+  }
+  
+  .sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1px;
+  }
+  
+  .sidebar::-webkit-scrollbar-thumb {
+    background: rgba(167, 139, 250, 0.5);
+    border-radius: 1px;
+  }
+}
+
 /* Developer Signature */
 .developer-signature {
   margin-top: auto;
@@ -204,6 +230,7 @@
     backdrop-filter: blur(4px);
     z-index: 10001;
     animation: fadeIn 0.3s ease;
+    touch-action: none; /* Prevent scrolling on overlay */
   }
 
   @keyframes fadeIn {
@@ -228,6 +255,9 @@
     z-index: 10002;
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
   .sidebar.open {
@@ -251,8 +281,13 @@
     gap: 8px;
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     max-height: calc(100vh - 300px);
-    -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    padding-right: 8px;
+    margin-right: -8px;
   }
 
   .nav-item {
@@ -287,6 +322,14 @@
 
 /* Mobile portrait (480px) */
 @media (max-width: 480px) {
+  .sidebar {
+    padding: 20px 16px;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
   .sidebar-nav {
     padding: 6px 0;
   }
@@ -310,5 +353,13 @@
     min-width: 14px;
     height: 14px;
     padding: 0 3px;
+  }
+
+  .playlists {
+    max-height: calc(100vh - 250px);
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
 }
