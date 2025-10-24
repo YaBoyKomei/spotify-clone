@@ -32,6 +32,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const longPressTimer = useRef(null);
   const isDraggingTouch = useRef(false);
   const draggedElement = useRef(null);
+  const wakeLockRef = useRef(null);
 
   // Keep refs updated
   useEffect(() => {
@@ -463,7 +464,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentSong.title,
         artist: currentSong.artist,
-        album: 'YouTube Music',
+        album: 'Sonfy Music',
         artwork: [
           { src: currentSong.cover, sizes: '96x96', type: 'image/jpeg' },
           { src: currentSong.cover, sizes: '128x128', type: 'image/jpeg' },
@@ -473,6 +474,9 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           { src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' },
         ]
       });
+
+      // Force notification to persist
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
     } catch (error) {
       console.error('Error setting Media Session metadata:', error);
     }
@@ -586,10 +590,27 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         setSongEnded(false); // Reset songEnded when user plays
         player.playVideo();
         console.log('▶️ Playing video');
+
+        // Request wake lock to prevent screen from sleeping during playback
+        if ('wakeLock' in navigator) {
+          navigator.wakeLock.request('screen').then(wakeLock => {
+            wakeLockRef.current = wakeLock;
+            console.log('🔒 Wake lock acquired');
+          }).catch(err => {
+            console.log('Wake lock failed:', err);
+          });
+        }
       } else {
         manualPauseRef.current = true; // Set manual pause when pausing
         player.pauseVideo();
         console.log('⏸️ Pausing video');
+
+        // Release wake lock when paused
+        if (wakeLockRef.current) {
+          wakeLockRef.current.release();
+          wakeLockRef.current = null;
+          console.log('🔓 Wake lock released');
+        }
       }
     } catch (error) {
       console.error('Error controlling playback:', error);
@@ -625,8 +646,20 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               iframe.style.zIndex = '-9999';
             }
 
-            // Disabled keep-alive to prevent auto-resume issues
-            // Background playback will work naturally with Media Session API
+            // Ensure Media Session stays active
+            if ('mediaSession' in navigator) {
+              navigator.mediaSession.playbackState = 'playing';
+            }
+
+            // Keep audio context active for background playback
+            try {
+              const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+              if (audioContext.state === 'suspended') {
+                audioContext.resume();
+              }
+            } catch (e) {
+              console.log('AudioContext not available');
+            }
 
           } catch (error) {
             console.error('Error maintaining playback:', error);
