@@ -41,12 +41,12 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     const audio = new Audio();
     audio.loop = true;
     audio.volume = 0.01; // Very low volume, almost silent
-    
+
     // Use a silent audio file or data URL
     audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-    
+
     audioElementRef.current = audio;
-    
+
     return () => {
       if (audioElementRef.current) {
         audioElementRef.current.pause();
@@ -290,7 +290,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               console.log('✅ YouTube Player is ready');
               setPlayer(event.target);
               playerInitialized.current = true;
-              
+
               // Set quality preference for better audio
               try {
                 event.target.setPlaybackQualityRange('hd720', 'hd1080');
@@ -374,7 +374,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     if (!window.YT) {
       console.log('Loading YouTube API...');
       const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
+      tag.src = 'https://www.youtube-nocookie.com/iframe_api';
       const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
@@ -585,7 +585,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         try {
           const availableQualities = player.getAvailableQualityLevels();
           console.log('📺 Available qualities:', availableQualities);
-          
+
           // Try to set the highest quality available (hd1080, hd720, large, medium)
           if (availableQualities.includes('hd1080')) {
             player.setPlaybackQuality('hd1080');
