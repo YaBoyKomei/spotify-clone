@@ -539,6 +539,14 @@ function App() {
     return newPlaylist;
   };
 
+  const clearAllPlaylists = () => {
+    if (window.confirm('Are you sure you want to delete all playlists? This action cannot be undone.')) {
+      setPlaylists([]);
+      setCurrentView('home');
+      console.log('🗑️ All playlists cleared');
+    }
+  };
+
   const addToPlaylist = (playlistId, song) => {
     setPlaylists(prev => prev.map(playlist => {
       if (playlist.id === playlistId) {
@@ -1000,6 +1008,7 @@ function App() {
           setShowCreatePlaylist(true);
           closeSidebar();
         }}
+        onClearPlaylists={clearAllPlaylists}
       />
       <div className="main-content">
         {/* Sonfy Header */}
