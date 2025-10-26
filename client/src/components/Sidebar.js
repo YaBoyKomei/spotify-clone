@@ -1,29 +1,9 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import './Sidebar.css';
 import { HomeIcon, SearchIcon, PlusIcon, HeartIcon, MusicIcon } from './Icons';
 
 function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playlists, historyCount, onCreatePlaylist, onClearPlaylists }) {
   const sidebarRef = useRef(null);
-  const [onlineUsers, setOnlineUsers] = useState(0);
-
-  // Simulate online users counter
-  useEffect(() => {
-    // Generate a base number between 150-300
-    const baseUsers = Math.floor(Math.random() * 150) + 150;
-    setOnlineUsers(baseUsers);
-
-    // Update counter every 10-30 seconds with small variations
-    const interval = setInterval(() => {
-      setOnlineUsers(prev => {
-        const change = Math.floor(Math.random() * 10) - 5; // -5 to +5
-        const newCount = prev + change;
-        // Keep between 100 and 500
-        return Math.max(100, Math.min(500, newCount));
-      });
-    }, Math.random() * 20000 + 10000); // Random interval between 10-30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const sidebar = sidebarRef.current;
@@ -67,11 +47,6 @@ function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playl
           <div className="logo-text">
             <h2>Sonfy</h2>
             <span className="logo-subtitle">Music Streaming</span>
-          </div>
-          {/* Online Users Counter */}
-          <div className="online-counter" title="Users online">
-            <span className="online-dot"></span>
-            <span className="online-count">{onlineUsers}</span>
           </div>
         </div>
         <nav className="sidebar-nav nav-menu">
