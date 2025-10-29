@@ -581,12 +581,12 @@ function App() {
     try {
       const response = await fetch(`/api/next/${lastSong.youtubeId}`);
       const moreSongs = await response.json();
-      
+
       if (moreSongs.length > 0) {
         // Filter out songs already in queue to avoid duplicates
         const existingIds = new Set(queue.map(s => s.id));
         const newSongs = moreSongs.filter(s => !existingIds.has(s.id));
-        
+
         if (newSongs.length > 0) {
           setQueue(prev => [...prev, ...newSongs]);
           console.log(`✨ Extended queue with ${newSongs.length} new songs (total: ${queue.length + newSongs.length})`);
@@ -784,7 +784,7 @@ function App() {
                 <h2 className="section-title">
                   Recommendations
                 </h2>
-                <span className="section-subtitle">Personalized for you</span>
+                <span className="section-subtitle"></span>
               </div>
               <button
                 className="more-button"
