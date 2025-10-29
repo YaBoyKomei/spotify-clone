@@ -215,8 +215,27 @@ function App() {
 
         return () => mostPlayedCarousel.removeEventListener('scroll', updateMostPlayedScrollState);
       }
+
+      // Also initialize AI Recommendations carousel
+      const aiRecommendationsCarousel = document.getElementById('carousel-ai-recommendations');
+      if (aiRecommendationsCarousel) {
+        const updateAIRecommendationsScrollState = () => {
+          const isAtStart = aiRecommendationsCarousel.scrollLeft <= 0;
+          const isAtEnd = aiRecommendationsCarousel.scrollLeft + aiRecommendationsCarousel.clientWidth >= aiRecommendationsCarousel.scrollWidth - 1;
+
+          setScrollStates(prev => ({
+            ...prev,
+            'ai-recommendations': { isAtStart, isAtEnd }
+          }));
+        };
+
+        updateAIRecommendationsScrollState();
+        aiRecommendationsCarousel.addEventListener('scroll', updateAIRecommendationsScrollState);
+
+        return () => aiRecommendationsCarousel.removeEventListener('scroll', updateAIRecommendationsScrollState);
+      }
     }
-  }, [sections, currentView, playCount]);
+  }, [sections, currentView, playCount, aiRecommendations]);
 
   const updateScrollState = (index) => {
     const carousel = document.getElementById(`carousel-${index}`);
@@ -723,7 +742,7 @@ function App() {
             <div className="section-header">
               <div className="section-title-group">
                 <h2 className="section-title">
-                  🤖 AI Recommendations
+                  Recommendations
                 </h2>
                 <span className="section-subtitle">Personalized for you</span>
               </div>
@@ -742,7 +761,25 @@ function App() {
               </div>
             ) : aiRecommendations.length > 0 ? (
               <div className="section-carousel">
-                <div className="songs-carousel">
+                {scrollStates['ai-recommendations'] && !scrollStates['ai-recommendations'].isAtStart && (
+                  <button
+                    className="scroll-button left"
+                    onClick={() => scrollCarousel('ai-recommendations', 'left')}
+                    aria-label="Scroll left"
+                  >
+                    <ChevronLeftIcon />
+                  </button>
+                )}
+                {scrollStates['ai-recommendations'] && !scrollStates['ai-recommendations'].isAtEnd && (
+                  <button
+                    className="scroll-button right"
+                    onClick={() => scrollCarousel('ai-recommendations', 'right')}
+                    aria-label="Scroll right"
+                  >
+                    <ChevronRightIcon />
+                  </button>
+                )}
+                <div className="songs-carousel" id="carousel-ai-recommendations">
                   {aiRecommendations.map(song => (
                     <SongCard
                       key={song.id}

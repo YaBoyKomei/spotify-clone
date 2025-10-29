@@ -795,7 +795,7 @@ app.post('/api/recommendations', async (req, res) => {
       userContext += "\n";
     }
 
-    userContext += "Please recommend 10 songs (with artist names) that match this user's taste. Format each recommendation as: 'Song Title by Artist Name' on separate lines. Only provide song recommendations, nothing else.";
+    userContext += "Please recommend exactly 10 songs (with artist names) that match this user's taste. Format each recommendation EXACTLY as: 'Song Title by Artist Name' on separate lines. Provide ONLY the 10 song recommendations, nothing else - no explanations, no numbering, no extra text.";
 
     console.log('🤖 Requesting AI recommendations...');
 
