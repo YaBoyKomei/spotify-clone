@@ -375,23 +375,32 @@ function App() {
         }
       }));
 
-      // If we've reached the end of the queue, fetch a new queue
-      if (nextIndex >= queue.length - 1) {
+      // 🔥 INFINITE QUEUE: Load more songs when approaching the end
+      // Check if we're within the last 3 songs of the queue
+      const songsRemaining = queue.length - nextIndex - 1;
+      if (songsRemaining <= 3 && nextSong.youtubeId) {
         try {
-          console.log(`📡 End of queue reached, fetching new queue for: ${nextSong.youtubeId}`);
+          console.log(`🔄 Approaching end of queue (${songsRemaining} songs left), extending queue...`);
           const response = await fetch(`/api/next/${nextSong.youtubeId}`);
-          const nextSongs = await response.json();
-          const fullQueue = [nextSong, ...nextSongs];
-          setQueue(fullQueue);
-          setQueueIndex(0);
-          console.log(`📋 Queue updated: ${fullQueue.length} songs`);
-          if (nextSongs.length > 0) {
-            console.log(`  Next up: "${nextSongs[0].title}" by ${nextSongs[0].artist}`);
+          const moreSongs = await response.json();
+          
+          if (moreSongs.length > 0) {
+            // Filter out songs already in queue to avoid duplicates
+            const existingIds = new Set(queue.map(s => s.id));
+            const newSongs = moreSongs.filter(s => !existingIds.has(s.id));
+            
+            if (newSongs.length > 0) {
+              setQueue(prev => [...prev, ...newSongs]);
+              console.log(`✨ Extended queue with ${newSongs.length} new songs (total: ${queue.length + newSongs.length})`);
+            } else {
+              console.log(`⚠️ No new unique songs to add to queue`);
+            }
           }
         } catch (error) {
-          console.error('❌ Error loading queue:', error);
+          console.error('❌ Error extending queue:', error);
         }
       }
+      
       return;
     }
 
