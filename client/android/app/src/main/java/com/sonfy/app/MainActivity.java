@@ -10,6 +10,14 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     
     @Override
+    public void onStart() {
+        super.onStart();
+        
+        // Register Native Audio Plugin
+        registerPlugin(NativeAudioPlugin.class);
+    }
+    
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
