@@ -746,6 +746,48 @@ app.get('/api/next/:videoId', async (req, res) => {
   }
 });
 
+// Get audio URL for YouTube video (for native player)
+app.get('/api/audio/:videoId', async (req, res) => {
+  const { videoId } = req.params;
+  
+  if (!videoId) {
+    return res.status(400).json({ error: 'Video ID is required' });
+  }
+  
+  try {
+    const ytdl = require('ytdl-core');
+    
+    console.log(`🎵 Getting audio URL for: ${videoId}`);
+    
+    const info = await ytdl.getInfo(videoId);
+    
+    // Get audio-only format with best quality
+    const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+    
+    if (audioFormats.length === 0) {
+      throw new Error('No audio formats available');
+    }
+    
+    // Sort by quality and get best
+    const bestAudio = audioFormats.sort((a, b) => b.audioBitrate - a.audioBitrate)[0];
+    
+    console.log(`✅ Found audio URL: ${bestAudio.audioBitrate}kbps`);
+    
+    res.json({
+      url: bestAudio.url,
+      bitrate: bestAudio.audioBitrate,
+      mimeType: bestAudio.mimeType,
+      duration: info.videoDetails.lengthSeconds,
+      title: info.videoDetails.title,
+      artist: info.videoDetails.author.name
+    });
+    
+  } catch (error) {
+    console.error('❌ Error getting audio URL:', error.message);
+    res.status(500).json({ error: 'Failed to get audio URL' });
+  }
+});
+
 // Search songs
 app.get('/api/search', async (req, res) => {
   const query = req.query.q;
