@@ -101,12 +101,7 @@ function App() {
     }
   }, [currentView]);
 
-  // Fetch AI recommendations when user has listening data
-  useEffect(() => {
-    if (currentView === 'home' && (likedSongs.length > 0 || listeningHistory.length > 0) && aiRecommendations.length === 0) {
-      fetchAIRecommendations();
-    }
-  }, [currentView, likedSongs.length, listeningHistory.length]);
+  // Don't auto-fetch recommendations - let user click the button instead
 
   const fetchAIRecommendations = async () => {
     if (loadingRecommendations) return;
@@ -732,15 +727,13 @@ function App() {
                 </h2>
                 <span className="section-subtitle">Personalized for you</span>
               </div>
-              {aiRecommendations.length > 0 && (
-                <button
-                  className="more-button"
-                  onClick={fetchAIRecommendations}
-                  disabled={loadingRecommendations}
-                >
-                  {loadingRecommendations ? 'Loading...' : 'Refresh'}
-                </button>
-              )}
+              <button
+                className="more-button"
+                onClick={fetchAIRecommendations}
+                disabled={loadingRecommendations}
+              >
+                {loadingRecommendations ? 'Loading...' : aiRecommendations.length > 0 ? 'Refresh' : 'Get Recommendations'}
+              </button>
             </div>
             {loadingRecommendations ? (
               <div className="loading-state">
@@ -766,7 +759,11 @@ function App() {
                   ))}
                 </div>
               </div>
-            ) : null}
+            ) : (
+              <div className="empty-state">
+                <p>Click "Get Recommendations" to discover songs based on your taste!</p>
+              </div>
+            )}
           </div>
         )}
         

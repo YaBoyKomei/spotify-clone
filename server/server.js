@@ -838,9 +838,17 @@ app.post('/api/recommendations', async (req, res) => {
     const recommendations = aiData.output || '';
     
     console.log('🤖 AI Response:', recommendations);
+    console.log('🤖 AI Response length:', recommendations.length);
+    
+    if (!recommendations || recommendations.length < 10) {
+      console.warn('⚠️ AI returned empty or very short response');
+      return res.json([]);
+    }
     
     // Parse AI recommendations and search for each song
     const lines = recommendations.split('\n').filter(line => line.trim());
+    console.log(`📝 Parsed ${lines.length} lines from AI response`);
+    
     const searchPromises = [];
     
     for (const line of lines) {
@@ -851,9 +859,14 @@ app.post('/api/recommendations', async (req, res) => {
       if (match) {
         const [, title, artist] = match;
         const query = `${title.trim()} ${artist.trim()}`;
+        console.log(`🔍 Searching for: "${query}"`);
         searchPromises.push(searchYouTubeMusic(query, 1));
+      } else {
+        console.log(`⚠️ Could not parse line: "${line}"`);
       }
     }
+    
+    console.log(`🔍 Searching for ${searchPromises.length} songs...`);
     
     const searchResults = await Promise.all(searchPromises);
     const recommendedSongs = searchResults
@@ -861,6 +874,11 @@ app.post('/api/recommendations', async (req, res) => {
       .map(results => results[0]);
     
     console.log(`✅ Found ${recommendedSongs.length} AI-recommended songs`);
+    
+    if (recommendedSongs.length === 0) {
+      console.warn('⚠️ No songs found from AI recommendations');
+    }
+    
     res.json(recommendedSongs);
     
   } catch (error) {
