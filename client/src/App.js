@@ -101,14 +101,23 @@ function App() {
     }
   }, [currentView]);
 
-  // Don't auto-fetch recommendations - let user click the button instead
+  // Auto-fetch AI recommendations when user has listening data and visits home
+  useEffect(() => {
+    if (currentView === 'home' && (likedSongs.length > 0 || listeningHistory.length > 0) && aiRecommendations.length === 0 && !loadingRecommendations) {
+      // Small delay to let the page load first
+      const timer = setTimeout(() => {
+        fetchAIRecommendations();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentView, likedSongs.length, listeningHistory.length]);
 
   const fetchAIRecommendations = async () => {
     if (loadingRecommendations) return;
-    
+
     setLoadingRecommendations(true);
     console.log('🤖 Fetching AI recommendations...');
-    
+
     try {
       const response = await fetch('/api/recommendations', {
         method: 'POST',
@@ -120,7 +129,7 @@ function App() {
           listeningHistory: listeningHistory
         })
       });
-      
+
       const recommendations = await response.json();
       setAiRecommendations(recommendations);
       console.log(`✅ Got ${recommendations.length} AI recommendations`);
@@ -133,15 +142,15 @@ function App() {
 
   // SEO optimization: Update meta tags when view changes
   useEffect(() => {
-    const currentPlaylist = currentView.startsWith('playlist-') 
+    const currentPlaylist = currentView.startsWith('playlist-')
       ? playlists.find(p => p.id === currentView.replace('playlist-', ''))
       : null;
-    
+
     updateSEOForView(
       currentView.startsWith('playlist-') ? 'playlist' : currentView,
-      currentPlaylist ? { 
-        playlistName: currentPlaylist.name, 
-        playlistId: currentPlaylist.id 
+      currentPlaylist ? {
+        playlistName: currentPlaylist.name,
+        playlistId: currentPlaylist.id
       } : {}
     );
   }, [currentView, playlists]);
@@ -434,12 +443,12 @@ function App() {
           console.log(`🔄 Approaching end of queue (${songsRemaining} songs left), extending queue...`);
           const response = await fetch(`/api/next/${nextSong.youtubeId}`);
           const moreSongs = await response.json();
-          
+
           if (moreSongs.length > 0) {
             // Filter out songs already in queue to avoid duplicates
             const existingIds = new Set(queue.map(s => s.id));
             const newSongs = moreSongs.filter(s => !existingIds.has(s.id));
-            
+
             if (newSongs.length > 0) {
               setQueue(prev => [...prev, ...newSongs]);
               console.log(`✨ Extended queue with ${newSongs.length} new songs (total: ${queue.length + newSongs.length})`);
@@ -451,7 +460,7 @@ function App() {
           console.error('❌ Error extending queue:', error);
         }
       }
-      
+
       return;
     }
 
@@ -803,7 +812,7 @@ function App() {
             )}
           </div>
         )}
-        
+
         {filteredSections.map((section, index) => {
           const scrollState = scrollStates[index] || { isAtStart: true, isAtEnd: false };
 
@@ -1408,7 +1417,7 @@ function App() {
             </p>
             <div className="modal-info">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
-                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
               </svg>
               <p>{playlists.length} playlists will be permanently deleted</p>
             </div>
