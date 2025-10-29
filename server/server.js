@@ -14,49 +14,49 @@ app.use(express.json());
 function parseSongsFromData(data) {
   const sections = [];
   const seenIds = new Set();
-  
+
   try {
     // Navigate to sectionListRenderer
     const sectionList = data?.contents?.singleColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents || [];
-    
+
     console.log(`🔍 Found ${sectionList.length} sections`);
-    
+
     for (const section of sectionList) {
       // Get section title and browse ID
       const header = section?.musicCarouselShelfRenderer?.header?.musicCarouselShelfBasicHeaderRenderer;
       const sectionTitle = header?.title?.runs?.[0]?.text ||
-                          section?.musicShelfRenderer?.title?.runs?.[0]?.text ||
-                          'Recommended';
-      
+        section?.musicShelfRenderer?.title?.runs?.[0]?.text ||
+        'Recommended';
+
       // Get browse ID for "More" button - prioritize moreContentButton
       const browseId = header?.moreContentButton?.buttonRenderer?.navigationEndpoint?.browseEndpoint?.browseId ||
-                      header?.title?.runs?.[0]?.navigationEndpoint?.browseEndpoint?.browseId;
-      
+        header?.title?.runs?.[0]?.navigationEndpoint?.browseEndpoint?.browseId;
+
       // Get items from carousel or shelf
-      const items = section?.musicCarouselShelfRenderer?.contents || 
-                   section?.musicShelfRenderer?.contents || [];
-      
+      const items = section?.musicCarouselShelfRenderer?.contents ||
+        section?.musicShelfRenderer?.contents || [];
+
       if (items.length === 0) continue;
-      
+
       const sectionSongs = [];
-      
+
       for (const item of items) {
         const renderer = item?.musicTwoRowItemRenderer ||
-                        item?.musicResponsiveListItemRenderer ||
-                        item?.musicMultiRowListItemRenderer ||
-                        item?.videoRenderer;
-        
+          item?.musicResponsiveListItemRenderer ||
+          item?.musicMultiRowListItemRenderer ||
+          item?.videoRenderer;
+
         if (renderer) {
           // Try multiple paths for video ID
           const videoId = renderer?.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId ||
-                         renderer?.playlistItemData?.videoId ||
-                         renderer?.navigationEndpoint?.watchEndpoint?.videoId ||
-                         renderer?.videoId ||
-                         renderer?.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.navigationEndpoint?.watchEndpoint?.videoId;
-          
+            renderer?.playlistItemData?.videoId ||
+            renderer?.navigationEndpoint?.watchEndpoint?.videoId ||
+            renderer?.videoId ||
+            renderer?.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.navigationEndpoint?.watchEndpoint?.videoId;
+
           if (videoId && !seenIds.has(videoId)) {
             seenIds.add(videoId);
-            
+
             // Extract title
             let title = 'Unknown Title';
             if (renderer?.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text) {
@@ -66,7 +66,7 @@ function parseSongsFromData(data) {
             } else if (renderer?.title?.simpleText) {
               title = renderer.title.simpleText;
             }
-            
+
             // Extract artist
             let artist = 'Unknown Artist';
             if (renderer?.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs) {
@@ -77,15 +77,15 @@ function parseSongsFromData(data) {
             } else if (renderer?.ownerText?.runs?.[0]?.text) {
               artist = renderer.ownerText.runs[0].text;
             }
-            
+
             // Extract thumbnail
             const thumbnails = renderer?.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails ||
-                             renderer?.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails ||
-                             renderer?.thumbnail?.thumbnails || [];
-            
+              renderer?.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails ||
+              renderer?.thumbnail?.thumbnails || [];
+
             let cover = thumbnails[thumbnails.length - 1]?.url || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
             if (cover.startsWith('//')) cover = 'https:' + cover;
-            
+
             sectionSongs.push({
               id: videoId,
               title: title,
@@ -98,7 +98,7 @@ function parseSongsFromData(data) {
           }
         }
       }
-      
+
       if (sectionSongs.length > 0) {
         sections.push({
           title: sectionTitle,
@@ -108,7 +108,7 @@ function parseSongsFromData(data) {
         console.log(`  ✅ ${sectionTitle}: ${sectionSongs.length} items${browseId ? ' (has more)' : ''}`);
       }
     }
-    
+
     console.log(`📊 Parsed ${sections.length} sections with ${seenIds.size} unique songs`);
     return sections;
   } catch (error) {
@@ -121,7 +121,7 @@ function parseSongsFromData(data) {
 async function getLatestSongs() {
   try {
     const fetch = (await import('node-fetch')).default;
-    
+
     const body = {
       context: {
         client: {
@@ -153,7 +153,7 @@ async function getLatestSongs() {
 
     const data = await response.json();
     const songs = parseSongsFromData(data);
-    
+
     console.log(`🎵 Got ${songs.length} songs from Explore page`);
     return songs;
   } catch (error) {
@@ -167,18 +167,18 @@ async function getLatestSongs() {
 function parseSearchResults(data) {
   const results = [];
   const seenIds = new Set();
-  
+
   try {
     const contents = data?.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents || [];
-    
+
     console.log(`🔍 Found ${contents.length} search sections`);
-    
+
     for (const section of contents) {
       // Handle top result (musicCardShelfRenderer)
       if (section.musicCardShelfRenderer) {
         const card = section.musicCardShelfRenderer;
         const videoId = card.title?.runs?.[0]?.navigationEndpoint?.watchEndpoint?.videoId;
-        
+
         if (videoId && !seenIds.has(videoId)) {
           const title = card.title?.runs?.[0]?.text || '';
           const subtitleRuns = card.subtitle?.runs || [];
@@ -212,7 +212,7 @@ function parseSearchResults(data) {
       if (section.musicShelfRenderer) {
         const shelf = section.musicShelfRenderer;
         const shelfContents = shelf.contents || [];
-        
+
         for (const item of shelfContents) {
           if (item.musicResponsiveListItemRenderer) {
             const parsed = parseSearchItem(item.musicResponsiveListItemRenderer);
@@ -224,7 +224,7 @@ function parseSearchResults(data) {
         }
       }
     }
-    
+
     console.log(`✅ Parsed ${results.length} search results`);
     return results;
   } catch (error) {
@@ -236,15 +236,15 @@ function parseSearchResults(data) {
 // Parse individual search item
 function parseSearchItem(item) {
   try {
-    const videoId = item.playlistItemData?.videoId || 
-                    item.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId;
-    
+    const videoId = item.playlistItemData?.videoId ||
+      item.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId;
+
     if (!videoId) return null;
 
     const flexColumns = item.flexColumns || [];
     const title = flexColumns[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || '';
     const artist = flexColumns[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || 'Unknown Artist';
-    
+
     const thumbnail = item.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
 
     return {
@@ -294,7 +294,7 @@ async function searchYouTubeMusic(query, maxResults = 50) {
 
     const data = await response.json();
     const songs = parseSearchResults(data);
-    
+
     // Limit results
     return songs.slice(0, maxResults);
   } catch (error) {
@@ -307,11 +307,11 @@ async function searchYouTubeMusic(query, maxResults = 50) {
 app.get('/api/songs', async (req, res) => {
   try {
     const sections = await getLatestSongs();
-    
+
     if (sections.length === 0) {
       throw new Error('No songs found');
     }
-    
+
     console.log(`✅ Returning ${sections.length} sections`);
     res.json(sections);
   } catch (error) {
@@ -381,48 +381,48 @@ app.get('/api/songs', async (req, res) => {
 function parseBrowseSongs(data) {
   const songs = [];
   const seenIds = new Set();
-  
+
   try {
     // Try multiple paths for browse responses
     const contents = data?.contents?.singleColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents ||
-                    data?.contents?.twoColumnBrowseResultsRenderer?.secondaryContents?.sectionListRenderer?.contents ||
-                    [];
-    
+      data?.contents?.twoColumnBrowseResultsRenderer?.secondaryContents?.sectionListRenderer?.contents ||
+      [];
+
     console.log(`🔍 Browse response has ${contents.length} sections`);
-    
+
     for (const section of contents) {
       const sectionType = Object.keys(section)[0];
       console.log(`  📁 Section type: ${sectionType}`);
-      
+
       // Handle different section types
       const items = section?.musicShelfRenderer?.contents ||
-                   section?.musicCarouselShelfRenderer?.contents ||
-                   section?.musicPlaylistShelfRenderer?.contents ||
-                   section?.gridRenderer?.items || [];
-      
+        section?.musicCarouselShelfRenderer?.contents ||
+        section?.musicPlaylistShelfRenderer?.contents ||
+        section?.gridRenderer?.items || [];
+
       console.log(`  📦 Section has ${items.length} items`);
-      
+
       for (const item of items) {
         const itemType = Object.keys(item)[0];
-        
+
         const renderer = item?.musicTwoRowItemRenderer ||
-                        item?.musicResponsiveListItemRenderer ||
-                        item?.musicMultiRowListItemRenderer ||
-                        item?.gridVideoRenderer;
-        
+          item?.musicResponsiveListItemRenderer ||
+          item?.musicMultiRowListItemRenderer ||
+          item?.gridVideoRenderer;
+
         if (renderer) {
           const videoId = renderer?.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId ||
-                         renderer?.playlistItemData?.videoId ||
-                         renderer?.navigationEndpoint?.watchEndpoint?.videoId ||
-                         renderer?.videoId;
-          
+            renderer?.playlistItemData?.videoId ||
+            renderer?.navigationEndpoint?.watchEndpoint?.videoId ||
+            renderer?.videoId;
+
           if (!videoId) {
             console.log(`    ⚠️ No videoId found in ${itemType}`);
           }
-          
+
           if (videoId && !seenIds.has(videoId)) {
             seenIds.add(videoId);
-            
+
             let title = 'Unknown Title';
             if (renderer?.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text) {
               title = renderer.flexColumns[0].musicResponsiveListItemFlexColumnRenderer.text.runs[0].text;
@@ -431,7 +431,7 @@ function parseBrowseSongs(data) {
             } else if (renderer?.title?.simpleText) {
               title = renderer.title.simpleText;
             }
-            
+
             let artist = 'Unknown Artist';
             if (renderer?.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs) {
               const runs = renderer.flexColumns[1].musicResponsiveListItemFlexColumnRenderer.text.runs;
@@ -441,14 +441,14 @@ function parseBrowseSongs(data) {
             } else if (renderer?.shortBylineText?.runs?.[0]?.text) {
               artist = renderer.shortBylineText.runs[0].text;
             }
-            
+
             const thumbnails = renderer?.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails ||
-                             renderer?.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails ||
-                             renderer?.thumbnail?.thumbnails || [];
-            
+              renderer?.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails ||
+              renderer?.thumbnail?.thumbnails || [];
+
             let cover = thumbnails[thumbnails.length - 1]?.url || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
             if (cover.startsWith('//')) cover = 'https:' + cover;
-            
+
             songs.push({
               id: videoId,
               title: title,
@@ -458,13 +458,13 @@ function parseBrowseSongs(data) {
               cover: cover,
               youtubeId: videoId
             });
-            
+
             console.log(`    ✅ ${title} by ${artist}`);
           }
         }
       }
     }
-    
+
     return songs;
   } catch (error) {
     console.error('Error parsing browse songs:', error);
@@ -475,10 +475,10 @@ function parseBrowseSongs(data) {
 // Get section details by browse ID
 app.get('/api/section/:browseId', async (req, res) => {
   const { browseId } = req.params;
-  
+
   try {
     const fetch = (await import('node-fetch')).default;
-    
+
     const body = {
       context: {
         client: {
@@ -512,7 +512,7 @@ app.get('/api/section/:browseId', async (req, res) => {
 
     const data = await response.json();
     const songs = parseBrowseSongs(data);
-    
+
     console.log(`✅ Got ${songs.length} songs for browse ID: ${browseId}`);
     res.json(songs);
   } catch (error) {
@@ -524,7 +524,7 @@ app.get('/api/section/:browseId', async (req, res) => {
 // Get next songs in queue for a video
 app.get('/api/next/:videoId', async (req, res) => {
   const { videoId } = req.params;
-  
+
   if (!videoId) {
     return res.status(400).json({ error: 'Video ID is required' });
   }
@@ -532,7 +532,7 @@ app.get('/api/next/:videoId', async (req, res) => {
   try {
     const fetch = (await import('node-fetch')).default;
     const url = 'https://music.youtube.com/youtubei/v1/next?prettyPrint=false';
-    
+
     // Step 1: Get radio playlist ID
     console.log(`🎵 Step 1: Fetching radio playlist for videoId: ${videoId}`);
     const firstPayload = {
@@ -563,12 +563,12 @@ app.get('/api/next/:videoId', async (req, res) => {
     }
 
     const firstData = await firstResponse.json();
-    
+
     // Extract radio playlist ID from "Start radio" menu item
     let radioPlaylistId = null;
     try {
       const contents = firstData?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer?.contents || [];
-      
+
       for (const item of contents) {
         const menuItems = item?.playlistPanelVideoRenderer?.menu?.menuRenderer?.items || [];
         for (const menuItem of menuItems) {
@@ -584,13 +584,13 @@ app.get('/api/next/:videoId', async (req, res) => {
     } catch (err) {
       console.error('Error extracting radio playlist:', err);
     }
-    
+
     // If no radio playlist found, return empty queue
     if (!radioPlaylistId) {
       console.log('⚠️ No radio playlist found');
       return res.json([]);
     }
-    
+
     // Step 2: Get queue with radio playlist ID
     console.log(`🎵 Step 2: Fetching queue with playlistId: ${radioPlaylistId}`);
     const secondPayload = {
@@ -623,18 +623,18 @@ app.get('/api/next/:videoId', async (req, res) => {
 
     const data = await response.json();
     const queue = [];
-    
+
     try {
       const panelRenderer = data?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer;
       const contents = panelRenderer?.contents || [];
       let playlistId = panelRenderer?.playlistId;
-      
+
       console.log(`🔍 Processing ${contents.length} items from queue for videoId: ${videoId}`);
       console.log(`📋 PlaylistId: ${playlistId || 'none'}`);
-      
+
       for (const item of contents) {
         const renderer = item.playlistPanelVideoRenderer;
-        
+
         // Check for automix preview
         if (!renderer && item.automixPreviewVideoRenderer) {
           const automixPlaylistId = item.automixPreviewVideoRenderer?.content?.automixPlaylistVideoRenderer?.navigationEndpoint?.watchPlaylistEndpoint?.playlistId;
@@ -644,43 +644,43 @@ app.get('/api/next/:videoId', async (req, res) => {
           }
           continue;
         }
-        
+
         if (!renderer) {
           console.log('  ⚠️ No playlistPanelVideoRenderer found');
           continue;
         }
-        
+
         const itemVideoId = renderer.videoId;
         const title = renderer.title?.runs?.[0]?.text || '';
         const artist = renderer.longBylineText?.runs?.[0]?.text || 'Unknown Artist';
         const thumbnail = renderer.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
-        
+
         console.log(`  📝 Item: "${title}" by ${artist}`);
         console.log(`     - videoId: ${itemVideoId}`);
         console.log(`     - selected: ${renderer.selected}`);
-        
+
         // Skip the currently playing song (marked as selected)
         if (renderer.selected) {
           console.log(`     ⏭️ SKIPPED: Current song`);
           continue;
         }
-        
+
         // Filter out non-music items
         const musicVideoType = renderer.navigationEndpoint?.watchEndpoint?.watchEndpointMusicSupportedConfigs?.watchEndpointMusicConfig?.musicVideoType;
         const itemPlaylistId = renderer.navigationEndpoint?.watchEndpoint?.playlistId;
-        
+
         console.log(`     - musicVideoType: ${musicVideoType || 'none'}`);
         console.log(`     - playlistId: ${itemPlaylistId || 'none'}`);
         console.log(`     - title length: ${title.length}`);
-        
+
         // Check if it's a music item
         const isMusic = musicVideoType || itemPlaylistId || title.length < 100;
-        
+
         if (!isMusic) {
           console.log(`     🚫 FILTERED OUT: Not music (no musicVideoType, no playlistId, title too long)`);
           continue;
         }
-        
+
         if (itemVideoId && title) {
           console.log(`     ✅ ADDED to queue`);
           queue.push({
@@ -694,7 +694,7 @@ app.get('/api/next/:videoId', async (req, res) => {
           console.log(`     ⚠️ SKIPPED: Missing videoId or title`);
         }
       }
-      
+
       // If queue is empty but we have a playlistId, fetch songs from the playlist
       if (queue.length === 0 && playlistId) {
         console.log(`📋 Queue empty, fetching songs from playlist: ${playlistId}`);
@@ -710,7 +710,7 @@ app.get('/api/next/:videoId', async (req, res) => {
             },
             browseId: `VL${playlistId}`
           };
-          
+
           const playlistResponse = await fetch('https://music.youtube.com/youtubei/v1/browse?prettyPrint=false', {
             method: 'POST',
             headers: {
@@ -719,12 +719,12 @@ app.get('/api/next/:videoId', async (req, res) => {
             },
             body: JSON.stringify(playlistPayload)
           });
-          
+
           if (playlistResponse.ok) {
             const playlistData = await playlistResponse.json();
             const playlistSongs = parseBrowseSongs(playlistData);
             console.log(`✅ Fetched ${playlistSongs.length} songs from playlist`);
-            
+
             // Filter out the current song
             const filteredSongs = playlistSongs.filter(s => s.id !== videoId);
             queue.push(...filteredSongs.slice(0, 20)); // Limit to 20 songs
@@ -733,7 +733,7 @@ app.get('/api/next/:videoId', async (req, res) => {
           console.error('Error fetching playlist:', playlistError);
         }
       }
-      
+
       console.log(`✅ Found ${queue.length} music songs in queue for ${videoId}`);
       res.json(queue);
     } catch (parseError) {
@@ -749,14 +749,14 @@ app.get('/api/next/:videoId', async (req, res) => {
 // Search songs
 app.get('/api/search', async (req, res) => {
   const query = req.query.q;
-  
+
   if (!query) {
     return res.status(400).json({ error: 'Search query is required' });
   }
-  
+
   try {
     const songs = await searchYouTubeMusic(query);
-    
+
     console.log(`✅ Found ${songs.length} results for "${query}"`);
     res.json(songs);
   } catch (error) {
@@ -768,17 +768,17 @@ app.get('/api/search', async (req, res) => {
 // AI-powered recommendations
 app.post('/api/recommendations', async (req, res) => {
   const { likedSongs, listeningHistory } = req.body;
-  
+
   try {
     const fetch = (await import('node-fetch')).default;
-    
+
     // Prepare user preferences for AI
     const recentSongs = listeningHistory?.slice(-10) || [];
     const topLiked = likedSongs?.slice(-10) || [];
-    
+
     // Build context for AI
     let userContext = "Based on the user's music preferences:\n\n";
-    
+
     if (topLiked.length > 0) {
       userContext += "Liked songs:\n";
       topLiked.forEach(song => {
@@ -786,7 +786,7 @@ app.post('/api/recommendations', async (req, res) => {
       });
       userContext += "\n";
     }
-    
+
     if (recentSongs.length > 0) {
       userContext += "Recently played:\n";
       recentSongs.forEach(song => {
@@ -794,15 +794,15 @@ app.post('/api/recommendations', async (req, res) => {
       });
       userContext += "\n";
     }
-    
+
     userContext += "Please recommend 10 songs (with artist names) that match this user's taste. Format each recommendation as: 'Song Title by Artist Name' on separate lines. Only provide song recommendations, nothing else.";
-    
+
     console.log('🤖 Requesting AI recommendations...');
-    
+
     // Call DeepAI API
     const boundary = "----WebKitFormBoundary2EZaPVKzInbQDlEI";
     const messages = [{ role: "user", content: userContext }];
-    
+
     const body = [
       `--${boundary}`,
       'Content-Disposition: form-data; name="chat_style"\r\n',
@@ -818,7 +818,7 @@ app.post('/api/recommendations', async (req, res) => {
       'very_stinky',
       `--${boundary}--`
     ].join('\r\n');
-    
+
     const aiResponse = await fetch('https://api.deepai.org/hacking_is_a_serious_crime', {
       method: 'POST',
       headers: {
@@ -829,33 +829,33 @@ app.post('/api/recommendations', async (req, res) => {
       },
       body: body
     });
-    
+
     if (!aiResponse.ok) {
       throw new Error(`AI API error: ${aiResponse.status}`);
     }
-    
-    const aiData = await aiResponse.json();
-    const recommendations = aiData.output || '';
-    
+
+    // AI API returns plain text, not JSON
+    const recommendations = await aiResponse.text();
+
     console.log('🤖 AI Response:', recommendations);
     console.log('🤖 AI Response length:', recommendations.length);
-    
+
     if (!recommendations || recommendations.length < 10) {
       console.warn('⚠️ AI returned empty or very short response');
       return res.json([]);
     }
-    
+
     // Parse AI recommendations and search for each song
     const lines = recommendations.split('\n').filter(line => line.trim());
     console.log(`📝 Parsed ${lines.length} lines from AI response`);
-    
+
     const searchPromises = [];
-    
+
     for (const line of lines) {
       // Extract song info from various formats
-      const match = line.match(/(?:^\d+\.\s*)?["']?(.+?)["']?\s+by\s+(.+?)$/i) || 
-                   line.match(/(?:^\d+\.\s*)?(.+?)\s*-\s*(.+?)$/);
-      
+      const match = line.match(/(?:^\d+\.\s*)?["']?(.+?)["']?\s+by\s+(.+?)$/i) ||
+        line.match(/(?:^\d+\.\s*)?(.+?)\s*-\s*(.+?)$/);
+
       if (match) {
         const [, title, artist] = match;
         const query = `${title.trim()} ${artist.trim()}`;
@@ -865,22 +865,22 @@ app.post('/api/recommendations', async (req, res) => {
         console.log(`⚠️ Could not parse line: "${line}"`);
       }
     }
-    
+
     console.log(`🔍 Searching for ${searchPromises.length} songs...`);
-    
+
     const searchResults = await Promise.all(searchPromises);
     const recommendedSongs = searchResults
       .filter(results => results.length > 0)
       .map(results => results[0]);
-    
+
     console.log(`✅ Found ${recommendedSongs.length} AI-recommended songs`);
-    
+
     if (recommendedSongs.length === 0) {
       console.warn('⚠️ No songs found from AI recommendations');
     }
-    
+
     res.json(recommendedSongs);
-    
+
   } catch (error) {
     console.error('❌ Error getting AI recommendations:', error);
     // Fallback to empty array
@@ -892,13 +892,13 @@ app.post('/api/recommendations', async (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   const buildPath = path.join(__dirname, '../client/build');
   console.log('📁 Serving static files from:', buildPath);
-  
+
   // Add logging middleware
   app.use((req, res, next) => {
     console.log(`📥 Request: ${req.method} ${req.path}`);
     next();
   });
-  
+
   // Debug routes (remove these after fixing)
   app.get('/debug-build', (req, res) => {
     const fs = require('fs');
@@ -914,17 +914,17 @@ if (process.env.NODE_ENV === 'production') {
       res.json({ error: error.message });
     }
   });
-  
+
   app.get('/test', (req, res) => {
     res.send('<h1>🎵 Sonfy Server Works!</h1><script>console.log("JS works!");</script>');
   });
-  
+
   // Test if JS file is served correctly
   app.get('/test-js', (req, res) => {
     const fs = require('fs');
     const jsFiles = fs.readdirSync(path.join(buildPath, 'static/js'));
     const mainJsFile = jsFiles.find(f => f.startsWith('main.') && f.endsWith('.js'));
-    
+
     if (mainJsFile) {
       const jsPath = path.join(buildPath, 'static/js', mainJsFile);
       const jsContent = fs.readFileSync(jsPath, 'utf8');
@@ -938,7 +938,7 @@ if (process.env.NODE_ENV === 'production') {
       res.json({ error: 'No main JS file found' });
     }
   });
-  
+
   // Serve static files FIRST - this is crucial
   app.use(express.static(buildPath, {
     maxAge: 0, // Disable caching for debugging
@@ -947,7 +947,7 @@ if (process.env.NODE_ENV === 'production') {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
-      
+
       if (filePath.endsWith('.js')) {
         res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
       } else if (filePath.endsWith('.css')) {
@@ -955,18 +955,18 @@ if (process.env.NODE_ENV === 'production') {
       }
     }
   }));
-  
+
   // Catch-all for React Router (ONLY for non-file requests)
   app.get('*', (req, res) => {
     const indexPath = path.join(buildPath, 'index.html');
     console.log('📄 Serving index.html for:', req.path);
     res.sendFile(indexPath);
   });
-  
+
 } else {
   // Development mode
   app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
       message: 'Server is running in development mode',
       note: 'Run the React app separately with: cd client && npm start'
     });
