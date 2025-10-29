@@ -183,7 +183,8 @@ function App() {
     if (sections.length > 0 && currentView === 'home') {
       const filteredSections = sections.filter(section =>
         !section.title.toLowerCase().includes('episode') &&
-        !section.title.toLowerCase().includes('podcast')
+        !section.title.toLowerCase().includes('podcast') &&
+        !section.title.toLowerCase().includes('video')
       );
 
       filteredSections.forEach((_, index) => {
@@ -752,7 +753,8 @@ function App() {
 
     const filteredSections = sections.filter(section =>
       !section.title.toLowerCase().includes('episode') &&
-      !section.title.toLowerCase().includes('podcast')
+      !section.title.toLowerCase().includes('podcast') &&
+      !section.title.toLowerCase().includes('video')
     );
 
     // Get most played songs from play count tracker
