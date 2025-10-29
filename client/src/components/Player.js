@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
 import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon } from './Icons';
 import { BackgroundMode } from '../plugins/BackgroundMode';
+import NativeAudio from '../plugins/NativeAudio';
+import { Capacitor } from '@capacitor/core';
 
 function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
   const [player, setPlayer] = useState(null);
@@ -35,6 +37,9 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const draggedElement = useRef(null);
   const wakeLockRef = useRef(null);
   const audioElementRef = useRef(null);
+  const isNativePlatform = Capacitor.isNativePlatform();
+  const [useNativePlayer, setUseNativePlayer] = useState(isNativePlatform);
+  const nativePlayerReady = useRef(false);
 
   // Enable background mode on mount
   useEffect(() => {
@@ -626,8 +631,29 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         }
       }
 
-      // Load the video
-      player.loadVideoById(currentSong.youtubeId);
+      // Load the video - use native player on Android
+      if (useNativePlayer && currentSong.youtubeId) {
+        console.log('🎵 Loading with native player:', currentSong.youtubeId);
+        
+        NativeAudio.loadYouTubeAudio(
+          currentSong.youtubeId,
+          currentSong.title,
+          currentSong.artist
+        ).then(() => {
+          console.log('✅ Native audio loaded');
+          nativePlayerReady.current = true;
+          
+          if (isPlayingRef.current) {
+            NativeAudio.play();
+          }
+        }).catch(error => {
+          console.error('❌ Native player error, falling back to YouTube:', error);
+          setUseNativePlayer(false);
+          player.loadVideoById(currentSong.youtubeId);
+        });
+      } else {
+        player.loadVideoById(currentSong.youtubeId);
+      }
 
       // Set quality to HD for better audio after video loads
       setTimeout(() => {
@@ -680,9 +706,21 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
   // Handle play/pause
   useEffect(() => {
-    if (!player) return;
+    if (!player && !useNativePlayer) return;
 
     try {
+      if (useNativePlayer && nativePlayerReady.current) {
+        // Use native player
+        if (isPlaying) {
+          console.log('▶️ Native player: Play');
+          NativeAudio.play().catch(err => console.error('Native play error:', err));
+        } else {
+          console.log('⏸️ Native player: Pause');
+          NativeAudio.pause().catch(err => console.error('Native pause error:', err));
+        }
+        return;
+      }
+
       const playerState = player.getPlayerState ? player.getPlayerState() : -1;
       console.log('🎮 Play/Pause Effect - Player state:', playerState, 'isPlaying:', isPlaying, 'Manual pause:', manualPauseRef.current);
 
