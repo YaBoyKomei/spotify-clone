@@ -17,33 +17,9 @@
       "purpose": "any"
     },
     {
-      "src": "favicon-16x16.png",
-      "type": "image/png",
-      "sizes": "16x16",
-      "purpose": "any"
-    },
-    {
-      "src": "favicon-32x32.png",
-      "type": "image/png",
-      "sizes": "32x32",
-      "purpose": "any"
-    },
-    {
       "src": "apple-touch-icon.png",
       "type": "image/png",
       "sizes": "180x180",
-      "purpose": "any"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512",
       "purpose": "any maskable"
     }
   ],
@@ -67,8 +43,8 @@
       "url": "/?view=search",
       "icons": [
         {
-          "src": "logo192.png",
-          "sizes": "192x192"
+          "src": "apple-touch-icon.png",
+          "sizes": "180x180"
         }
       ]
     },
@@ -79,26 +55,10 @@
       "url": "/?view=liked",
       "icons": [
         {
-          "src": "logo192.png",
-          "sizes": "192x192"
+          "src": "apple-touch-icon.png",
+          "sizes": "180x180"
         }
       ]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Sonfy music streaming interface on desktop"
-    },
-    {
-      "src": "screenshot-narrow.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Sonfy music streaming interface on mobile"
     }
   ]
 }
