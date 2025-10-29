@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Sidebar from './components/Sidebar';
 import Player from './components/Player';
+import { getApiUrl } from './config';
 // import AudioPlayer from './components/AudioPlayer';
 import SongCard from './components/SongCard';
 import { SearchIcon, MusicIcon } from './components/Icons';
@@ -86,7 +87,7 @@ function App() {
   useEffect(() => {
     if (currentView === 'home') {
       setLoading(true);
-      fetch('/api/songs')
+      fetch(getApiUrl('/api/songs'))
         .then(res => res.json())
         .then(data => {
           setSections(data);
@@ -119,7 +120,7 @@ function App() {
     console.log('🤖 Fetching AI recommendations...');
 
     try {
-      const response = await fetch('/api/recommendations', {
+      const response = await fetch(getApiUrl('/api/recommendations'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -329,7 +330,7 @@ function App() {
     if (fetchNewQueue && song.youtubeId) {
       try {
         console.log(`📡 Fetching queue for video ID: ${song.youtubeId}`);
-        const response = await fetch(`/api/next/${song.youtubeId}`);
+        const response = await fetch(getApiUrl(`/api/next/${song.youtubeId}`));
         const nextSongs = await response.json();
         // Add current song at the beginning of the queue
         const fullQueue = [song, ...nextSongs];
@@ -446,7 +447,7 @@ function App() {
       if (songsRemaining <= 3 && nextSong.youtubeId) {
         try {
           console.log(`🔄 Approaching end of queue (${songsRemaining} songs left), extending queue...`);
-          const response = await fetch(`/api/next/${nextSong.youtubeId}`);
+          const response = await fetch(getApiUrl(`/api/next/${nextSong.youtubeId}`));
           const moreSongs = await response.json();
 
           if (moreSongs.length > 0) {
@@ -509,7 +510,7 @@ function App() {
 
       // Fetch queue for the previous song
       try {
-        const response = await fetch(`/api/next/${prevSong.youtubeId}`);
+        const response = await fetch(getApiUrl(`/api/next/${prevSong.youtubeId}`));
         const nextSongs = await response.json();
         // Add previous song at the beginning
         const fullQueue = [prevSong, ...nextSongs];
@@ -562,7 +563,7 @@ function App() {
 
     console.log(`🔄 Refreshing queue for: "${currentSong.title}"`);
     try {
-      const response = await fetch(`/api/next/${currentSong.youtubeId}`);
+      const response = await fetch(getApiUrl(`/api/next/${currentSong.youtubeId}`));
       const nextSongs = await response.json();
       // Add current song at the beginning
       const fullQueue = [currentSong, ...nextSongs];
@@ -583,7 +584,7 @@ function App() {
 
     console.log(`📜 Extending queue based on: "${lastSong.title}"`);
     try {
-      const response = await fetch(`/api/next/${lastSong.youtubeId}`);
+      const response = await fetch(getApiUrl(`/api/next/${lastSong.youtubeId}`));
       const moreSongs = await response.json();
 
       if (moreSongs.length > 0) {
@@ -696,7 +697,7 @@ function App() {
     setExpandedSection(section);
 
     try {
-      const response = await fetch(`/api/section/${section.browseId}`);
+      const response = await fetch(getApiUrl(`/api/section/${section.browseId}`));
       const data = await response.json();
       setExpandedSongs(data);
     } catch (error) {
@@ -722,7 +723,7 @@ function App() {
     setIsSearching(true);
     setHasSearched(true);
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(getApiUrl(`/api/search?q=${encodeURIComponent(searchQuery)}`));
       const data = await response.json();
       setSearchResults(data);
     } catch (error) {
