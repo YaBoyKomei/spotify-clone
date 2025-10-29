@@ -19,7 +19,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         // Start foreground service when app is active
         Intent serviceIntent = new Intent(this, MusicService.class);
@@ -27,14 +27,14 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         // Keep service running when app goes to background
         // Service will be stopped when music actually stops
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         // Stop service when app is destroyed
         Intent serviceIntent = new Intent(this, MusicService.class);
