@@ -181,11 +181,15 @@ function App() {
   // Initialize scroll states for carousels
   useEffect(() => {
     if (sections.length > 0 && currentView === 'home') {
-      const filteredSections = sections.filter(section =>
-        !section.title.toLowerCase().includes('episode') &&
-        !section.title.toLowerCase().includes('podcast') &&
-        !section.title.toLowerCase().includes('video')
-      );
+      const filteredSections = sections
+        .filter(section =>
+          !section.title.toLowerCase().includes('episode') &&
+          !section.title.toLowerCase().includes('podcast')
+        )
+        .map(section => ({
+          ...section,
+          title: section.title.replace(/\s*videos?\s*/gi, ' ').replace(/\s+/g, ' ').trim()
+        }));
 
       filteredSections.forEach((_, index) => {
         const carousel = document.getElementById(`carousel-${index}`);
@@ -751,11 +755,15 @@ function App() {
       );
     }
 
-    const filteredSections = sections.filter(section =>
-      !section.title.toLowerCase().includes('episode') &&
-      !section.title.toLowerCase().includes('podcast') &&
-      !section.title.toLowerCase().includes('video')
-    );
+    const filteredSections = sections
+      .filter(section =>
+        !section.title.toLowerCase().includes('episode') &&
+        !section.title.toLowerCase().includes('podcast')
+      )
+      .map(section => ({
+        ...section,
+        title: section.title.replace(/\s*videos?\s*/gi, ' ').replace(/\s+/g, ' ').trim()
+      }));
 
     // Get most played songs from play count tracker
     const getMostPlayedSongs = () => {
