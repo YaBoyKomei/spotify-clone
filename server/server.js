@@ -765,6 +765,111 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
+// AI-powered recommendations
+app.post('/api/recommendations', async (req, res) => {
+  const { likedSongs, listeningHistory } = req.body;
+  
+  try {
+    const fetch = (await import('node-fetch')).default;
+    
+    // Prepare user preferences for AI
+    const recentSongs = listeningHistory?.slice(-10) || [];
+    const topLiked = likedSongs?.slice(-10) || [];
+    
+    // Build context for AI
+    let userContext = "Based on the user's music preferences:\n\n";
+    
+    if (topLiked.length > 0) {
+      userContext += "Liked songs:\n";
+      topLiked.forEach(song => {
+        userContext += `- "${song.title}" by ${song.artist}\n`;
+      });
+      userContext += "\n";
+    }
+    
+    if (recentSongs.length > 0) {
+      userContext += "Recently played:\n";
+      recentSongs.forEach(song => {
+        userContext += `- "${song.title}" by ${song.artist}\n`;
+      });
+      userContext += "\n";
+    }
+    
+    userContext += "Please recommend 10 songs (with artist names) that match this user's taste. Format each recommendation as: 'Song Title by Artist Name' on separate lines. Only provide song recommendations, nothing else.";
+    
+    console.log('🤖 Requesting AI recommendations...');
+    
+    // Call DeepAI API
+    const boundary = "----WebKitFormBoundary2EZaPVKzInbQDlEI";
+    const messages = [{ role: "user", content: userContext }];
+    
+    const body = [
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="chat_style"\r\n',
+      'chat',
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="chatHistory"\r\n',
+      JSON.stringify(messages),
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="model"\r\n',
+      'standard',
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="hacker_is_stinky"\r\n',
+      'very_stinky',
+      `--${boundary}--`
+    ].join('\r\n');
+    
+    const aiResponse = await fetch('https://api.deepai.org/hacking_is_a_serious_crime', {
+      method: 'POST',
+      headers: {
+        'Api-Key': 'tryit-69244861019-9ebc4eeb1aa323e195fa7bb7a0fcc026',
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': '*/*'
+      },
+      body: body
+    });
+    
+    if (!aiResponse.ok) {
+      throw new Error(`AI API error: ${aiResponse.status}`);
+    }
+    
+    const aiData = await aiResponse.json();
+    const recommendations = aiData.output || '';
+    
+    console.log('🤖 AI Response:', recommendations);
+    
+    // Parse AI recommendations and search for each song
+    const lines = recommendations.split('\n').filter(line => line.trim());
+    const searchPromises = [];
+    
+    for (const line of lines) {
+      // Extract song info from various formats
+      const match = line.match(/(?:^\d+\.\s*)?["']?(.+?)["']?\s+by\s+(.+?)$/i) || 
+                   line.match(/(?:^\d+\.\s*)?(.+?)\s*-\s*(.+?)$/);
+      
+      if (match) {
+        const [, title, artist] = match;
+        const query = `${title.trim()} ${artist.trim()}`;
+        searchPromises.push(searchYouTubeMusic(query, 1));
+      }
+    }
+    
+    const searchResults = await Promise.all(searchPromises);
+    const recommendedSongs = searchResults
+      .filter(results => results.length > 0)
+      .map(results => results[0]);
+    
+    console.log(`✅ Found ${recommendedSongs.length} AI-recommended songs`);
+    res.json(recommendedSongs);
+    
+  } catch (error) {
+    console.error('❌ Error getting AI recommendations:', error);
+    // Fallback to empty array
+    res.json([]);
+  }
+});
+
 // Production configuration
 if (process.env.NODE_ENV === 'production') {
   const buildPath = path.join(__dirname, '../client/build');

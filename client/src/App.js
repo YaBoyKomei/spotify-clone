@@ -58,6 +58,8 @@ function App() {
   const [showDeletePlaylist, setShowDeletePlaylist] = useState(false);
   const [playlistToDelete, setPlaylistToDelete] = useState(null);
   const [showClearHistory, setShowClearHistory] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   // Save to localStorage whenever data changes
   useEffect(() => {
@@ -98,6 +100,41 @@ function App() {
         });
     }
   }, [currentView]);
+
+  // Fetch AI recommendations when user has listening data
+  useEffect(() => {
+    if (currentView === 'home' && (likedSongs.length > 0 || listeningHistory.length > 0) && aiRecommendations.length === 0) {
+      fetchAIRecommendations();
+    }
+  }, [currentView, likedSongs.length, listeningHistory.length]);
+
+  const fetchAIRecommendations = async () => {
+    if (loadingRecommendations) return;
+    
+    setLoadingRecommendations(true);
+    console.log('🤖 Fetching AI recommendations...');
+    
+    try {
+      const response = await fetch('/api/recommendations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          likedSongs: likedSongs,
+          listeningHistory: listeningHistory
+        })
+      });
+      
+      const recommendations = await response.json();
+      setAiRecommendations(recommendations);
+      console.log(`✅ Got ${recommendations.length} AI recommendations`);
+    } catch (error) {
+      console.error('❌ Error fetching AI recommendations:', error);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
 
   // SEO optimization: Update meta tags when view changes
   useEffect(() => {
@@ -684,6 +721,54 @@ function App() {
           <h2 className="welcome-title">Welcome to Sonfy</h2>
           <p className="welcome-subtitle">Discover millions of songs, create playlists, and enjoy high-quality music streaming - all for free!</p>
         </div>
+
+        {/* AI Recommendations Section */}
+        {(likedSongs.length > 0 || listeningHistory.length > 0) && (
+          <div className="music-section">
+            <div className="section-header">
+              <div className="section-title-group">
+                <h2 className="section-title">
+                  🤖 AI Recommendations
+                </h2>
+                <span className="section-subtitle">Personalized for you</span>
+              </div>
+              {aiRecommendations.length > 0 && (
+                <button
+                  className="more-button"
+                  onClick={fetchAIRecommendations}
+                  disabled={loadingRecommendations}
+                >
+                  {loadingRecommendations ? 'Loading...' : 'Refresh'}
+                </button>
+              )}
+            </div>
+            {loadingRecommendations ? (
+              <div className="loading-state">
+                <div className="spinner"></div>
+                <p>Getting personalized recommendations...</p>
+              </div>
+            ) : aiRecommendations.length > 0 ? (
+              <div className="section-carousel">
+                <div className="songs-carousel">
+                  {aiRecommendations.map(song => (
+                    <SongCard
+                      key={song.id}
+                      song={song}
+                      currentSong={currentSong}
+                      isLiked={!!likedSongs.find(s => s.id === song.id)}
+                      onPlay={playSong}
+                      onToggleLike={toggleLike}
+                      onAddToPlaylist={(song) => {
+                        setSelectedSongForPlaylist(song);
+                        setShowAddToPlaylist(true);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
         
         {filteredSections.map((section, index) => {
           const scrollState = scrollStates[index] || { isAtStart: true, isAtEnd: false };
