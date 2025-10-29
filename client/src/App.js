@@ -569,6 +569,35 @@ function App() {
     }
   };
 
+  const extendQueue = async () => {
+    if (queue.length === 0) return;
+
+    // Get the last song in queue to fetch related songs
+    const lastSong = queue[queue.length - 1];
+    if (!lastSong || !lastSong.youtubeId) return;
+
+    console.log(`📜 Extending queue based on: "${lastSong.title}"`);
+    try {
+      const response = await fetch(`/api/next/${lastSong.youtubeId}`);
+      const moreSongs = await response.json();
+      
+      if (moreSongs.length > 0) {
+        // Filter out songs already in queue to avoid duplicates
+        const existingIds = new Set(queue.map(s => s.id));
+        const newSongs = moreSongs.filter(s => !existingIds.has(s.id));
+        
+        if (newSongs.length > 0) {
+          setQueue(prev => [...prev, ...newSongs]);
+          console.log(`✨ Extended queue with ${newSongs.length} new songs (total: ${queue.length + newSongs.length})`);
+        } else {
+          console.log(`⚠️ No new unique songs to add to queue`);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error extending queue:', error);
+    }
+  };
+
   const reorderQueue = (fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;
 
@@ -1259,6 +1288,7 @@ function App() {
         onToggleQueue={toggleQueue}
         onPlayFromQueue={playFromQueue}
         onRefreshQueue={refreshQueue}
+        onExtendQueue={extendQueue}
         onReorderQueue={reorderQueue}
         likedSongs={likedSongs}
         onToggleLikeInQueue={toggleLike}

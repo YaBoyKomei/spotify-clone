@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
 import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon } from './Icons';
 
-function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
+function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -67,6 +67,43 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   useEffect(() => {
     playerRef.current = player;
   }, [player]);
+
+  // Infinite scroll for queue panel
+  useEffect(() => {
+    if (!showQueue || !onExtendQueue) return;
+
+    const queueList = document.querySelector('.queue-list');
+    if (!queueList) return;
+
+    let isLoading = false;
+
+    const handleScroll = () => {
+      if (isLoading) return;
+
+      const scrollTop = queueList.scrollTop;
+      const scrollHeight = queueList.scrollHeight;
+      const clientHeight = queueList.clientHeight;
+
+      // Check if user scrolled near the bottom (within 200px)
+      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200;
+
+      if (isNearBottom && queue.length > 0) {
+        console.log('📜 Near bottom of queue, loading more songs...');
+        isLoading = true;
+        
+        // Extend the queue with more songs
+        onExtendQueue();
+        
+        // Prevent multiple rapid calls
+        setTimeout(() => {
+          isLoading = false;
+        }, 2000);
+      }
+    };
+
+    queueList.addEventListener('scroll', handleScroll);
+    return () => queueList.removeEventListener('scroll', handleScroll);
+  }, [showQueue, queue.length, onExtendQueue]);
 
   useEffect(() => {
     autoplayRef.current = autoplay;
