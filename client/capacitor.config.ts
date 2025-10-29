@@ -8,7 +8,14 @@ const config: CapacitorConfig = {
   // API calls will go to the server defined in the React app
   android: {
     allowMixedContent: true,
-    backgroundColor: '#000000'
+    backgroundColor: '#000000',
+    // Enable background mode
+    webContentsDebuggingEnabled: true
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 0
+    }
   }
 };
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
 import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon } from './Icons';
+import { BackgroundMode } from '../plugins/BackgroundMode';
 
 function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
   const [player, setPlayer] = useState(null);
@@ -34,6 +35,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const draggedElement = useRef(null);
   const wakeLockRef = useRef(null);
   const audioElementRef = useRef(null);
+
+  // Enable background mode on mount
+  useEffect(() => {
+    BackgroundMode.enable().then(() => {
+      console.log('🎵 Background playback enabled');
+    });
+
+    return () => {
+      BackgroundMode.disable();
+    };
+  }, []);
 
   // Initialize audio element for background playback detection
   useEffect(() => {
