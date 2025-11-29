@@ -4,12 +4,14 @@ const config: CapacitorConfig = {
   appId: 'com.sonfy.app',
   appName: 'Sonfy',
   webDir: 'build',
-  // Remove server.url to load app locally
-  // API calls will go to the server defined in the React app
+  server: {
+    // Load YouTube Music directly
+    url: 'https://music.youtube.com',
+    cleartext: true
+  },
   android: {
     allowMixedContent: true,
     backgroundColor: '#000000',
-    // Enable background mode
     webContentsDebuggingEnabled: true
   },
   plugins: {
