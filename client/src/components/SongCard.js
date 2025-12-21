@@ -1,9 +1,11 @@
-import React, { useRef, useEffect } from 'react';
-import { HeartIcon, PlusIcon } from './Icons';
+import React, { useRef, useEffect, useState } from 'react';
+import { HeartIcon } from './Icons';
 import { getOptimizedImageUrl, lazyLoadImage } from '../utils/performance';
 
-function SongCard({ song, currentSong, isLiked, onPlay, onToggleLike, onAddToPlaylist, onRemoveFromPlaylist, showRemove }) {
+function SongCard({ song, currentSong, isLiked, onPlay, onToggleLike, onAddToPlaylist, onRemoveFromPlaylist, onPlayNext, showRemove }) {
   const imgRef = useRef(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     if (imgRef.current) {
@@ -11,10 +13,43 @@ function SongCard({ song, currentSong, isLiked, onPlay, onToggleLike, onAddToPla
     }
   }, []);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showMenu]);
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onPlay(song);
+    }
+  };
+
+  const handleMenuClick = (e) => {
+    e.stopPropagation();
+    setShowMenu(!showMenu);
+  };
+
+  const handleAddToPlaylist = (e) => {
+    e.stopPropagation();
+    setShowMenu(false);
+    onAddToPlaylist(song);
+  };
+
+  const handlePlayNext = (e) => {
+    e.stopPropagation();
+    setShowMenu(false);
+    if (onPlayNext) {
+      onPlayNext(song);
     }
   };
 
@@ -55,17 +90,37 @@ function SongCard({ song, currentSong, isLiked, onPlay, onToggleLike, onAddToPla
           </svg>
         </button>
       ) : (
-        <button
-          className="add-to-playlist-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToPlaylist(song);
-          }}
-          title="Add to Playlist"
-          aria-label={`Add ${song.title} to playlist`}
-        >
-          <PlusIcon />
-        </button>
+        <div className="song-menu-container" ref={menuRef}>
+          <button
+            className="song-menu-btn"
+            onClick={handleMenuClick}
+            title="More options"
+            aria-label={`More options for ${song.title}`}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="5" r="2"></circle>
+              <circle cx="12" cy="12" r="2"></circle>
+              <circle cx="12" cy="19" r="2"></circle>
+            </svg>
+          </button>
+          {showMenu && (
+            <div className="song-menu-dropdown">
+              <button onClick={handlePlayNext}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                </svg>
+                Play Next
+              </button>
+              <button onClick={handleAddToPlaylist}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add to Playlist
+              </button>
+            </div>
+          )}
+        </div>
       )}
       <div className="song-card-content" onClick={() => onPlay(song)}>
         <img 

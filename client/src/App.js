@@ -9,6 +9,28 @@ import { SearchIcon, MusicIcon } from './components/Icons';
 import { ChevronLeftIcon, ChevronRightIcon } from './components/ScrollButton';
 import { updateSEOForView, addSongStructuredData, preloadCriticalResources } from './utils/seo';
 
+// API Helper Functions (using server)
+const fetchNextSongs = async (videoId) => {
+  console.log(`⏭️ Fetching next songs for: ${videoId}`);
+  const response = await fetch(getApiUrl(`/api/next/${videoId}`));
+  if (!response.ok) throw new Error(`Next API error: ${response.status}`);
+  return response.json();
+};
+
+const fetchSection = async (browseId) => {
+  console.log(`📁 Fetching section: ${browseId}`);
+  const response = await fetch(getApiUrl(`/api/browse/${browseId}`));
+  if (!response.ok) throw new Error(`Browse API error: ${response.status}`);
+  return response.json();
+};
+
+const searchSongs = async (query) => {
+  console.log(`🔍 Searching: ${query}`);
+  const response = await fetch(getApiUrl(`/api/search?q=${encodeURIComponent(query)}`));
+  if (!response.ok) throw new Error(`Search API error: ${response.status}`);
+  return response.json();
+};
+
 function App() {
   console.log('🎵 Sonfy App starting...');
   const [songs, setSongs] = useState([]);
@@ -337,17 +359,6 @@ function App() {
         setQueue(fullQueue);
         setQueueIndex(0); // Current song is at index 0
         console.log(`📋 Queue loaded: ${fullQueue.length} songs (including current)`);
-        if (nextSongs.length > 0) {
-          console.log(`🎵 Next songs in queue:`);
-          nextSongs.slice(0, 5).forEach((s, i) => {
-            console.log(`  ${i + 1}. "${s.title}" by ${s.artist}`);
-          });
-          if (nextSongs.length > 5) {
-            console.log(`  ... and ${nextSongs.length - 5} more`);
-          }
-        } else {
-          console.warn('⚠️ Queue is empty - no next songs found!');
-        }
       } catch (error) {
         console.error('❌ Error loading queue:', error);
         setQueue([song]); // At least keep the current song
@@ -447,8 +458,7 @@ function App() {
       if (songsRemaining <= 3 && nextSong.youtubeId) {
         try {
           console.log(`🔄 Approaching end of queue (${songsRemaining} songs left), extending queue...`);
-          const response = await fetch(getApiUrl(`/api/next/${nextSong.youtubeId}`));
-          const moreSongs = await response.json();
+          const moreSongs = await fetchNextSongs(nextSong.youtubeId);
 
           if (moreSongs.length > 0) {
             // Filter out songs already in queue to avoid duplicates
@@ -510,8 +520,7 @@ function App() {
 
       // Fetch queue for the previous song
       try {
-        const response = await fetch(getApiUrl(`/api/next/${prevSong.youtubeId}`));
-        const nextSongs = await response.json();
+        const nextSongs = await fetchNextSongs(prevSong.youtubeId);
         // Add previous song at the beginning
         const fullQueue = [prevSong, ...nextSongs];
         setQueue(fullQueue);
@@ -563,8 +572,7 @@ function App() {
 
     console.log(`🔄 Refreshing queue for: "${currentSong.title}"`);
     try {
-      const response = await fetch(getApiUrl(`/api/next/${currentSong.youtubeId}`));
-      const nextSongs = await response.json();
+      const nextSongs = await fetchNextSongs(currentSong.youtubeId);
       // Add current song at the beginning
       const fullQueue = [currentSong, ...nextSongs];
       setQueue(fullQueue);
@@ -584,8 +592,7 @@ function App() {
 
     console.log(`📜 Extending queue based on: "${lastSong.title}"`);
     try {
-      const response = await fetch(getApiUrl(`/api/next/${lastSong.youtubeId}`));
-      const moreSongs = await response.json();
+      const moreSongs = await fetchNextSongs(lastSong.youtubeId);
 
       if (moreSongs.length > 0) {
         // Filter out songs already in queue to avoid duplicates
@@ -613,6 +620,26 @@ function App() {
 
     setQueue(newQueue);
     console.log(`🔄 Reordered queue: moved song from position ${fromIndex + 1} to ${toIndex + 1}`);
+  };
+
+  // Add song to play next (right after current song)
+  const handlePlayNext = (song) => {
+    // Check if song is already in queue
+    const existingIndex = queue.findIndex(s => s.id === song.id);
+    
+    const newQueue = [...queue];
+    
+    // Remove if already exists
+    if (existingIndex !== -1) {
+      newQueue.splice(existingIndex, 1);
+    }
+    
+    // Insert right after current song (queueIndex)
+    const insertIndex = queueIndex + 1;
+    newQueue.splice(insertIndex, 0, song);
+    
+    setQueue(newQueue);
+    console.log(`⏭️ Added "${song.title}" to play next (position ${insertIndex + 1})`);
   };
 
   const toggleLike = (song) => {
@@ -697,8 +724,7 @@ function App() {
     setExpandedSection(section);
 
     try {
-      const response = await fetch(getApiUrl(`/api/section/${section.browseId}`));
-      const data = await response.json();
+      const data = await fetchSection(section.browseId);
       setExpandedSongs(data);
     } catch (error) {
       console.error('Error loading section:', error);
@@ -723,8 +749,7 @@ function App() {
     setIsSearching(true);
     setHasSearched(true);
     try {
-      const response = await fetch(getApiUrl(`/api/search?q=${encodeURIComponent(searchQuery)}`));
-      const data = await response.json();
+      const data = await searchSongs(searchQuery);
       setSearchResults(data);
     } catch (error) {
       console.error('Search error:', error);
@@ -841,6 +866,7 @@ function App() {
                         setSelectedSongForPlaylist(song);
                         setShowAddToPlaylist(true);
                       }}
+                      onPlayNext={handlePlayNext}
                     />
                   ))}
                 </div>
@@ -901,6 +927,7 @@ function App() {
                         setSelectedSongForPlaylist(song);
                         setShowAddToPlaylist(true);
                       }}
+                      onPlayNext={handlePlayNext}
                     />
                   ))}
                 </div>
@@ -948,6 +975,7 @@ function App() {
                         setSelectedSongForPlaylist(song);
                         setShowAddToPlaylist(true);
                       }}
+                      onPlayNext={handlePlayNext}
                     />
                   </div>
                 ))}
@@ -985,6 +1013,7 @@ function App() {
                       setSelectedSongForPlaylist(song);
                       setShowAddToPlaylist(true);
                     }}
+                    onPlayNext={handlePlayNext}
                   />
                 ))}
               </div>
@@ -1041,6 +1070,7 @@ function App() {
                     setSelectedSongForPlaylist(song);
                     setShowAddToPlaylist(true);
                   }}
+                  onPlayNext={handlePlayNext}
                 />
               ))}
             </div>
@@ -1110,6 +1140,7 @@ function App() {
                     setSelectedSongForPlaylist(song);
                     setShowAddToPlaylist(true);
                   }}
+                  onPlayNext={handlePlayNext}
                 />
               ))}
             </div>
@@ -1148,6 +1179,7 @@ function App() {
                     setSelectedSongForPlaylist(song);
                     setShowAddToPlaylist(true);
                   }}
+                  onPlayNext={handlePlayNext}
                 />
               ))}
             </div>
@@ -1257,6 +1289,7 @@ function App() {
                         setSelectedSongForPlaylist(song);
                         setShowAddToPlaylist(true);
                       }}
+                      onPlayNext={handlePlayNext}
                     />
                   ))}
                 </div>

@@ -3,6 +3,7 @@ import './Player.css';
 import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon } from './Icons';
 import { BackgroundMode } from '../plugins/BackgroundMode';
 import NativeAudio from '../plugins/NativeAudio';
+import MusicControl from '../plugins/MusicControl';
 import { Capacitor } from '@capacitor/core';
 
 function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
@@ -27,6 +28,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const touchEndY = useRef(0);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Touch drag state
   const [touchDragActive, setTouchDragActive] = useState(false);
@@ -51,6 +53,174 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       BackgroundMode.disable();
     };
   }, []);
+
+  // Setup global SonfyControl object for native communication
+  useEffect(() => {
+    // Create global control object that native code can call
+    window.SonfyControl = {
+      play: () => {
+        console.log('📱 Native: Play');
+        if (playerRef.current && playerRef.current.playVideo) {
+          playerRef.current.playVideo();
+        }
+        if (!isPlayingRef.current) {
+          onTogglePlay();
+        }
+      },
+      pause: () => {
+        console.log('📱 Native: Pause');
+        if (playerRef.current && playerRef.current.pauseVideo) {
+          playerRef.current.pauseVideo();
+        }
+        if (isPlayingRef.current) {
+          onTogglePlay();
+        }
+      },
+      previous: () => {
+        console.log('📱 Native: Previous');
+        if (onPreviousRef.current) {
+          onPreviousRef.current();
+        }
+      },
+      next: () => {
+        console.log('📱 Native: Next');
+        if (onNextRef.current) {
+          onNextRef.current();
+        }
+      },
+      seekTo: (seconds) => {
+        console.log('📱 Native: Seek to', seconds);
+        if (playerRef.current && playerRef.current.seekTo) {
+          playerRef.current.seekTo(seconds, true);
+        }
+      }
+    };
+
+    // Listen for custom events from native Android app
+    const handleSonfyControl = (event) => {
+      const { action, value } = event.detail || {};
+      console.log('📱 Sonfy control event:', action, value);
+      
+      switch (action) {
+        case 'play':
+          if (playerRef.current && playerRef.current.playVideo) {
+            playerRef.current.playVideo();
+          }
+          if (!isPlayingRef.current) {
+            onTogglePlay();
+          }
+          break;
+        case 'pause':
+          if (playerRef.current && playerRef.current.pauseVideo) {
+            playerRef.current.pauseVideo();
+          }
+          if (isPlayingRef.current) {
+            onTogglePlay();
+          }
+          break;
+        case 'previous':
+          if (onPreviousRef.current) {
+            onPreviousRef.current();
+          }
+          break;
+        case 'next':
+          if (onNextRef.current) {
+            onNextRef.current();
+          }
+          break;
+        case 'seekTo':
+          if (playerRef.current && playerRef.current.seekTo && value !== undefined) {
+            playerRef.current.seekTo(value, true);
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('sonfy-control', handleSonfyControl);
+    console.log('✅ SonfyControl global object and event listener registered');
+
+    return () => {
+      delete window.SonfyControl;
+      window.removeEventListener('sonfy-control', handleSonfyControl);
+    };
+  }, [onTogglePlay]);
+
+  // Listen for notification control events
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const listener = MusicControl.addListener('controlEvent', (event) => {
+      console.log('🎵 Notification control:', event.action);
+      
+      if (event.action === 'com.sonfy.app.PLAY_PAUSE') {
+        onTogglePlay();
+      } else if (event.action === 'com.sonfy.app.NEXT') {
+        onNext();
+      } else if (event.action === 'com.sonfy.app.PREVIOUS') {
+        onPrevious();
+      }
+    });
+
+    return () => {
+      listener.remove();
+    };
+  }, [onTogglePlay, onNext, onPrevious]);
+
+  // Update notification when song or playing state changes
+  useEffect(() => {
+    if (!currentSong) return;
+
+    // Check if running in native Android app (SonfyNative interface available)
+    if (window.SonfyNative) {
+      try {
+        window.SonfyNative.notify(
+          currentSong.title || 'Unknown Song',
+          currentSong.artist || 'Unknown Artist',
+          Math.floor(duration) || 0,
+          currentSong.cover || ''
+        );
+        console.log('📱 Updated native notification:', currentSong.title);
+      } catch (e) {
+        console.log('SonfyNative.notify error:', e);
+      }
+    }
+    
+    // Also try Capacitor plugin if available
+    if (Capacitor.isNativePlatform()) {
+      MusicControl.updateNotification({
+        title: currentSong.title || 'Unknown Song',
+        artist: currentSong.artist || 'Unknown Artist',
+        thumbnail: currentSong.cover || '',
+        duration: duration || 0,
+        isPlaying: isPlaying,
+        position: currentTime || 0
+      }).catch(err => {
+        // Silently fail - might not be using Capacitor
+      });
+    }
+  }, [currentSong, isPlaying, duration]);
+
+  // Update progress to native side periodically
+  useEffect(() => {
+    // Update native progress via SonfyNative interface
+    if (window.SonfyNative) {
+      try {
+        window.SonfyNative.notifyProgress(isPlaying, Math.floor(currentTime));
+      } catch (e) {
+        // Silently fail
+      }
+    }
+
+    // Also try Capacitor plugin if available
+    if (Capacitor.isNativePlatform()) {
+      MusicControl.notifyProgress({
+        isPlaying: isPlaying,
+        position: Math.floor(currentTime)
+      }).catch(() => {});
+    }
+  }, [isPlaying, currentTime]);
 
   // Initialize audio element for background playback detection
   useEffect(() => {
@@ -92,10 +262,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     const queueList = document.querySelector('.queue-list');
     if (!queueList) return;
 
-    let isLoading = false;
-
     const handleScroll = () => {
-      if (isLoading) return;
+      if (isLoadingMore) return;
 
       const scrollTop = queueList.scrollTop;
       const scrollHeight = queueList.scrollHeight;
@@ -106,21 +274,21 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
       if (isNearBottom && queue.length > 0) {
         console.log('📜 Near bottom of queue, loading more songs...');
-        isLoading = true;
+        setIsLoadingMore(true);
         
         // Extend the queue with more songs
         onExtendQueue();
         
-        // Prevent multiple rapid calls
+        // Reset loading state after a delay
         setTimeout(() => {
-          isLoading = false;
-        }, 2000);
+          setIsLoadingMore(false);
+        }, 3000);
       }
     };
 
     queueList.addEventListener('scroll', handleScroll);
     return () => queueList.removeEventListener('scroll', handleScroll);
-  }, [showQueue, queue.length, onExtendQueue]);
+  }, [showQueue, queue.length, onExtendQueue, isLoadingMore]);
 
   useEffect(() => {
     autoplayRef.current = autoplay;
@@ -335,8 +503,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             controls: 0,
             playsinline: 1,
             enablejsapi: 1,
-            origin: window.location.origin,
-            widget_referrer: window.location.origin,
             vq: 'hd720' // Prefer HD quality for better audio
           },
           events: {
@@ -631,29 +797,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         }
       }
 
-      // Load the video - use native player on Android
-      if (useNativePlayer && currentSong.youtubeId) {
-        console.log('🎵 Loading with native player:', currentSong.youtubeId);
-        
-        NativeAudio.loadYouTubeAudio(
-          currentSong.youtubeId,
-          currentSong.title,
-          currentSong.artist
-        ).then(() => {
-          console.log('✅ Native audio loaded');
-          nativePlayerReady.current = true;
-          
-          if (isPlayingRef.current) {
-            NativeAudio.play();
-          }
-        }).catch(error => {
-          console.error('❌ Native player error, falling back to YouTube:', error);
-          setUseNativePlayer(false);
-          player.loadVideoById(currentSong.youtubeId);
-        });
-      } else {
-        player.loadVideoById(currentSong.youtubeId);
-      }
+      // Load the video with YouTube player
+      player.loadVideoById(currentSong.youtubeId);
 
       // Set quality to HD for better audio after video loads
       setTimeout(() => {
@@ -1247,6 +1392,13 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             ) : (
               <div className="queue-empty">
                 <p>No songs in queue</p>
+              </div>
+            )}
+            {/* Loading indicator for infinite scroll */}
+            {isLoadingMore && (
+              <div className="queue-loading">
+                <div className="queue-loading-spinner"></div>
+                <span>Loading more songs...</span>
               </div>
             )}
           </div>

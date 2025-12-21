@@ -1,0 +1,34 @@
+import { observable } from '@legendapp/state'
+import { syncObservable } from '@legendapp/state/sync'
+import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv'
+
+interface Store {
+  home: 'yt' | 'yt-music'
+  isYTMusic: () => boolean
+
+  feedsEnabled: boolean
+  hideShorts: boolean
+  keepHistory: boolean
+  restoreOnStart: boolean
+  sponsorBlock: boolean
+  theme: null | 'dark' | 'light'
+}
+
+export const settings$ = observable<Store>({
+  home: 'yt',
+  isYTMusic: (): boolean => settings$.home.get() == 'yt-music',
+
+  feedsEnabled: true,
+  hideShorts: true,
+  keepHistory: true,
+  restoreOnStart: true,
+  sponsorBlock: true,
+  theme: null,
+})
+
+syncObservable(settings$, {
+  persist: {
+    name: 'settings',
+    plugin: ObservablePersistMMKV,
+  },
+})

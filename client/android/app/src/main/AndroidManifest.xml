@@ -32,6 +32,13 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+        
+        <!-- Background Audio Service with ExoPlayer -->
+        <service
+            android:name=".BackgroundAudioService"
+            android:enabled="false"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <!-- Native Audio Player Service -->
         <service
@@ -69,4 +76,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- Make all features optional to avoid device filtering -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 </manifest>

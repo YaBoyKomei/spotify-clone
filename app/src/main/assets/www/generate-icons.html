@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Sonfy Icons</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #000;
+            color: #fff;
+        }
+        canvas {
+            border: 2px solid #a78bfa;
+            margin: 10px;
+        }
+        button {
+            background: #a78bfa;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #8b5cf6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generate Sonfy PWA Icons</h1>
+    <p>Click the buttons below to download the required icon sizes:</p>
+    
+    <div>
+        <canvas id="canvas192" width="192" height="192"></canvas>
+        <button onclick="download(192)">Download 192x192</button>
+    </div>
+    
+    <div>
+        <canvas id="canvas512" width="512" height="512"></canvas>
+        <button onclick="download(512)">Download 512x512</button>
+    </div>
+
+    <script>
+        function createIcon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const ctx = canvas.getContext('2d');
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#a78bfa');
+            gradient.addColorStop(0.5, '#ec4899');
+            gradient.addColorStop(1, '#f59e0b');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add text
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('S', size / 2, size / 2);
+        }
+        
+        function download(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const link = document.createElement('a');
+            link.download = `logo${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Generate icons on load
+        createIcon(192);
+        createIcon(512);
+    </script>
+</body>
+</html>

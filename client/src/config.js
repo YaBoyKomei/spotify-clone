@@ -1,14 +1,8 @@
 // API Configuration
-// Detects if running in Capacitor (native app) or browser
+// Always use Render server for API calls
 
-import { Capacitor } from '@capacitor/core';
-
-const isNative = Capacitor.isNativePlatform();
-
-// API Base URL
-export const API_BASE_URL = isNative 
-  ? 'https://sonfy.onrender.com'  // Production server for native app
-  : '';  // Relative URL for web (uses same origin)
+// API Base URL - always use Render
+export const API_BASE_URL = 'https://sonfy.onrender.com';
 
 // Helper function to build API URLs
 export const getApiUrl = (endpoint) => {
@@ -16,7 +10,6 @@ export const getApiUrl = (endpoint) => {
 };
 
 console.log('🔧 API Config:', {
-  isNative,
   API_BASE_URL,
-  platform: Capacitor.getPlatform()
+  hostname: window.location.hostname
 });
