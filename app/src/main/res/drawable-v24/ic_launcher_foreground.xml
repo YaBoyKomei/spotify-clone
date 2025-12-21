@@ -4,25 +4,16 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Music note / headphone icon for Sonfy -->
-    <!-- Centered in safe zone (18-90 for adaptive icons) -->
+    <!-- Sonfy Music Icon - Headphones with music note in purple -->
+    <!-- Scaled and centered in safe zone (18-90 for adaptive icons) -->
     
-    <!-- Outer circle -->
+    <!-- Headphones -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,24
-            C37.4,24 24,37.4 24,54
-            C24,70.6 37.4,84 54,84
-            C70.6,84 84,70.6 84,54
-            C84,37.4 70.6,24 54,24z
-            M54,78
-            C40.7,78 30,67.3 30,54
-            C30,40.7 40.7,30 54,30
-            C67.3,30 78,40.7 78,54
-            C78,67.3 67.3,78 54,78z" />
+        android:fillColor="#A78BFA"
+        android:pathData="M54,22.5C34.77,22.5 19.5,37.77 19.5,57v24.5c0,3.85 3.15,7 7,7h7v-31.5h-7v-1.75c0,-15.4 10.92,-27.75 27.5,-27.75s27.5,10.75 27.5,22.75V88.5h7c3.85,0 7,-3.15 7,-7V57c0,-19.23 -15.27,-34.5 -34.5,-34.5zM33.5,60.5v17.5h-7v-17.5h7zM81.5,78h-7v-17.5h7v17.5z"/>
     
-    <!-- Play triangle in center -->
+    <!-- Music note in center -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M46,40 L46,68 L70,54 Z" />
+        android:fillColor="#A78BFA"
+        android:pathData="M54,41.75c-2.9,0 -5.25,2.35 -5.25,5.25v15.75c-2.1,1.19 -3.5,3.43 -3.5,6.02 0,3.85 3.15,7 7,7s7,-3.15 7,-7c0,-2.59 -1.4,-4.83 -3.5,-6.02V47c0,-0.98 0.77,-1.75 1.75,-1.75s1.75,0.77 1.75,1.75v3.5h5.25v-3.5c0,-3.85 -3.15,-7 -7,-7z"/>
 </vector>
