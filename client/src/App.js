@@ -987,36 +987,77 @@ function App() {
     );
   };
 
+  // Play song from liked songs - sets queue to all liked songs
+  const playFromLikedSongs = (song) => {
+    console.log(`❤️ Playing from Liked Songs: "${song.title}"`);
+    const songIndex = likedSongs.findIndex(s => s.id === song.id);
+    
+    // Set queue to all liked songs, starting from clicked song
+    const reorderedQueue = [
+      ...likedSongs.slice(songIndex),
+      ...likedSongs.slice(0, songIndex)
+    ];
+    
+    setQueue(reorderedQueue);
+    setQueueIndex(0);
+    setCurrentSong(song);
+    setIsPlaying(true);
+    
+    // Add to history
+    setPlayHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(song);
+      return newHistory;
+    });
+    setHistoryIndex(prev => prev + 1);
+    
+    // Add to listening history
+    setListeningHistory(prev => {
+      const existingIndex = prev.findIndex(s => s.id === song.id);
+      let newHistory = [...prev];
+      if (existingIndex !== -1) newHistory.splice(existingIndex, 1);
+      newHistory.push({ ...song, playedAt: new Date().toISOString() });
+      return newHistory.slice(-100);
+    });
+    
+    // Track play count
+    setPlayCount(prev => ({
+      ...prev,
+      [song.id]: { song, count: (prev[song.id]?.count || 0) + 1 }
+    }));
+    
+    console.log(`📋 Queue set to ${reorderedQueue.length} liked songs`);
+  };
+
   const renderLikedView = () => {
     return (
       <div className="home-view">
         <div className="music-section">
           <div className="section-header">
             <h2 className="section-title">Liked Songs</h2>
+            <span className="section-subtitle">{likedSongs.length} songs</span>
           </div>
           {likedSongs.length === 0 ? (
             <div className="empty-state">
               <p>No liked songs yet. Start liking some songs!</p>
             </div>
           ) : (
-            <div className="section-carousel">
-              <div className="songs-carousel">
-                {likedSongs.map(song => (
-                  <SongCard
-                    key={song.id}
-                    song={song}
-                    currentSong={currentSong}
-                    isLiked={true}
-                    onPlay={playSong}
-                    onToggleLike={toggleLike}
-                    onAddToPlaylist={(song) => {
-                      setSelectedSongForPlaylist(song);
-                      setShowAddToPlaylist(true);
-                    }}
-                    onPlayNext={handlePlayNext}
-                  />
-                ))}
-              </div>
+            <div className="songs-grid-full">
+              {likedSongs.map(song => (
+                <SongCard
+                  key={song.id}
+                  song={song}
+                  currentSong={currentSong}
+                  isLiked={true}
+                  onPlay={playFromLikedSongs}
+                  onToggleLike={toggleLike}
+                  onAddToPlaylist={(song) => {
+                    setSelectedSongForPlaylist(song);
+                    setShowAddToPlaylist(true);
+                  }}
+                  onPlayNext={handlePlayNext}
+                />
+              ))}
             </div>
           )}
         </div>
