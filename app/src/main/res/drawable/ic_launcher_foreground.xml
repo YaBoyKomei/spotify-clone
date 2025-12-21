@@ -4,12 +4,12 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Music note / headphone icon for Sonfy -->
+    <!-- Sonfy Logo - Circle with play button -->
     <!-- Centered in safe zone (18-90 for adaptive icons) -->
     
     <!-- Outer circle -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#A78BFA"
         android:pathData="M54,24
             C37.4,24 24,37.4 24,54
             C24,70.6 37.4,84 54,84
@@ -23,6 +23,6 @@
     
     <!-- Play triangle in center -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#A78BFA"
         android:pathData="M46,40 L46,68 L70,54 Z" />
 </vector>
