@@ -1,2 +1,0 @@
-- Support feeds for bookmarked channels
-- Add menu item to reload current page

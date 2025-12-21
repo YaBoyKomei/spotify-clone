@@ -1,3 +1,0 @@
-- Fix reloading on orientation change
-- Support auto fullscreen when rotate to landscape
-- Support receiving youtu.be link

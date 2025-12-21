@@ -1,3 +1,0 @@
-- Click yellow star icon to edit bookmark
-- Fix opening external link
-- Support importing a list of links

@@ -1,1 +1,0 @@
-- Fix fullscreen mode when auto rotate is off

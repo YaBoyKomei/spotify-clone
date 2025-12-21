@@ -1,2 +1,0 @@
-- prevent blank screen
-- simplify back press handling

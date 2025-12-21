@@ -1,2 +1,0 @@
-- Fix status bar color after exiting fullscreen
-- Support clearing webview cookies and browsing history
