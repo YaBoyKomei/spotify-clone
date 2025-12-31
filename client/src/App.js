@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import Sidebar from './components/Sidebar';
+import BottomNav from './components/BottomNav';
 import Player from './components/Player';
 import { getApiUrl } from './config';
 // import AudioPlayer from './components/AudioPlayer';
@@ -1121,6 +1122,67 @@ function App() {
     );
   };
 
+  const renderLibraryView = () => {
+    return (
+      <div className="home-view">
+        <div className="music-section">
+          <div className="section-header">
+            <h2 className="section-title">Your Library</h2>
+            <button
+              className="more-button"
+              onClick={() => setShowCreatePlaylist(true)}
+            >
+              + New Playlist
+            </button>
+          </div>
+          
+          <div className="library-grid">
+            {/* Liked Songs Card */}
+            <div 
+              className="library-card"
+              onClick={() => setCurrentView('liked')}
+            >
+              <div className="library-card-icon liked">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+              <div className="library-card-info">
+                <h3>Liked Songs</h3>
+                <span>{likedSongs.length} songs</span>
+              </div>
+            </div>
+
+            {/* Playlists */}
+            {playlists.map(playlist => (
+              <div 
+                key={playlist.id}
+                className="library-card"
+                onClick={() => setCurrentView(`playlist-${playlist.id}`)}
+              >
+                <div className="library-card-icon playlist">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z" />
+                  </svg>
+                </div>
+                <div className="library-card-info">
+                  <h3>{playlist.name}</h3>
+                  <span>{playlist.songs.length} songs</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {playlists.length === 0 && (
+            <div className="empty-state" style={{ marginTop: '20px' }}>
+              <p>Create your first playlist to organize your music!</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderPlaylistView = (playlistId) => {
     const playlist = playlists.find(p => p.id === playlistId);
 
@@ -1230,22 +1292,12 @@ function App() {
     );
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
   const closeSidebar = () => {
     setIsSidebarOpen(false);
   };
 
   return (
     <div className="app">
-      <button className={`hamburger-menu ${isSidebarOpen ? 'hidden' : ''}`} onClick={toggleSidebar} aria-label="Toggle menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-
       <Sidebar
         currentView={currentView}
         onViewChange={(view) => {
@@ -1350,6 +1402,7 @@ function App() {
             {currentView === 'home' && renderHomeView()}
             {currentView === 'liked' && renderLikedView()}
             {currentView === 'history' && renderHistoryView()}
+            {currentView === 'library' && renderLibraryView()}
             {currentView.startsWith('playlist-') && renderPlaylistView(currentView.replace('playlist-', ''))}
           </>
         )}
@@ -1380,6 +1433,14 @@ function App() {
         onAddToPlaylistFromQueue={(song) => {
           setSelectedSongForPlaylist(song);
           setShowAddToPlaylist(true);
+        }}
+      />
+
+      <BottomNav
+        currentView={currentView}
+        onViewChange={(view) => {
+          setCurrentView(view);
+          closeExpandedSection();
         }}
       />
 

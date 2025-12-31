@@ -1,10 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
 import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon } from './Icons';
-import { BackgroundMode } from '../plugins/BackgroundMode';
-import NativeAudio from '../plugins/NativeAudio';
-import MusicControl from '../plugins/MusicControl';
-import { Capacitor } from '@capacitor/core';
 
 function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
   const [player, setPlayer] = useState(null);
@@ -39,20 +35,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const draggedElement = useRef(null);
   const wakeLockRef = useRef(null);
   const audioElementRef = useRef(null);
-  const isNativePlatform = Capacitor.isNativePlatform();
-  const [useNativePlayer, setUseNativePlayer] = useState(isNativePlatform);
+  const [useNativePlayer, setUseNativePlayer] = useState(false);
   const nativePlayerReady = useRef(false);
-
-  // Enable background mode on mount
-  useEffect(() => {
-    BackgroundMode.enable().then(() => {
-      console.log('🎵 Background playback enabled');
-    });
-
-    return () => {
-      BackgroundMode.disable();
-    };
-  }, []);
 
   // Setup global SonfyControl object for native communication
   useEffect(() => {
@@ -147,27 +131,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     };
   }, [onTogglePlay]);
 
-  // Listen for notification control events
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-
-    const listener = MusicControl.addListener('controlEvent', (event) => {
-      console.log('🎵 Notification control:', event.action);
-      
-      if (event.action === 'com.sonfy.app.PLAY_PAUSE') {
-        onTogglePlay();
-      } else if (event.action === 'com.sonfy.app.NEXT') {
-        onNext();
-      } else if (event.action === 'com.sonfy.app.PREVIOUS') {
-        onPrevious();
-      }
-    });
-
-    return () => {
-      listener.remove();
-    };
-  }, [onTogglePlay, onNext, onPrevious]);
-
   // Update notification when song or playing state changes
   useEffect(() => {
     if (!currentSong) return;
@@ -186,20 +149,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         console.log('SonfyNative.notify error:', e);
       }
     }
-    
-    // Also try Capacitor plugin if available
-    if (Capacitor.isNativePlatform()) {
-      MusicControl.updateNotification({
-        title: currentSong.title || 'Unknown Song',
-        artist: currentSong.artist || 'Unknown Artist',
-        thumbnail: currentSong.cover || '',
-        duration: duration || 0,
-        isPlaying: isPlaying,
-        position: currentTime || 0
-      }).catch(err => {
-        // Silently fail - might not be using Capacitor
-      });
-    }
   }, [currentSong, isPlaying, duration]);
 
   // Update progress to native side periodically
@@ -211,14 +160,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       } catch (e) {
         // Silently fail
       }
-    }
-
-    // Also try Capacitor plugin if available
-    if (Capacitor.isNativePlatform()) {
-      MusicControl.notifyProgress({
-        isPlaying: isPlaying,
-        position: Math.floor(currentTime)
-      }).catch(() => {});
     }
   }, [isPlaying, currentTime]);
 
@@ -851,21 +792,9 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
   // Handle play/pause
   useEffect(() => {
-    if (!player && !useNativePlayer) return;
+    if (!player) return;
 
     try {
-      if (useNativePlayer && nativePlayerReady.current) {
-        // Use native player
-        if (isPlaying) {
-          console.log('▶️ Native player: Play');
-          NativeAudio.play().catch(err => console.error('Native play error:', err));
-        } else {
-          console.log('⏸️ Native player: Pause');
-          NativeAudio.pause().catch(err => console.error('Native pause error:', err));
-        }
-        return;
-      }
-
       const playerState = player.getPlayerState ? player.getPlayerState() : -1;
       console.log('🎮 Play/Pause Effect - Player state:', playerState, 'isPlaying:', isPlaying, 'Manual pause:', manualPauseRef.current);
 

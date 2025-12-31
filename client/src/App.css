@@ -1304,85 +1304,93 @@
 }
 
 
-/* Hamburger Menu */
-.hamburger-menu {
-  display: none;
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 10003;
-  background: rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  width: 48px;
-  height: 48px;
-  flex-direction: column;
+/* Library View */
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.library-card {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 5px;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  padding: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.hamburger-menu:hover {
-  background: rgba(167, 139, 250, 0.4);
-  border-color: rgba(167, 139, 250, 0.6);
-  transform: scale(1.05);
+.library-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
 }
 
-.hamburger-menu:active {
-  transform: scale(0.95);
+.library-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.hamburger-menu span {
-  display: block;
-  width: 24px;
-  height: 2.5px;
-  background: #fff;
-  border-radius: 2px;
-  transition: all 0.3s ease;
+.library-card-icon.liked {
+  background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
 }
 
-/* Hide hamburger menu when sidebar is open */
-.hamburger-menu.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.8);
+.library-card-icon.playlist {
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
 }
 
+.library-card-icon svg {
+  color: white;
+}
+
+.library-card-info h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 4px 0;
+}
+
+.library-card-info span {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Mobile bottom nav spacing */
 @media (max-width: 768px) {
-  .hamburger-menu {
-    display: flex;
-  }
-
-  /* Add padding to main content to avoid overlap with hamburger and logo */
   .main-content {
-    padding-top: 100px;
+    padding-top: 20px;
+    padding-bottom: 180px;
   }
 
   .main-content h1 {
     margin-top: 0;
   }
+  
+  .library-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
-  .hamburger-menu {
-    top: 16px;
-    left: 16px;
-    width: 44px;
-    height: 44px;
-  }
-
-  .hamburger-menu span {
-    width: 22px;
-    height: 2px;
-  }
-
   .main-content {
-    padding-top: 72px;
+    padding-top: 16px;
+    padding-bottom: 170px;
+  }
+  
+  .library-card {
+    padding: 12px;
+  }
+  
+  .library-card-icon {
+    width: 48px;
+    height: 48px;
   }
 }
 
