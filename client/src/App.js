@@ -811,6 +811,54 @@ function App() {
           <p className="welcome-subtitle">Discover millions of songs, create playlists, and enjoy high-quality music streaming - all for free!</p>
         </div>
 
+        {/* Most Played Section */}
+        {mostPlayedSongs.length > 0 && (
+          <div className="music-section">
+            <div className="section-header">
+              <h2 className="section-title">Most Played</h2>
+            </div>
+            <div className="section-carousel">
+              {scrollStates['most-played'] && !scrollStates['most-played'].isAtStart && (
+                <button
+                  className="scroll-button left"
+                  onClick={() => scrollCarousel('most-played', 'left')}
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeftIcon />
+                </button>
+              )}
+              {scrollStates['most-played'] && !scrollStates['most-played'].isAtEnd && (
+                <button
+                  className="scroll-button right"
+                  onClick={() => scrollCarousel('most-played', 'right')}
+                  aria-label="Scroll right"
+                >
+                  <ChevronRightIcon />
+                </button>
+              )}
+              <div className="songs-carousel" id="carousel-most-played">
+                {mostPlayedSongs.map(({ song, count }) => (
+                  <div key={song.id} className="song-card-wrapper">
+                    <div className="play-count-badge">{count}× played</div>
+                    <SongCard
+                      song={song}
+                      currentSong={currentSong}
+                      isLiked={!!likedSongs.find(s => s.id === song.id)}
+                      onPlay={playSong}
+                      onToggleLike={toggleLike}
+                      onAddToPlaylist={(song) => {
+                        setSelectedSongForPlaylist(song);
+                        setShowAddToPlaylist(true);
+                      }}
+                      onPlayNext={handlePlayNext}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* AI Recommendations Section */}
         {(likedSongs.length > 0 || listeningHistory.length > 0) && (
           <div className="music-section">
@@ -936,54 +984,6 @@ function App() {
             </div>
           );
         })}
-
-        {/* Most Played Section */}
-        {mostPlayedSongs.length > 0 && (
-          <div className="music-section">
-            <div className="section-header">
-              <h2 className="section-title">Most Played</h2>
-            </div>
-            <div className="section-carousel">
-              {scrollStates['most-played'] && !scrollStates['most-played'].isAtStart && (
-                <button
-                  className="scroll-button left"
-                  onClick={() => scrollCarousel('most-played', 'left')}
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeftIcon />
-                </button>
-              )}
-              {scrollStates['most-played'] && !scrollStates['most-played'].isAtEnd && (
-                <button
-                  className="scroll-button right"
-                  onClick={() => scrollCarousel('most-played', 'right')}
-                  aria-label="Scroll right"
-                >
-                  <ChevronRightIcon />
-                </button>
-              )}
-              <div className="songs-carousel" id="carousel-most-played">
-                {mostPlayedSongs.map(({ song, count }) => (
-                  <div key={song.id} className="song-card-wrapper">
-                    <div className="play-count-badge">{count}× played</div>
-                    <SongCard
-                      song={song}
-                      currentSong={currentSong}
-                      isLiked={!!likedSongs.find(s => s.id === song.id)}
-                      onPlay={playSong}
-                      onToggleLike={toggleLike}
-                      onAddToPlaylist={(song) => {
-                        setSelectedSongForPlaylist(song);
-                        setShowAddToPlaylist(true);
-                      }}
-                      onPlayNext={handlePlayNext}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   };
