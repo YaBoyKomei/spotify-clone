@@ -18,7 +18,7 @@ export const updateCanonicalUrl = (path = '') => {
     canonical.rel = 'canonical';
     document.head.appendChild(canonical);
   }
-  canonical.href = `https://Komei.onrender.com${path}`;
+  canonical.href = `https://sonfy.onrender.com${path}`;
 };
 
 export const updateOpenGraphTags = (data) => {
@@ -73,7 +73,7 @@ export const updateSEOForView = (view, data = {}) => {
       updateOpenGraphTags({
         title: 'Search Music on Komei | Free Music Streaming',
         description: 'Search for your favorite songs, artists, and albums on Komei. Discover new music and create playlists with millions of tracks available on the Komei music platform.',
-        url: 'https://Komei.onrender.com/?view=search'
+        url: 'https://sonfy.onrender.com/?view=search'
       });
       break;
       
@@ -84,7 +84,7 @@ export const updateSEOForView = (view, data = {}) => {
       updateOpenGraphTags({
         title: 'My Liked Songs - Komei Music | Free Streaming',
         description: 'Access your favorite songs collection on Komei. All your liked tracks in one place for easy listening and playlist creation on the Komei music streaming platform.',
-        url: 'https://Komei.onrender.com/?view=liked'
+        url: 'https://sonfy.onrender.com/?view=liked'
       });
       break;
       
@@ -95,7 +95,7 @@ export const updateSEOForView = (view, data = {}) => {
       updateOpenGraphTags({
         title: 'Listening History | Komei',
         description: 'View your music listening history on Komei. Rediscover songs you\'ve played and track your musical journey.',
-        url: 'https://Komei.onrender.com/?view=history'
+        url: 'https://sonfy.onrender.com/?view=history'
       });
       break;
       
@@ -107,7 +107,7 @@ export const updateSEOForView = (view, data = {}) => {
       updateOpenGraphTags({
         title: `${playlistName} - Playlist | Komei`,
         description: `Listen to ${playlistName} playlist on Komei. Enjoy curated music collections and discover new songs.`,
-        url: `https://Komei.onrender.com/?view=playlist&id=${data.playlistId}`
+        url: `https://sonfy.onrender.com/?view=playlist&id=${data.playlistId}`
       });
       break;
       
@@ -118,7 +118,7 @@ export const updateSEOForView = (view, data = {}) => {
       updateOpenGraphTags({
         title: 'About Komei - Free Music Streaming Platform',
         description: 'Learn about Komei, the ultimate free music streaming platform. Discover how Komei revolutionizes online music with unlimited streaming, playlist creation, and high-quality audio.',
-        url: 'https://Komei.onrender.com/?view=about'
+        url: 'https://sonfy.onrender.com/?view=about'
       });
       break;
       
@@ -129,7 +129,7 @@ export const updateSEOForView = (view, data = {}) => {
       updateOpenGraphTags({
         title: 'Komei - Official Music Streaming App | Free Online Music Player',
         description: 'Komei is the ultimate free music streaming platform. Stream millions of songs, create playlists, and discover new music with Komei\'s high-quality audio streaming. The official Komei music app.',
-        url: 'https://Komei.onrender.com/'
+        url: 'https://sonfy.onrender.com/'
       });
       break;
   }
@@ -147,7 +147,7 @@ export const addSongStructuredData = (song) => {
       "name": song.artist
     },
     "duration": song.duration || "PT3M30S",
-    "url": `https://Komei.onrender.com/?song=${song.id}`,
+    "url": `https://sonfy.onrender.com/?song=${song.id}`,
     "image": song.thumbnail,
     "genre": "Music",
     "inAlbum": song.album ? {
