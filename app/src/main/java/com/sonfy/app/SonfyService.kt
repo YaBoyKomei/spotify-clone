@@ -89,6 +89,11 @@ class SonfyService : Service() {
             override fun onSkipToNext() {
                 webView.evaluateJavascript("window.SonfyControl && window.SonfyControl.next()", null)
             }
+
+            override fun onSeekTo(pos: Long) {
+                val seconds = pos / 1000
+                webView.evaluateJavascript("window.SonfyControl && window.SonfyControl.seekTo($seconds)", null)
+            }
         }
         mediaSession?.setCallback(callback)
         mediaSession?.isActive = true
@@ -160,6 +165,7 @@ class SonfyService : Service() {
                         or PlaybackStateCompat.ACTION_PAUSE
                         or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
                         or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                        or PlaybackStateCompat.ACTION_SEEK_TO
                 )
         }
         val state = stateBuilder!!.setState(
