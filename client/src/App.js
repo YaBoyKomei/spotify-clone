@@ -1322,7 +1322,7 @@ function App() {
           <div className="sonfy-brand">
             <h1 className="sonfy-title">
               <div className="sonfy-logo">
-                <MusicIcon />
+                <img src="/logo.png" alt="Sonfy" />
               </div>
               Sonfy
             </h1>

@@ -23,10 +23,11 @@
   padding: 0 12px;
 }
 
-.logo svg {
-  color: #a78bfa;
-  filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.5));
-  animation: glow 3s ease-in-out infinite alternate;
+.sidebar-logo-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: contain;
 }
 
 .logo-text {

@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import './Sidebar.css';
-import { HomeIcon, SearchIcon, PlusIcon, HeartIcon, MusicIcon } from './Icons';
+import { HomeIcon, SearchIcon, PlusIcon, HeartIcon } from './Icons';
 
 function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playlists, historyCount, onCreatePlaylist, onClearPlaylists }) {
   const sidebarRef = useRef(null);
@@ -43,7 +43,7 @@ function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playl
       {isOpen && <div className="sidebar-overlay" onClick={onClose}></div>}
       <div ref={sidebarRef} className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-logo logo">
-          <MusicIcon />
+          <img src="/logo.png" alt="Sonfy" className="sidebar-logo-img" />
           <div className="logo-text">
             <h2>Sonfy</h2>
             <span className="logo-subtitle">Music Streaming</span>
