@@ -201,14 +201,10 @@
 /* Mobile responsive styles for Sonfy branding */
 @media (max-width: 768px) {
   .main-header {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 999;
-    margin-bottom: 0;
-    padding: 0;
-    width: auto;
+    position: relative;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    width: 100%;
   }
   
   .sonfy-title {
@@ -846,7 +842,6 @@
 
   .main-content {
     padding: 20px;
-    padding-top: 80px;
     padding-bottom: 190px;
   }
 
@@ -961,7 +956,6 @@
 @media (max-width: 640px) {
   .main-content {
     padding: 16px;
-    padding-top: 76px;
     padding-bottom: 140px;
   }
 
@@ -1041,7 +1035,6 @@
 @media (max-width: 480px) {
   .main-content {
     padding: 12px;
-    padding-top: 72px;
     padding-bottom: 220px;
   }
 
