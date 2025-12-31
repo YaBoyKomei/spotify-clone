@@ -50,6 +50,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.appcompat)
     
+    // ConstraintLayout for splash screen
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    
     // WebKit for WebViewAssetLoader
     implementation("androidx.webkit:webkit:1.9.0")
     
