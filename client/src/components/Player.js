@@ -7,6 +7,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [songEnded, setSongEnded] = useState(false);
+  const [titleOverflows, setTitleOverflows] = useState(false);
+  const titleRef = useRef(null);
   const intervalRef = useRef(null);
   const playerInitialized = useRef(false);
   const isPlayingRef = useRef(isPlaying);
@@ -150,6 +152,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       }
     }
   }, [currentSong, isPlaying, duration]);
+
+  // Check if title overflows and needs marquee animation
+  useEffect(() => {
+    if (titleRef.current && currentSong) {
+      const element = titleRef.current;
+      const isOverflowing = element.scrollWidth > element.clientWidth;
+      setTitleOverflows(isOverflowing);
+    } else {
+      setTitleOverflows(false);
+    }
+  }, [currentSong]);
 
   // Update progress to native side periodically
   useEffect(() => {
@@ -1092,7 +1105,17 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             <div className="player-song-info">
               <img src={currentSong.cover} alt={currentSong.title} />
               <div className="song-details">
-                <div className="player-song-title">{currentSong.title}</div>
+                <div 
+                  ref={titleRef}
+                  className={`player-song-title ${titleOverflows ? 'marquee' : ''}`}
+                >
+                  <span 
+                    className="player-song-title-text"
+                    data-text={currentSong.title}
+                  >
+                    {currentSong.title}
+                  </span>
+                </div>
                 <div className="player-song-artist">{currentSong.artist}</div>
               </div>
               <button
