@@ -33,7 +33,7 @@ const searchSongs = async (query) => {
 };
 
 function App() {
-  console.log('🎵 Sonfy App starting...');
+  console.log('🎵 Komei App starting...');
   const [songs, setSongs] = useState([]);
   const [sections, setSections] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -807,7 +807,7 @@ function App() {
     return (
       <div className="home-view">
         <div className="welcome-section">
-          <h2 className="welcome-title">Welcome to Sonfy</h2>
+          <h2 className="welcome-title">Welcome to Komei</h2>
           <p className="welcome-subtitle">Discover millions of songs, create playlists, and enjoy high-quality music streaming - all for free!</p>
         </div>
 
@@ -1317,14 +1317,14 @@ function App() {
         onClearPlaylists={clearAllPlaylists}
       />
       <div className="main-content">
-        {/* Sonfy Header */}
+        {/* Komei Header */}
         <div className="main-header">
           <div className="sonfy-brand">
             <h1 className="sonfy-title">
               <div className="sonfy-logo">
-                <img src="/logo.png" alt="Sonfy" />
+                <img src="/logo.png" alt="Komei" />
               </div>
-              Sonfy
+              Komei
             </h1>
           </div>
         </div>
@@ -1332,7 +1332,7 @@ function App() {
         {currentView === 'search' ? (
           <div className="search-view">
             <div className="search-header">
-              <h1>Search on Sonfy</h1>
+              <h1>Search on Komei</h1>
               <div className="search-input-wrapper">
                 <div className="search-input-container">
                   <SearchIcon />

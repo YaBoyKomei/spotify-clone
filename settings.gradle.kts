@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Sonfy"
+rootProject.name = "Komei"
 include(":app")
  

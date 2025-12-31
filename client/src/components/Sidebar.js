@@ -43,9 +43,9 @@ function Sidebar({ currentView, onViewChange, likedCount, isOpen, onClose, playl
       {isOpen && <div className="sidebar-overlay" onClick={onClose}></div>}
       <div ref={sidebarRef} className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-logo logo">
-          <img src="/logo.png" alt="Sonfy" className="sidebar-logo-img" />
+          <img src="/logo.png" alt="Komei" className="sidebar-logo-img" />
           <div className="logo-text">
-            <h2>Sonfy</h2>
+            <h2>Komei</h2>
             <span className="logo-subtitle">Music Streaming</span>
           </div>
         </div>

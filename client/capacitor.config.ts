@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.sonfy.app',
-  appName: 'Sonfy',
+  appName: 'Komei',
   webDir: 'build',
   android: {
     allowMixedContent: true,
