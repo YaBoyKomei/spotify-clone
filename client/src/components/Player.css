@@ -436,10 +436,14 @@
   .player-controls {
     width: 100%;
     gap: 8px;
+    align-items: center;
+    justify-content: center;
   }
 
   .control-buttons {
     gap: 12px;
+    justify-content: center;
+    width: 100%;
   }
 
   .control-btn {
@@ -507,6 +511,8 @@
 
   .control-buttons {
     gap: 8px;
+    justify-content: center;
+    width: 100%;
   }
 
   .control-btn {

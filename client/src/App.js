@@ -1324,7 +1324,7 @@ function App() {
               <div className="sonfy-logo">
                 <img src="/logo.png" alt="Komei" />
               </div>
-              Komei
+              <b>Komei</b>
             </h1>
           </div>
         </div>
