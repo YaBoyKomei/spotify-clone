@@ -1,7 +1,7 @@
 // SEO utility functions for dynamic meta tag updates
 
 export const updatePageTitle = (title) => {
-  document.title = title ? `${title} | Sonfy` : 'Sonfy - Free Music Streaming App | Listen to Songs Online';
+  document.title = title ? `${title} | Komei` : 'Komei - Free Music Streaming App | Listen to Songs Online';
 };
 
 export const updateMetaDescription = (description) => {
@@ -18,7 +18,7 @@ export const updateCanonicalUrl = (path = '') => {
     canonical.rel = 'canonical';
     document.head.appendChild(canonical);
   }
-  canonical.href = `https://sonfy.onrender.com${path}`;
+  canonical.href = `https://Komei.onrender.com${path}`;
 };
 
 export const updateOpenGraphTags = (data) => {
@@ -67,69 +67,69 @@ export const addStructuredData = (data) => {
 export const updateSEOForView = (view, data = {}) => {
   switch (view) {
     case 'search':
-      updatePageTitle('Search Music on Sonfy');
-      updateMetaDescription('Search for your favorite songs, artists, and albums on Sonfy. Discover new music and create playlists with millions of tracks available on the Sonfy music platform.');
+      updatePageTitle('Search Music on Komei');
+      updateMetaDescription('Search for your favorite songs, artists, and albums on Komei. Discover new music and create playlists with millions of tracks available on the Komei music platform.');
       updateCanonicalUrl('/?view=search');
       updateOpenGraphTags({
-        title: 'Search Music on Sonfy | Free Music Streaming',
-        description: 'Search for your favorite songs, artists, and albums on Sonfy. Discover new music and create playlists with millions of tracks available on the Sonfy music platform.',
-        url: 'https://sonfy.onrender.com/?view=search'
+        title: 'Search Music on Komei | Free Music Streaming',
+        description: 'Search for your favorite songs, artists, and albums on Komei. Discover new music and create playlists with millions of tracks available on the Komei music platform.',
+        url: 'https://Komei.onrender.com/?view=search'
       });
       break;
       
     case 'liked':
-      updatePageTitle('My Liked Songs - Sonfy Music');
-      updateMetaDescription('Access your favorite songs collection on Sonfy. All your liked tracks in one place for easy listening and playlist creation on the Sonfy music streaming platform.');
+      updatePageTitle('My Liked Songs - Komei Music');
+      updateMetaDescription('Access your favorite songs collection on Komei. All your liked tracks in one place for easy listening and playlist creation on the Komei music streaming platform.');
       updateCanonicalUrl('/?view=liked');
       updateOpenGraphTags({
-        title: 'My Liked Songs - Sonfy Music | Free Streaming',
-        description: 'Access your favorite songs collection on Sonfy. All your liked tracks in one place for easy listening and playlist creation on the Sonfy music streaming platform.',
-        url: 'https://sonfy.onrender.com/?view=liked'
+        title: 'My Liked Songs - Komei Music | Free Streaming',
+        description: 'Access your favorite songs collection on Komei. All your liked tracks in one place for easy listening and playlist creation on the Komei music streaming platform.',
+        url: 'https://Komei.onrender.com/?view=liked'
       });
       break;
       
     case 'history':
       updatePageTitle('Listening History');
-      updateMetaDescription('View your music listening history on Sonfy. Rediscover songs you\'ve played and track your musical journey.');
+      updateMetaDescription('View your music listening history on Komei. Rediscover songs you\'ve played and track your musical journey.');
       updateCanonicalUrl('/?view=history');
       updateOpenGraphTags({
-        title: 'Listening History | Sonfy',
-        description: 'View your music listening history on Sonfy. Rediscover songs you\'ve played and track your musical journey.',
-        url: 'https://sonfy.onrender.com/?view=history'
+        title: 'Listening History | Komei',
+        description: 'View your music listening history on Komei. Rediscover songs you\'ve played and track your musical journey.',
+        url: 'https://Komei.onrender.com/?view=history'
       });
       break;
       
     case 'playlist':
       const playlistName = data.playlistName || 'Playlist';
       updatePageTitle(`${playlistName} - Playlist`);
-      updateMetaDescription(`Listen to ${playlistName} playlist on Sonfy. Enjoy curated music collections and discover new songs.`);
+      updateMetaDescription(`Listen to ${playlistName} playlist on Komei. Enjoy curated music collections and discover new songs.`);
       updateCanonicalUrl(`/?view=playlist&id=${data.playlistId}`);
       updateOpenGraphTags({
-        title: `${playlistName} - Playlist | Sonfy`,
-        description: `Listen to ${playlistName} playlist on Sonfy. Enjoy curated music collections and discover new songs.`,
-        url: `https://sonfy.onrender.com/?view=playlist&id=${data.playlistId}`
+        title: `${playlistName} - Playlist | Komei`,
+        description: `Listen to ${playlistName} playlist on Komei. Enjoy curated music collections and discover new songs.`,
+        url: `https://Komei.onrender.com/?view=playlist&id=${data.playlistId}`
       });
       break;
       
     case 'about':
-      updatePageTitle('About Sonfy - Free Music Streaming Platform');
-      updateMetaDescription('Learn about Sonfy, the ultimate free music streaming platform. Discover how Sonfy revolutionizes online music with unlimited streaming, playlist creation, and high-quality audio.');
+      updatePageTitle('About Komei - Free Music Streaming Platform');
+      updateMetaDescription('Learn about Komei, the ultimate free music streaming platform. Discover how Komei revolutionizes online music with unlimited streaming, playlist creation, and high-quality audio.');
       updateCanonicalUrl('/?view=about');
       updateOpenGraphTags({
-        title: 'About Sonfy - Free Music Streaming Platform',
-        description: 'Learn about Sonfy, the ultimate free music streaming platform. Discover how Sonfy revolutionizes online music with unlimited streaming, playlist creation, and high-quality audio.',
-        url: 'https://sonfy.onrender.com/?view=about'
+        title: 'About Komei - Free Music Streaming Platform',
+        description: 'Learn about Komei, the ultimate free music streaming platform. Discover how Komei revolutionizes online music with unlimited streaming, playlist creation, and high-quality audio.',
+        url: 'https://Komei.onrender.com/?view=about'
       });
       break;
       
     default: // home
       updatePageTitle();
-      updateMetaDescription('Sonfy is the ultimate free music streaming platform. Stream millions of songs, create playlists, and discover new music with Sonfy\'s high-quality audio streaming. The official Sonfy music app - no ads, no limits.');
+      updateMetaDescription('Komei is the ultimate free music streaming platform. Stream millions of songs, create playlists, and discover new music with Komei\'s high-quality audio streaming. The official Komei music app - no ads, no limits.');
       updateCanonicalUrl('/');
       updateOpenGraphTags({
-        title: 'Sonfy - Official Music Streaming App | Free Online Music Player',
-        description: 'Sonfy is the ultimate free music streaming platform. Stream millions of songs, create playlists, and discover new music with Sonfy\'s high-quality audio streaming. The official Sonfy music app.',
-        url: 'https://sonfy.onrender.com/'
+        title: 'Komei - Official Music Streaming App | Free Online Music Player',
+        description: 'Komei is the ultimate free music streaming platform. Stream millions of songs, create playlists, and discover new music with Komei\'s high-quality audio streaming. The official Komei music app.',
+        url: 'https://Komei.onrender.com/'
       });
       break;
   }
@@ -147,7 +147,7 @@ export const addSongStructuredData = (song) => {
       "name": song.artist
     },
     "duration": song.duration || "PT3M30S",
-    "url": `https://sonfy.onrender.com/?song=${song.id}`,
+    "url": `https://Komei.onrender.com/?song=${song.id}`,
     "image": song.thumbnail,
     "genre": "Music",
     "inAlbum": song.album ? {
