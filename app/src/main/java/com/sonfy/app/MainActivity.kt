@@ -82,17 +82,10 @@ class MainActivity : AppCompatActivity() {
             setBackgroundColor(Color.parseColor("#121212"))
             addView(webView)
             
-            // Apply padding for system bars (top only, bottom handled by CSS)
+            // Apply padding for system bars (top and bottom)
             ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
                 val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-                view.setPadding(0, insets.top, 0, 0)
-                
-                // Pass bottom navigation bar height to WebView via CSS variable
-                val bottomInset = insets.bottom
-                val density = resources.displayMetrics.density
-                val bottomInsetPx = bottomInset / density // Convert to dp-like value for CSS
-                injectNavigationBarHeight(bottomInset)
-                
+                view.setPadding(0, insets.top, 0, insets.bottom)
                 windowInsets
             }
         }
@@ -152,8 +145,6 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
                 Log.d(TAG, "Page finished: $url")
-                // Re-inject navigation bar height after page loads
-                reinjectNavBarHeight()
             }
             
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -207,63 +198,6 @@ class MainActivity : AppCompatActivity() {
                 customView = null
                 customViewCallback = null
             }
-        }
-    }
-    
-    private var lastInjectedNavHeight = -1
-    private var navigationBarHeight = 0
-    
-    private fun injectNavigationBarHeight(heightPx: Int) {
-        navigationBarHeight = heightPx
-        if (heightPx == lastInjectedNavHeight) return
-        lastInjectedNavHeight = heightPx
-        
-        Log.d(TAG, "Injecting nav bar height: ${heightPx}px")
-        
-        val script = """
-            (function() {
-                document.documentElement.style.setProperty('--android-nav-bar-height', '${heightPx}px');
-                document.body.style.setProperty('--android-nav-bar-height', '${heightPx}px');
-                
-                // Also add padding to bottom nav directly as fallback
-                var bottomNav = document.querySelector('.bottom-nav');
-                if (bottomNav) {
-                    bottomNav.style.paddingBottom = 'calc(8px + ${heightPx}px)';
-                }
-                
-                console.log('Android nav bar height set to: ${heightPx}px');
-            })();
-        """.trimIndent()
-        
-        webView.post {
-            webView.evaluateJavascript(script, null)
-        }
-    }
-    
-    // Re-inject nav bar height after page loads
-    private fun reinjectNavBarHeight() {
-        if (navigationBarHeight > 0) {
-            val script = """
-                (function() {
-                    document.documentElement.style.setProperty('--android-nav-bar-height', '${navigationBarHeight}px');
-                    document.body.style.setProperty('--android-nav-bar-height', '${navigationBarHeight}px');
-                    
-                    var bottomNav = document.querySelector('.bottom-nav');
-                    if (bottomNav) {
-                        bottomNav.style.paddingBottom = 'calc(8px + ${navigationBarHeight}px)';
-                    }
-                    
-                    // Also fix player position
-                    var player = document.querySelector('.player');
-                    if (player && window.innerWidth <= 768) {
-                        player.style.bottom = 'calc(60px + ${navigationBarHeight}px)';
-                    }
-                    
-                    console.log('Re-injected nav bar height: ${navigationBarHeight}px');
-                })();
-            """.trimIndent()
-            
-            webView.evaluateJavascript(script, null)
         }
     }
     
