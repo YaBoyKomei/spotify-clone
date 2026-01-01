@@ -4,7 +4,7 @@
   bottom: env(safe-area-inset-bottom, 0);
   left: 0;
   right: 0;
-  height: 64px;
+  height: 72px;
   background: #212121;
   z-index: 9999;
 }
@@ -19,8 +19,8 @@
 
 /* Mini Player Album Art */
 .mini-player-art {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -80,8 +80,8 @@
 
 /* Mini Play Button - Large triangle like YouTube */
 .mini-play-btn {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   background: none;
   border: none;
   color: #fff;
@@ -792,18 +792,18 @@
 /* Tablet and below (768px) */
 @media (max-width: 768px) {
   .player {
-    height: 60px;
+    height: 68px;
     bottom: 60px; /* Space for bottom nav */
   }
 
   .mini-player-art {
-    width: 60px;
-    height: 60px;
+    width: 68px;
+    height: 68px;
   }
 
   .mini-play-btn {
-    width: 60px;
-    height: 60px;
+    width: 68px;
+    height: 68px;
   }
 
   .mini-play-btn svg {
@@ -842,13 +842,13 @@
 /* Mobile portrait (480px) */
 @media (max-width: 480px) {
   .player {
-    height: 56px;
+    height: 64px;
     bottom: 56px; /* Space for bottom nav */
   }
 
   .mini-player-art {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
   }
 
   .mini-player-info {
@@ -864,8 +864,8 @@
   }
 
   .mini-play-btn {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
   }
 
   .mini-play-btn svg {
