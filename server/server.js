@@ -8,6 +8,41 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Trust proxy for getting real IP behind reverse proxies (Render, Heroku, etc.)
+app.set('trust proxy', true);
+
+// Helper function to get country code from IP using free API
+async function getCountryFromIP(ip) {
+  try {
+    // Skip for localhost/private IPs
+    if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+      return 'US'; // Default for local development
+    }
+    
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=countryCode`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.countryCode) {
+        console.log(`🌍 Detected country from IP ${ip}: ${data.countryCode}`);
+        return data.countryCode;
+      }
+    }
+  } catch (error) {
+    console.error('Error detecting country from IP:', error.message);
+  }
+  return 'US'; // Default fallback
+}
+
+// Helper to get client IP from request
+function getClientIP(req) {
+  return req.ip || 
+         req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+         req.headers['x-real-ip'] ||
+         req.connection?.remoteAddress ||
+         '127.0.0.1';
+}
+
 // Note: Static files will be served after API routes
 
 // Parse songs from YouTube Music API response with sections
@@ -118,9 +153,11 @@ function parseSongsFromData(data) {
 }
 
 // Get songs from YouTube Music Explore page
-async function getLatestSongs() {
+async function getLatestSongs(region = 'US') {
   try {
     const fetch = (await import('node-fetch')).default;
+
+    console.log(`🌍 Fetching songs for region: ${region}`);
 
     const body = {
       context: {
@@ -128,7 +165,7 @@ async function getLatestSongs() {
           clientName: "WEB_REMIX",
           clientVersion: "1.20251015.03.00",
           hl: "en",
-          gl: "US"
+          gl: region // Use dynamic region
         }
       },
       browseId: "FEmusic_explore"
@@ -154,7 +191,7 @@ async function getLatestSongs() {
     const data = await response.json();
     const songs = parseSongsFromData(data);
 
-    console.log(`🎵 Got ${songs.length} songs from Explore page`);
+    console.log(`🎵 Got ${songs.length} songs from Explore page (${region})`);
     return songs;
   } catch (error) {
     console.error('Error fetching explore page:', error);
@@ -320,7 +357,7 @@ function parseSearchItem(item, isAlbumSection = false) {
   }
 }
 
-async function searchYouTubeMusic(query, maxResults = 50) {
+async function searchYouTubeMusic(query, maxResults = 50, region = 'US') {
   try {
     const fetch = (await import('node-fetch')).default;
     const body = {
@@ -329,12 +366,14 @@ async function searchYouTubeMusic(query, maxResults = 50) {
           clientName: "WEB_REMIX",
           clientVersion: "1.20251215.03.00",
           hl: "en",
-          gl: "IN",
+          gl: region, // Use dynamic region
           userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
         }
       },
       query: query
     };
+
+    console.log(`🔍 Searching "${query}" in region: ${region}`);
 
     const response = await fetch('https://music.youtube.com/youtubei/v1/search?prettyPrint=false', {
       method: 'POST',
@@ -370,13 +409,21 @@ async function searchYouTubeMusic(query, maxResults = 50) {
 // Get latest songs organized by sections
 app.get('/api/songs', async (req, res) => {
   try {
-    const sections = await getLatestSongs();
+    // Get region from query param, or detect from IP
+    let region = req.query.region;
+    
+    if (!region) {
+      const clientIP = getClientIP(req);
+      region = await getCountryFromIP(clientIP);
+    }
+    
+    const sections = await getLatestSongs(region);
 
     if (sections.length === 0) {
       throw new Error('No songs found');
     }
 
-    console.log(`✅ Returning ${sections.length} sections`);
+    console.log(`✅ Returning ${sections.length} sections for region: ${region}`);
     res.json(sections);
   } catch (error) {
     console.error('Error fetching songs:', error);
@@ -861,9 +908,17 @@ app.get('/api/search', async (req, res) => {
   }
 
   try {
-    const results = await searchYouTubeMusic(query);
+    // Get region from query param, or detect from IP
+    let region = req.query.region;
+    
+    if (!region) {
+      const clientIP = getClientIP(req);
+      region = await getCountryFromIP(clientIP);
+    }
 
-    console.log(`✅ Found ${results.songs.length} songs and ${results.albums.length} albums for "${query}"`);
+    const results = await searchYouTubeMusic(query, 50, region);
+
+    console.log(`✅ Found ${results.songs.length} songs and ${results.albums.length} albums for "${query}" (${region})`);
     res.json(results);
   } catch (error) {
     console.error('Error searching songs:', error);
@@ -882,13 +937,21 @@ app.get('/api/album/:browseId', async (req, res) => {
   try {
     const fetch = (await import('node-fetch')).default;
 
+    // Get region from query param, or detect from IP
+    let region = req.query.region;
+    
+    if (!region) {
+      const clientIP = getClientIP(req);
+      region = await getCountryFromIP(clientIP);
+    }
+
     const body = {
       context: {
         client: {
           clientName: "WEB_REMIX",
           clientVersion: "1.20251215.03.00",
           hl: "en",
-          gl: "IN"
+          gl: region
         }
       },
       browseId: browseId
