@@ -397,7 +397,8 @@
 /* Expanded Song Info */
 .expanded-song-info {
   text-align: center;
-  padding: 20px 0;
+  padding: 20px 20px;
+  overflow: hidden;
 }
 
 .expanded-song-title {
@@ -405,9 +406,28 @@
   font-weight: 700;
   color: #fff;
   margin-bottom: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  overflow: hidden;
+}
+
+.expanded-song-title-text {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Marquee animation for long titles in expanded player */
+.expanded-song-title.marquee .expanded-song-title-text {
+  animation: marquee 10s linear infinite;
+  padding-right: 50px;
+}
+
+.expanded-song-title.marquee .expanded-song-title-text::after {
+  content: attr(data-text);
+  padding-left: 50px;
+}
+
+.expanded-song-title.marquee:hover .expanded-song-title-text {
+  animation-play-state: paused;
 }
 
 .expanded-song-artist {
