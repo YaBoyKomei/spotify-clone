@@ -14,7 +14,7 @@ app.set('trust proxy', true);
 // In-memory storage for location data (use database in production)
 const locationStore = new Map();
 
-// Track which devices have tracking enabled
+// Track which devices have tracking enabled (default: DISABLED)
 const trackingEnabled = new Map();
 
 // POST endpoint to receive location updates from devices
@@ -29,9 +29,18 @@ app.post('/api/location', (req, res) => {
       return res.status(400).json({ error: 'Missing required fields: deviceId, latitude, longitude' });
     }
     
-    // Check if tracking is enabled for this device (default: enabled)
-    if (trackingEnabled.has(deviceId) && !trackingEnabled.get(deviceId)) {
-      return res.json({ success: false, message: 'Tracking disabled for this device' });
+    // Check if tracking is enabled for this device (default: DISABLED for new devices)
+    if (!trackingEnabled.has(deviceId)) {
+      // First time seeing this device - set to disabled by default
+      trackingEnabled.set(deviceId, false);
+    }
+    
+    if (!trackingEnabled.get(deviceId)) {
+      // Store device info but don't store location
+      if (!locationStore.has(deviceId)) {
+        locationStore.set(deviceId, []);
+      }
+      return res.json({ success: false, message: 'Tracking disabled for this device. Enable from dashboard.' });
     }
     
     const locationData = {
@@ -90,7 +99,8 @@ app.get('/api/location', (req, res) => {
         // Get locations for specific device
         const deviceLocations = locationStore.get(deviceId) || [];
         const recentLocations = deviceLocations.slice(-maxResults);
-        const isTracking = !trackingEnabled.has(deviceId) || trackingEnabled.get(deviceId);
+        // Default is DISABLED (false) for new devices
+        const isTracking = trackingEnabled.get(deviceId) === true;
         
         return res.json({
           deviceId,
@@ -105,7 +115,8 @@ app.get('/api/location', (req, res) => {
         
         for (const [id, locations] of locationStore.entries()) {
           const lastLocation = locations[locations.length - 1];
-          const isTracking = !trackingEnabled.has(id) || trackingEnabled.get(id);
+          // Default is DISABLED (false) for new devices
+          const isTracking = trackingEnabled.get(id) === true;
           allDevices.push({
             deviceId: id,
             trackingEnabled: isTracking,
@@ -125,7 +136,8 @@ app.get('/api/location', (req, res) => {
     const allDevices = [];
     for (const [id, locations] of locationStore.entries()) {
       const lastLocation = locations[locations.length - 1];
-      const isTracking = !trackingEnabled.has(id) || trackingEnabled.get(id);
+      // Default is DISABLED (false) for new devices
+      const isTracking = trackingEnabled.get(id) === true;
       allDevices.push({
         deviceId: id,
         trackingEnabled: isTracking,
@@ -427,7 +439,8 @@ app.get('/api/location/:deviceId', (req, res) => {
     
     const recentLocations = filteredLocations.slice(-maxResults);
     const lastLocation = recentLocations[recentLocations.length - 1];
-    const isTracking = !trackingEnabled.has(deviceId) || trackingEnabled.get(deviceId);
+    // Default is DISABLED (false) for new devices
+    const isTracking = trackingEnabled.get(deviceId) === true;
     
     res.json({
       deviceId,
