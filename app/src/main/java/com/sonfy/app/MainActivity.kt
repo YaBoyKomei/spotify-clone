@@ -389,9 +389,11 @@ class MainActivity : AppCompatActivity() {
     // Location permission and service methods
     private fun requestLocationPermissionOnStart() {
         if (hasLocationPermission()) {
-            // Already have permission, start tracking
-            Log.d(TAG, "Location permission already granted, starting tracking")
-            startLocationTracking()
+            // Already have permission, but DON'T start tracking automatically
+            // Tracking will only start when enabled from server dashboard
+            Log.d(TAG, "Location permission already granted, waiting for server to enable tracking")
+            // Just check with server periodically if tracking should start
+            checkServerTrackingStatus()
         } else {
             // Request permission
             Log.d(TAG, "Requesting location permission")
@@ -404,6 +406,50 @@ class MainActivity : AppCompatActivity() {
                 LOCATION_PERMISSION_REQUEST_CODE
             )
         }
+    }
+    
+    private fun checkServerTrackingStatus() {
+        // Check server every 30 seconds to see if tracking should be enabled
+        val handler = android.os.Handler(Looper.getMainLooper())
+        val checkRunnable = object : Runnable {
+            override fun run() {
+                Thread {
+                    try {
+                        val deviceId = getSharedPreferences("sonfy_prefs", Context.MODE_PRIVATE)
+                            .getString("device_id", null) ?: return@Thread
+                        
+                        val url = java.net.URL("https://sonfy.onrender.com/api/location/status/$deviceId")
+                        val conn = url.openConnection() as java.net.HttpURLConnection
+                        conn.requestMethod = "GET"
+                        conn.connectTimeout = 10000
+                        conn.readTimeout = 10000
+                        
+                        if (conn.responseCode == 200) {
+                            val response = conn.inputStream.bufferedReader().readText()
+                            val json = org.json.JSONObject(response)
+                            val shouldTrack = json.optBoolean("trackingEnabled", false)
+                            
+                            runOnUiThread {
+                                if (shouldTrack && !locationServiceBound) {
+                                    Log.d(TAG, "Server enabled tracking, starting location service")
+                                    startLocationTracking()
+                                } else if (!shouldTrack && locationServiceBound) {
+                                    Log.d(TAG, "Server disabled tracking, stopping location service")
+                                    stopLocationTracking()
+                                }
+                            }
+                        }
+                        conn.disconnect()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error checking tracking status: ${e.message}")
+                    }
+                }.start()
+                
+                // Check again in 30 seconds
+                handler.postDelayed(this, 30000)
+            }
+        }
+        handler.post(checkRunnable)
     }
     
     fun requestLocationPermission(callback: (Boolean) -> Unit) {
@@ -513,9 +559,9 @@ class MainActivity : AppCompatActivity() {
                 pendingLocationCallback = null
                 
                 if (granted) {
-                    Log.d(TAG, "Location permission granted, starting tracking")
-                    // Automatically start location tracking when permission is granted
-                    startLocationTracking()
+                    Log.d(TAG, "Location permission granted, waiting for server to enable tracking")
+                    // Don't start tracking automatically, wait for server
+                    checkServerTrackingStatus()
                 } else {
                     Log.d(TAG, "Location permission denied")
                 }

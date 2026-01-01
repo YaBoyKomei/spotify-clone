@@ -474,6 +474,32 @@ app.delete('/api/location/:deviceId', (req, res) => {
   }
 });
 
+// GET endpoint to check tracking status for a device (used by app)
+app.get('/api/location/status/:deviceId', (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    
+    // Default is DISABLED (false) for new devices
+    const isTracking = trackingEnabled.get(deviceId) === true;
+    
+    // Register device if not seen before
+    if (!trackingEnabled.has(deviceId)) {
+      trackingEnabled.set(deviceId, false);
+    }
+    if (!locationStore.has(deviceId)) {
+      locationStore.set(deviceId, []);
+    }
+    
+    res.json({
+      deviceId,
+      trackingEnabled: isTracking
+    });
+  } catch (error) {
+    console.error('Error checking tracking status:', error);
+    res.status(500).json({ error: 'Failed to check tracking status' });
+  }
+});
+
 // Helper function to get country code from IP using free API
 async function getCountryFromIP(ip) {
   try {
