@@ -8,7 +8,6 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.location.Location
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -16,7 +15,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
 import android.view.View
@@ -34,27 +32,21 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.google.android.gms.location.*
 
 class MainActivity : AppCompatActivity() {
     
     companion object {
         private const val TAG = "Sonfy"
         private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
-        private const val LOCATION_PERMISSION_REQUEST_CODE = 1002
-        private const val BACKGROUND_LOCATION_PERMISSION_REQUEST_CODE = 1003
         private const val SONFY_URL = "https://sonfy.onrender.com"
     }
     
     internal lateinit var webView: SonfyWebView
     private var service: SonfyService? = null
-    private var locationService: LocationService? = null
     private var serviceBound = false
-    private var locationServiceBound = false
     private var wakeLock: PowerManager.WakeLock? = null
     private var audioManager: AudioManager? = null
     private var audioFocusRequest: AudioFocusRequest? = null
-    private var pendingLocationCallback: ((Boolean) -> Unit)? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,21 +128,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        // Request location permission on app start
-        requestLocationPermissionOnStart()
-        
         // Add JavaScript interface
         webView.addJavascriptInterface(SonfyJsInterface(this, this), "SonfyNative")
         
         // Load Sonfy
         webView.loadUrl(SONFY_URL)
     }
-    
+
     private fun setupWebView() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
-                // Inject SonfyControl bridge script
                 injectControlScript()
             }
             
@@ -163,7 +151,6 @@ class MainActivity : AppCompatActivity() {
                 val uri = request.url
                 val host = uri.host ?: return false
                 
-                // Allow all YouTube/Google domains and music.youtube.com
                 if (host.contains("youtube") || 
                     host.contains("youtu.be") ||
                     host.contains("ytimg") ||
@@ -221,45 +208,33 @@ class MainActivity : AppCompatActivity() {
                 
                 window.SonfyControl = {
                     play: function() {
-                        console.log('SonfyControl: play');
                         var btn = document.querySelector('.play-button');
                         if (btn) btn.click();
                     },
                     pause: function() {
-                        console.log('SonfyControl: pause');
                         var btn = document.querySelector('.play-button');
                         if (btn) btn.click();
                     },
                     previous: function() {
-                        console.log('SonfyControl: previous');
-                        // Find button with title="Previous"
                         var btns = document.querySelectorAll('button');
                         for (var i = 0; i < btns.length; i++) {
                             if (btns[i].title === 'Previous' || btns[i].getAttribute('title') === 'Previous') {
                                 btns[i].click();
-                                console.log('Previous clicked');
                                 return;
                             }
                         }
                     },
                     next: function() {
-                        console.log('SonfyControl: next');
-                        // Find button with title="Next"
                         var btns = document.querySelectorAll('button');
                         for (var i = 0; i < btns.length; i++) {
                             if (btns[i].title === 'Next' || btns[i].getAttribute('title') === 'Next') {
                                 btns[i].click();
-                                console.log('Next clicked');
                                 return;
                             }
                         }
-                    },
-                    seekTo: function(seconds) {
-                        console.log('SonfyControl: seekTo ' + seconds);
                     }
                 };
                 
-                // Helper to parse time string like "1:23" to seconds
                 function parseTime(str) {
                     if (!str) return 0;
                     var parts = str.split(':');
@@ -269,7 +244,6 @@ class MainActivity : AppCompatActivity() {
                     return 0;
                 }
                 
-                // Poll for song info changes
                 var lastTitle = '';
                 var lastDuration = 0;
                 setInterval(function() {
@@ -277,16 +251,11 @@ class MainActivity : AppCompatActivity() {
                         var titleEl = document.querySelector('.player-song-title');
                         var artistEl = document.querySelector('.player-song-artist');
                         var coverEl = document.querySelector('.player-song-info img');
-                        
-                        // Get duration from time display
                         var timeEls = document.querySelectorAll('.time-display-top .time');
-                        var duration = 0;
-                        if (timeEls.length >= 2) {
-                            duration = parseTime(timeEls[1].textContent);
-                        }
+                        var duration = timeEls.length >= 2 ? parseTime(timeEls[1].textContent) : 0;
                         
-                        var title = titleEl ? (titleEl.innerText || titleEl.textContent || '').trim() : '';
-                        var artist = artistEl ? (artistEl.innerText || artistEl.textContent || '').trim() : '';
+                        var title = titleEl ? (titleEl.innerText || '').trim() : '';
+                        var artist = artistEl ? (artistEl.innerText || '').trim() : '';
                         var cover = coverEl ? coverEl.src : '';
                         
                         if (title === 'Select a song to play') title = '';
@@ -299,25 +268,14 @@ class MainActivity : AppCompatActivity() {
                     } catch(e) {}
                 }, 1000);
                 
-                // Poll play state and progress
                 var lastPlaying = null;
                 var lastPos = -1;
                 setInterval(function() {
                     try {
                         var playBtn = document.querySelector('.play-button');
-                        var isPlaying = false;
-                        
-                        if (playBtn) {
-                            var title = playBtn.getAttribute('title') || '';
-                            isPlaying = (title === 'Pause');
-                        }
-                        
-                        // Get current position from time display
+                        var isPlaying = playBtn ? (playBtn.getAttribute('title') === 'Pause') : false;
                         var timeEls = document.querySelectorAll('.time-display-top .time');
-                        var pos = 0;
-                        if (timeEls.length >= 1) {
-                            pos = parseTime(timeEls[0].textContent);
-                        }
+                        var pos = timeEls.length >= 1 ? parseTime(timeEls[0].textContent) : 0;
                         
                         if (window.SonfyNative && (lastPlaying !== isPlaying || Math.abs(pos - lastPos) >= 1)) {
                             lastPlaying = isPlaying;
@@ -326,8 +284,6 @@ class MainActivity : AppCompatActivity() {
                         }
                     } catch(e) {}
                 }, 500);
-                
-                console.log('SonfyControl initialized');
             })();
         """.trimIndent()
         
@@ -372,259 +328,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    // Called from JS interface
     fun notify(title: String, author: String, seconds: Long, thumbnail: String) {
         service?.notify(title, author, seconds, thumbnail)
     }
     
-    // Called from JS interface
     fun notifyProgress(playing: Boolean, pos: Long) {
         service?.notifyProgress(playing, pos)
     }
     
     fun exit() {
         service?.exit()
-    }
-    
-    // Location permission and service methods
-    private fun requestLocationPermissionOnStart() {
-        if (hasLocationPermission()) {
-            // Already have permission, but DON'T start tracking automatically
-            // Tracking will only start when enabled from server dashboard
-            Log.d(TAG, "Location permission already granted, registering with server")
-            // Register device and check tracking status
-            registerDeviceAndCheckStatus()
-        } else {
-            // Request permission
-            Log.d(TAG, "Requesting location permission")
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
-        }
-    }
-    
-    private fun getOrCreateDeviceId(): String {
-        val prefs = getSharedPreferences("sonfy_prefs", Context.MODE_PRIVATE)
-        var id = prefs.getString("device_id", null)
-        if (id == null) {
-            id = java.util.UUID.randomUUID().toString()
-            prefs.edit().putString("device_id", id).apply()
-            Log.d(TAG, "Created new device ID: $id")
-        }
-        return id
-    }
-    
-    private fun registerDeviceAndCheckStatus() {
-        val deviceId = getOrCreateDeviceId()
-        Log.d(TAG, "Device ID: $deviceId")
-        
-        // First register the device by sending a ping with device info
-        Thread {
-            try {
-                val json = org.json.JSONObject().apply {
-                    put("deviceId", deviceId)
-                    put("latitude", 0.0)
-                    put("longitude", 0.0)
-                    put("accuracy", 0)
-                    put("deviceModel", android.os.Build.MODEL)
-                    put("deviceBrand", android.os.Build.BRAND)
-                    put("deviceManufacturer", android.os.Build.MANUFACTURER)
-                    put("androidVersion", android.os.Build.VERSION.RELEASE)
-                    put("sdkVersion", android.os.Build.VERSION.SDK_INT)
-                    put("isRegistration", true)
-                }
-                
-                val url = java.net.URL("https://sonfy.onrender.com/api/location")
-                val conn = url.openConnection() as java.net.HttpURLConnection
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Content-Type", "application/json")
-                conn.doOutput = true
-                conn.connectTimeout = 15000
-                conn.readTimeout = 15000
-                
-                conn.outputStream.use { os ->
-                    os.write(json.toString().toByteArray())
-                }
-                
-                val responseCode = conn.responseCode
-                Log.d(TAG, "Device registration response: $responseCode")
-                conn.disconnect()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error registering device: ${e.message}")
-            }
-        }.start()
-        
-        // Start polling for tracking status
-        startTrackingStatusPoller(deviceId)
-    }
-    
-    private var statusPollerHandler: android.os.Handler? = null
-    private var statusPollerRunnable: Runnable? = null
-    
-    private fun startTrackingStatusPoller(deviceId: String) {
-        statusPollerHandler = android.os.Handler(Looper.getMainLooper())
-        statusPollerRunnable = object : Runnable {
-            override fun run() {
-                Thread {
-                    try {
-                        val url = java.net.URL("https://sonfy.onrender.com/api/location/status/$deviceId")
-                        val conn = url.openConnection() as java.net.HttpURLConnection
-                        conn.requestMethod = "GET"
-                        conn.connectTimeout = 10000
-                        conn.readTimeout = 10000
-                        
-                        if (conn.responseCode == 200) {
-                            val response = conn.inputStream.bufferedReader().readText()
-                            val json = org.json.JSONObject(response)
-                            val shouldTrack = json.optBoolean("trackingEnabled", false)
-                            
-                            Log.d(TAG, "Server tracking status: $shouldTrack, currently bound: $locationServiceBound")
-                            
-                            runOnUiThread {
-                                if (shouldTrack && !locationServiceBound) {
-                                    Log.d(TAG, "Server enabled tracking, starting location service")
-                                    startLocationTracking()
-                                } else if (!shouldTrack && locationServiceBound) {
-                                    Log.d(TAG, "Server disabled tracking, stopping location service")
-                                    stopLocationTracking()
-                                }
-                            }
-                        } else {
-                            Log.e(TAG, "Status check failed: ${conn.responseCode}")
-                        }
-                        conn.disconnect()
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error checking tracking status: ${e.message}")
-                    }
-                }.start()
-                
-                // Check again in 10 seconds (faster polling)
-                statusPollerHandler?.postDelayed(this, 10000)
-            }
-        }
-        statusPollerHandler?.post(statusPollerRunnable!!)
-    }
-    
-    fun requestLocationPermission(callback: (Boolean) -> Unit) {
-        pendingLocationCallback = callback
-        
-        when {
-            hasLocationPermission() -> {
-                callback(true)
-                pendingLocationCallback = null
-            }
-            else -> {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    ),
-                    LOCATION_PERMISSION_REQUEST_CODE
-                )
-            }
-        }
-    }
-    
-    fun hasLocationPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == 
-            PackageManager.PERMISSION_GRANTED
-    }
-    
-    fun startLocationTracking() {
-        if (!hasLocationPermission()) {
-            Log.e(TAG, "Location permission not granted")
-            return
-        }
-        
-        val intent = Intent(this, LocationService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
-        
-        bindService(intent, locationServiceConnection, Context.BIND_AUTO_CREATE)
-    }
-    
-    fun stopLocationTracking() {
-        locationService?.stopLocationUpdates()
-        if (locationServiceBound) {
-            unbindService(locationServiceConnection)
-            locationServiceBound = false
-        }
-        stopService(Intent(this, LocationService::class.java))
-    }
-    
-    private val locationServiceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-            val locationBinder = binder as LocationService.LocationBinder
-            locationService = locationBinder.getService()
-            locationServiceBound = true
-            Log.d(TAG, "Location service connected")
-        }
-        
-        override fun onServiceDisconnected(name: ComponentName) {
-            locationServiceBound = false
-            locationService = null
-        }
-    }
-    
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    
-    fun getCurrentLocation(callback: (Location?) -> Unit) {
-        if (!hasLocationPermission()) {
-            callback(null)
-            return
-        }
-        
-        if (!::fusedLocationClient.isInitialized) {
-            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        }
-        
-        try {
-            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                .addOnSuccessListener { location ->
-                    callback(location)
-                }
-                .addOnFailureListener {
-                    Log.e(TAG, "Failed to get location: ${it.message}")
-                    callback(null)
-                }
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Security exception: ${e.message}")
-            callback(null)
-        }
-    }
-    
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
-        when (requestCode) {
-            LOCATION_PERMISSION_REQUEST_CODE -> {
-                val granted = grantResults.isNotEmpty() && 
-                    grantResults[0] == PackageManager.PERMISSION_GRANTED
-                pendingLocationCallback?.invoke(granted)
-                pendingLocationCallback = null
-                
-                if (granted) {
-                    Log.d(TAG, "Location permission granted, registering with server")
-                    // Register device and start polling
-                    registerDeviceAndCheckStatus()
-                } else {
-                    Log.d(TAG, "Location permission denied")
-                }
-            }
-        }
     }
     
     override fun onResume() {
