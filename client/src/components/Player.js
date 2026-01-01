@@ -1232,46 +1232,50 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           </div>
 
           <div className="player-content" onClick={toggleExpanded}>
-            <div className="player-song-info">
-              <img src={currentSong.cover} alt={currentSong.title} />
-              <div className="song-details">
-                <div 
-                  ref={titleRef}
-                  className={`player-song-title ${titleOverflows ? 'marquee' : ''}`}
+            {/* Album art */}
+            <img 
+              src={currentSong.cover} 
+              alt={currentSong.title} 
+              className="mini-player-art"
+            />
+            
+            {/* Song info with marquee */}
+            <div className="mini-player-info">
+              <div 
+                ref={titleRef}
+                className={`mini-player-title ${titleOverflows ? 'marquee' : ''}`}
+              >
+                <span 
+                  className="mini-player-title-text"
+                  data-text={currentSong.title}
                 >
-                  <span 
-                    className="player-song-title-text"
-                    data-text={currentSong.title}
-                  >
-                    {currentSong.title}
-                  </span>
-                </div>
-                <div className="player-song-artist">{currentSong.artist}</div>
+                  {currentSong.title}
+                </span>
               </div>
+              <div className="mini-player-artist">{currentSong.artist}</div>
             </div>
 
-            {/* Mini player controls - only play/pause visible */}
-            <div className="mini-controls" onClick={(e) => e.stopPropagation()}>
-              <button
-                className="mini-play-button"
-                onClick={() => {
-                  if (songEnded && player) {
-                    player.seekTo(0);
-                    setSongEnded(false);
-                    onTogglePlay();
-                  } else {
-                    onTogglePlay();
-                  }
-                }}
-              >
-                {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
-              </button>
-            </div>
+            {/* Play button only */}
+            <button
+              className="mini-play-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (songEnded && player) {
+                  player.seekTo(0);
+                  setSongEnded(false);
+                  onTogglePlay();
+                } else {
+                  onTogglePlay();
+                }
+              }}
+            >
+              {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
+            </button>
           </div>
         </>
       ) : (
-        <div className="player-song-info">
-          <div className="player-song-title">Select a song to play</div>
+        <div className="mini-player-info">
+          <div className="mini-player-title">Select a song to play</div>
         </div>
       )}
 

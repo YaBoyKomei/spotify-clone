@@ -4,21 +4,102 @@
   bottom: env(safe-area-inset-bottom, 0);
   left: 0;
   right: 0;
-  height: 70px;
-  background: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(40px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  height: 64px;
+  background: #212121;
   z-index: 9999;
-  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.4);
 }
 
 .player-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
+  padding: 0;
   height: 100%;
   cursor: pointer;
+}
+
+/* Mini Player Album Art */
+.mini-player-art {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Mini Player Song Info */
+.mini-player-info {
+  flex: 1;
+  min-width: 0;
+  padding: 0 12px;
+  overflow: hidden;
+}
+
+.mini-player-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mini-player-title-text {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Marquee animation for long titles */
+.mini-player-title.marquee .mini-player-title-text {
+  animation: marquee 10s linear infinite;
+  padding-right: 50px;
+}
+
+.mini-player-title.marquee .mini-player-title-text::after {
+  content: attr(data-text);
+  padding-left: 50px;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.mini-player-title.marquee:hover .mini-player-title-text {
+  animation-play-state: paused;
+}
+
+.mini-player-artist {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mini Play Button - Large triangle like YouTube */
+.mini-play-btn {
+  width: 64px;
+  height: 64px;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.mini-play-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mini-play-btn svg {
+  width: 32px;
+  height: 32px;
 }
 
 /* Time display at top - hidden in mini player */
@@ -32,8 +113,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.1);
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
   cursor: pointer;
 }
 
@@ -42,7 +123,7 @@
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, #a78bfa 0%, #8b5cf6 100%);
+  background: #a78bfa; /* Purple to match app theme */
   pointer-events: none;
   transition: width 0.1s linear;
 }
@@ -711,27 +792,23 @@
 /* Tablet and below (768px) */
 @media (max-width: 768px) {
   .player {
-    height: 65px;
+    height: 60px;
     bottom: 60px; /* Space for bottom nav */
   }
 
-  .player-content {
-    padding: 8px 12px;
+  .mini-player-art {
+    width: 60px;
+    height: 60px;
   }
 
-  .player-song-info img {
-    width: 44px;
-    height: 44px;
+  .mini-play-btn {
+    width: 60px;
+    height: 60px;
   }
 
-  .mini-play-button {
-    width: 36px;
-    height: 36px;
-  }
-
-  .mini-play-button svg {
-    width: 18px;
-    height: 18px;
+  .mini-play-btn svg {
+    width: 28px;
+    height: 28px;
   }
 
   /* Expanded player adjustments */
@@ -765,39 +842,35 @@
 /* Mobile portrait (480px) */
 @media (max-width: 480px) {
   .player {
-    height: 60px;
+    height: 56px;
     bottom: 56px; /* Space for bottom nav */
   }
 
-  .player-content {
-    padding: 6px 10px;
+  .mini-player-art {
+    width: 56px;
+    height: 56px;
   }
 
-  .player-song-info {
-    gap: 10px;
+  .mini-player-info {
+    padding: 0 10px;
   }
 
-  .player-song-info img {
-    width: 40px;
-    height: 40px;
-  }
-
-  .player-song-title {
+  .mini-player-title {
     font-size: 0.85rem;
   }
 
-  .player-song-artist {
+  .mini-player-artist {
     font-size: 0.75rem;
   }
 
-  .mini-play-button {
-    width: 34px;
-    height: 34px;
+  .mini-play-btn {
+    width: 56px;
+    height: 56px;
   }
 
-  .mini-play-button svg {
-    width: 16px;
-    height: 16px;
+  .mini-play-btn svg {
+    width: 26px;
+    height: 26px;
   }
 
   /* Expanded player adjustments */
