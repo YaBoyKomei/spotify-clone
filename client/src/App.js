@@ -801,9 +801,24 @@ function App() {
   // Play all album tracks
   const playAlbum = (tracks) => {
     if (tracks.length > 0) {
-      playSong(tracks[0]);
-      setQueue(tracks.slice(1));
+      // Set the full album as the queue first
+      setQueue(tracks);
       setQueueIndex(0);
+      // Play the first track without fetching a new queue (keep album queue)
+      playSong(tracks[0], true, false);
+      console.log(`📀 Playing album with ${tracks.length} tracks`);
+    }
+  };
+
+  // Play a specific track from album
+  const playAlbumTrack = (tracks, index) => {
+    if (tracks.length > 0 && index >= 0 && index < tracks.length) {
+      // Set the full album as the queue
+      setQueue(tracks);
+      setQueueIndex(index);
+      // Play the selected track without fetching a new queue (keep album queue)
+      playSong(tracks[index], true, false);
+      console.log(`📀 Playing album track ${index + 1}/${tracks.length}: "${tracks[index].title}"`);
     }
   };
 
@@ -1432,10 +1447,7 @@ function App() {
                       <div 
                         key={track.id} 
                         className={`album-track ${currentSong?.id === track.id ? 'active' : ''}`}
-                        onClick={() => {
-                          playSong(track);
-                          setQueue(albumTracks.slice(index + 1));
-                        }}
+                        onClick={() => playAlbumTrack(albumTracks, index)}
                       >
                         <span className="track-number">{index + 1}</span>
                         <div className="track-info">
