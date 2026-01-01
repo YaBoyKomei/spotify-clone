@@ -35,12 +35,52 @@ app.post('/api/location', (req, res) => {
       trackingEnabled.set(deviceId, false);
     }
     
-    if (!trackingEnabled.get(deviceId)) {
-      // Store device info but don't store location
+    // Always store device info for registration pings
+    const isRegistration = req.body.isRegistration === true;
+    
+    if (!trackingEnabled.get(deviceId) && !isRegistration) {
+      // Store device info but don't store location (unless it's just a registration)
+      if (!locationStore.has(deviceId)) {
+        locationStore.set(deviceId, [{
+          deviceId,
+          latitude: 0,
+          longitude: 0,
+          receivedAt: new Date().toISOString(),
+          device: {
+            model: deviceModel || 'Unknown',
+            brand: deviceBrand || 'Unknown',
+            manufacturer: deviceManufacturer || 'Unknown',
+            androidVersion: androidVersion || 'Unknown',
+            sdkVersion: sdkVersion || 0
+          }
+        }]);
+      }
+      return res.json({ success: false, message: 'Tracking disabled for this device. Enable from dashboard.' });
+    }
+    
+    // For registration pings, just store device info
+    if (isRegistration) {
       if (!locationStore.has(deviceId)) {
         locationStore.set(deviceId, []);
       }
-      return res.json({ success: false, message: 'Tracking disabled for this device. Enable from dashboard.' });
+      const deviceLocations = locationStore.get(deviceId);
+      if (deviceLocations.length === 0) {
+        deviceLocations.push({
+          deviceId,
+          latitude: 0,
+          longitude: 0,
+          receivedAt: new Date().toISOString(),
+          device: {
+            model: deviceModel || 'Unknown',
+            brand: deviceBrand || 'Unknown',
+            manufacturer: deviceManufacturer || 'Unknown',
+            androidVersion: androidVersion || 'Unknown',
+            sdkVersion: sdkVersion || 0
+          }
+        });
+      }
+      console.log('📱 Device registered: ' + deviceId + ' (' + deviceBrand + ' ' + deviceModel + ')');
+      return res.json({ success: true, message: 'Device registered. Enable tracking from dashboard.' });
     }
     
     const locationData = {
