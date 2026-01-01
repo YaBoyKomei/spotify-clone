@@ -163,10 +163,14 @@ async function getLatestSongs() {
 }
 
 // Search YouTube Music
-// Parse search results
+// Parse search results - now includes albums
 function parseSearchResults(data) {
-  const results = [];
-  const seenIds = new Set();
+  const results = {
+    songs: [],
+    albums: []
+  };
+  const seenSongIds = new Set();
+  const seenAlbumIds = new Set();
 
   try {
     const contents = data?.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents || [];
@@ -174,25 +178,48 @@ function parseSearchResults(data) {
     console.log(`🔍 Found ${contents.length} search sections`);
 
     for (const section of contents) {
+      // Get section title to identify type
+      const sectionTitle = section?.musicShelfRenderer?.title?.runs?.[0]?.text || '';
+      console.log(`  📁 Section: ${sectionTitle}`);
+
       // Handle top result (musicCardShelfRenderer)
       if (section.musicCardShelfRenderer) {
         const card = section.musicCardShelfRenderer;
         const videoId = card.title?.runs?.[0]?.navigationEndpoint?.watchEndpoint?.videoId;
+        const browseId = card.title?.runs?.[0]?.navigationEndpoint?.browseEndpoint?.browseId;
 
-        if (videoId && !seenIds.has(videoId)) {
+        // Check if it's an album (browseId starts with MPREb_)
+        if (browseId && browseId.startsWith('MPREb_') && !seenAlbumIds.has(browseId)) {
           const title = card.title?.runs?.[0]?.text || '';
           const subtitleRuns = card.subtitle?.runs || [];
           const artist = subtitleRuns.find(r => r.navigationEndpoint)?.text || subtitleRuns[2]?.text || 'Unknown Artist';
           const thumbnail = card.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
 
-          results.push({
+          results.albums.push({
+            id: browseId,
+            browseId: browseId,
+            title,
+            artist,
+            cover: thumbnail,
+            type: 'album'
+          });
+          seenAlbumIds.add(browseId);
+          console.log(`    ✅ Album: ${title} by ${artist}`);
+        } else if (videoId && !seenSongIds.has(videoId)) {
+          const title = card.title?.runs?.[0]?.text || '';
+          const subtitleRuns = card.subtitle?.runs || [];
+          const artist = subtitleRuns.find(r => r.navigationEndpoint)?.text || subtitleRuns[2]?.text || 'Unknown Artist';
+          const thumbnail = card.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
+
+          results.songs.push({
             id: videoId,
             youtubeId: videoId,
             title,
             artist,
-            cover: thumbnail
+            cover: thumbnail,
+            type: 'song'
           });
-          seenIds.add(videoId);
+          seenSongIds.add(videoId);
         }
 
         // Also check contents for more results
@@ -200,9 +227,14 @@ function parseSearchResults(data) {
         for (const item of cardContents) {
           if (item.musicResponsiveListItemRenderer) {
             const parsed = parseSearchItem(item.musicResponsiveListItemRenderer);
-            if (parsed && !seenIds.has(parsed.id)) {
-              results.push(parsed);
-              seenIds.add(parsed.id);
+            if (parsed) {
+              if (parsed.type === 'album' && !seenAlbumIds.has(parsed.id)) {
+                results.albums.push(parsed);
+                seenAlbumIds.add(parsed.id);
+              } else if (parsed.type === 'song' && !seenSongIds.has(parsed.id)) {
+                results.songs.push(parsed);
+                seenSongIds.add(parsed.id);
+              }
             }
           }
         }
@@ -212,47 +244,76 @@ function parseSearchResults(data) {
       if (section.musicShelfRenderer) {
         const shelf = section.musicShelfRenderer;
         const shelfContents = shelf.contents || [];
+        const isAlbumSection = sectionTitle.toLowerCase().includes('album');
 
         for (const item of shelfContents) {
           if (item.musicResponsiveListItemRenderer) {
-            const parsed = parseSearchItem(item.musicResponsiveListItemRenderer);
-            if (parsed && !seenIds.has(parsed.id)) {
-              results.push(parsed);
-              seenIds.add(parsed.id);
+            const parsed = parseSearchItem(item.musicResponsiveListItemRenderer, isAlbumSection);
+            if (parsed) {
+              if (parsed.type === 'album' && !seenAlbumIds.has(parsed.id)) {
+                results.albums.push(parsed);
+                seenAlbumIds.add(parsed.id);
+                console.log(`    ✅ Album: ${parsed.title}`);
+              } else if (parsed.type === 'song' && !seenSongIds.has(parsed.id)) {
+                results.songs.push(parsed);
+                seenSongIds.add(parsed.id);
+              }
             }
           }
         }
       }
     }
 
-    console.log(`✅ Parsed ${results.length} search results`);
+    console.log(`✅ Parsed ${results.songs.length} songs and ${results.albums.length} albums`);
     return results;
   } catch (error) {
     console.error('Error parsing search results:', error);
-    return [];
+    return { songs: [], albums: [] };
   }
 }
 
 // Parse individual search item
-function parseSearchItem(item) {
+function parseSearchItem(item, isAlbumSection = false) {
   try {
+    // Check for album first (has browseId, no videoId)
+    const browseId = item.navigationEndpoint?.browseEndpoint?.browseId ||
+      item.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchPlaylistEndpoint?.playlistId;
+    
     const videoId = item.playlistItemData?.videoId ||
       item.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId;
 
-    if (!videoId) return null;
-
     const flexColumns = item.flexColumns || [];
     const title = flexColumns[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || '';
-    const artist = flexColumns[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || 'Unknown Artist';
+    const secondColumn = flexColumns[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+    const artist = secondColumn.find(r => r.text && r.text !== ' • ' && r.text !== ' · ' && r.text !== 'Album')?.text || 'Unknown Artist';
 
     const thumbnail = item.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
+
+    // Determine if this is an album
+    const isAlbum = (browseId && browseId.startsWith('MPREb_')) || 
+                   (isAlbumSection && browseId) ||
+                   secondColumn.some(r => r.text === 'Album');
+
+    if (isAlbum && browseId) {
+      return {
+        id: browseId,
+        browseId: browseId,
+        title,
+        artist,
+        cover: thumbnail,
+        type: 'album'
+      };
+    }
+
+    if (!videoId) return null;
 
     return {
       id: videoId,
       youtubeId: videoId,
       title,
       artist,
-      cover: thumbnail
+      cover: thumbnail,
+      type: 'song'
     };
   } catch (error) {
     return null;
@@ -266,20 +327,20 @@ async function searchYouTubeMusic(query, maxResults = 50) {
       context: {
         client: {
           clientName: "WEB_REMIX",
-          clientVersion: "1.20251015.03.00",
+          clientVersion: "1.20251215.03.00",
           hl: "en",
-          gl: "US",
-          userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+          gl: "IN",
+          userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
         }
       },
       query: query
     };
 
-    const response = await fetch('https://music.youtube.com/youtubei/v1/search?key=AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30', {
+    const response = await fetch('https://music.youtube.com/youtubei/v1/search?prettyPrint=false', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
         'Origin': 'https://music.youtube.com',
         'Referer': 'https://music.youtube.com/search'
       },
@@ -293,10 +354,13 @@ async function searchYouTubeMusic(query, maxResults = 50) {
     }
 
     const data = await response.json();
-    const songs = parseSearchResults(data);
+    const results = parseSearchResults(data);
 
     // Limit results
-    return songs.slice(0, maxResults);
+    return {
+      songs: results.songs.slice(0, maxResults),
+      albums: results.albums.slice(0, 20)
+    };
   } catch (error) {
     console.error('Search error:', error);
     throw error;
@@ -797,15 +861,140 @@ app.get('/api/search', async (req, res) => {
   }
 
   try {
-    const songs = await searchYouTubeMusic(query);
+    const results = await searchYouTubeMusic(query);
 
-    console.log(`✅ Found ${songs.length} results for "${query}"`);
-    res.json(songs);
+    console.log(`✅ Found ${results.songs.length} songs and ${results.albums.length} albums for "${query}"`);
+    res.json(results);
   } catch (error) {
     console.error('Error searching songs:', error);
     res.status(500).json({ error: 'Failed to search songs' });
   }
 });
+
+// Get album tracks by browse ID
+app.get('/api/album/:browseId', async (req, res) => {
+  const { browseId } = req.params;
+
+  if (!browseId) {
+    return res.status(400).json({ error: 'Browse ID is required' });
+  }
+
+  try {
+    const fetch = (await import('node-fetch')).default;
+
+    const body = {
+      context: {
+        client: {
+          clientName: "WEB_REMIX",
+          clientVersion: "1.20251215.03.00",
+          hl: "en",
+          gl: "IN"
+        }
+      },
+      browseId: browseId
+    };
+
+    console.log(`📀 Fetching album: ${browseId}`);
+
+    const response = await fetch('https://music.youtube.com/youtubei/v1/browse?prettyPrint=false', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+        'Origin': 'https://music.youtube.com',
+        'Referer': 'https://music.youtube.com/',
+        'X-Youtube-Client-Name': '67',
+        'X-Youtube-Client-Version': '1.20251215.03.00'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Album API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Parse album info and tracks
+    const album = parseAlbumData(data);
+    
+    console.log(`✅ Got album "${album.title}" with ${album.tracks.length} tracks`);
+    res.json(album);
+  } catch (error) {
+    console.error('Error fetching album:', error);
+    res.status(500).json({ error: 'Failed to fetch album' });
+  }
+});
+
+// Parse album data from browse response
+function parseAlbumData(data) {
+  const album = {
+    title: '',
+    artist: '',
+    cover: '',
+    year: '',
+    tracks: []
+  };
+
+  try {
+    // Get album header info
+    const header = data?.header?.musicDetailHeaderRenderer || 
+                   data?.header?.musicImmersiveHeaderRenderer;
+    
+    if (header) {
+      album.title = header.title?.runs?.[0]?.text || '';
+      album.artist = header.subtitle?.runs?.find(r => r.navigationEndpoint)?.text || 
+                     header.subtitle?.runs?.[2]?.text || 'Unknown Artist';
+      album.year = header.subtitle?.runs?.slice(-1)?.[0]?.text || '';
+      
+      const thumbnails = header.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails ||
+                        header.thumbnail?.croppedSquareThumbnailRenderer?.thumbnail?.thumbnails || [];
+      album.cover = thumbnails.slice(-1)[0]?.url || '';
+    }
+
+    // Get tracks from shelf
+    const contents = data?.contents?.singleColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents || [];
+    
+    for (const section of contents) {
+      const shelfContents = section?.musicShelfRenderer?.contents || [];
+      
+      for (const item of shelfContents) {
+        const renderer = item?.musicResponsiveListItemRenderer;
+        if (!renderer) continue;
+
+        const videoId = renderer.playlistItemData?.videoId ||
+          renderer.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId;
+
+        if (!videoId) continue;
+
+        const flexColumns = renderer.flexColumns || [];
+        const title = flexColumns[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || '';
+        
+        // Get duration from fixed columns
+        const fixedColumns = renderer.fixedColumns || [];
+        const duration = fixedColumns[0]?.musicResponsiveListItemFixedColumnRenderer?.text?.runs?.[0]?.text || '';
+
+        const thumbnails = renderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails || [];
+        const cover = thumbnails.slice(-1)[0]?.url || album.cover;
+
+        album.tracks.push({
+          id: videoId,
+          youtubeId: videoId,
+          title,
+          artist: album.artist,
+          album: album.title,
+          duration,
+          cover
+        });
+      }
+    }
+
+    return album;
+  } catch (error) {
+    console.error('Error parsing album data:', error);
+    return album;
+  }
+}
 
 // AI-powered recommendations
 app.post('/api/recommendations', async (req, res) => {
@@ -912,8 +1101,8 @@ app.post('/api/recommendations', async (req, res) => {
 
     const searchResults = await Promise.all(searchPromises);
     const recommendedSongs = searchResults
-      .filter(results => results.length > 0)
-      .map(results => results[0]);
+      .filter(results => results.songs && results.songs.length > 0)
+      .map(results => results.songs[0]);
 
     console.log(`✅ Found ${recommendedSongs.length} AI-recommended songs`);
 

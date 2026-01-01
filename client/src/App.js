@@ -52,9 +52,12 @@ function App() {
   const [repeat, setRepeat] = useState('off'); // 'off', 'all', 'one'
   const [autoplay, setAutoplay] = useState(true); // Auto-play next song
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState({ songs: [], albums: [] });
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedAlbum, setSelectedAlbum] = useState(null); // For viewing album tracks
+  const [albumTracks, setAlbumTracks] = useState([]);
+  const [loadingAlbum, setLoadingAlbum] = useState(false);
   const [queue, setQueue] = useState([]); // Queue of next songs
   const [queueIndex, setQueueIndex] = useState(0); // Current position in queue
   const [playHistory, setPlayHistory] = useState(() => {
@@ -196,8 +199,10 @@ function App() {
     if (currentView === 'search') {
       // Don't reset if user already has a query and results
       if (!searchQuery && !hasSearched) {
-        setSearchResults([]);
+        setSearchResults({ songs: [], albums: [] });
         setHasSearched(false);
+        setSelectedAlbum(null);
+        setAlbumTracks([]);
       }
     }
   }, [currentView, searchQuery, hasSearched]);
@@ -742,19 +747,21 @@ function App() {
 
   const performSearch = async () => {
     if (!searchQuery.trim()) {
-      setSearchResults([]);
+      setSearchResults({ songs: [], albums: [] });
       setHasSearched(false);
       return;
     }
 
     setIsSearching(true);
     setHasSearched(true);
+    setSelectedAlbum(null);
+    setAlbumTracks([]);
     try {
       const data = await searchSongs(searchQuery);
       setSearchResults(data);
     } catch (error) {
       console.error('Search error:', error);
-      setSearchResults([]);
+      setSearchResults({ songs: [], albums: [] });
     } finally {
       setIsSearching(false);
     }
@@ -768,8 +775,36 @@ function App() {
 
   const clearSearch = () => {
     setSearchQuery('');
-    setSearchResults([]);
+    setSearchResults({ songs: [], albums: [] });
     setHasSearched(false);
+    setSelectedAlbum(null);
+    setAlbumTracks([]);
+  };
+
+  // Fetch album tracks
+  const fetchAlbumTracks = async (album) => {
+    setLoadingAlbum(true);
+    setSelectedAlbum(album);
+    try {
+      const response = await fetch(getApiUrl(`/api/album/${album.browseId}`));
+      if (!response.ok) throw new Error('Failed to fetch album');
+      const data = await response.json();
+      setAlbumTracks(data.tracks || []);
+    } catch (error) {
+      console.error('Error fetching album:', error);
+      setAlbumTracks([]);
+    } finally {
+      setLoadingAlbum(false);
+    }
+  };
+
+  // Play all album tracks
+  const playAlbum = (tracks) => {
+    if (tracks.length > 0) {
+      playSong(tracks[0]);
+      setQueue(tracks.slice(1));
+      setQueueIndex(0);
+    }
   };
 
   const renderHomeView = () => {
@@ -1366,28 +1401,101 @@ function App() {
                 <div className="spinner"></div>
                 <p>Searching...</p>
               </div>
-            ) : searchResults.length > 0 ? (
-              <div className="search-results">
-                <h2 className="section-title">Search Results</h2>
-                <div className="songs-grid-full">
-                  {searchResults.map(song => (
-                    <SongCard
-                      key={song.id}
-                      song={song}
-                      currentSong={currentSong}
-                      isLiked={!!likedSongs.find(s => s.id === song.id)}
-                      onPlay={playSong}
-                      onToggleLike={toggleLike}
-                      onAddToPlaylist={(song) => {
-                        setSelectedSongForPlaylist(song);
-                        setShowAddToPlaylist(true);
-                      }}
-                      onPlayNext={handlePlayNext}
-                    />
-                  ))}
+            ) : selectedAlbum ? (
+              // Album view
+              <div className="album-view">
+                <div className="album-header">
+                  <button className="back-button" onClick={() => { setSelectedAlbum(null); setAlbumTracks([]); }}>
+                    ← Back
+                  </button>
+                  <div className="album-info">
+                    <img src={selectedAlbum.cover} alt={selectedAlbum.title} className="album-cover-large" />
+                    <div className="album-details">
+                      <h1 className="album-title">{selectedAlbum.title}</h1>
+                      <p className="album-artist">{selectedAlbum.artist}</p>
+                      {albumTracks.length > 0 && (
+                        <button className="play-album-btn" onClick={() => playAlbum(albumTracks)}>
+                          ▶ Play All
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
+                {loadingAlbum ? (
+                  <div className="loading-state">
+                    <div className="spinner"></div>
+                    <p>Loading album...</p>
+                  </div>
+                ) : (
+                  <div className="album-tracks">
+                    {albumTracks.map((track, index) => (
+                      <div 
+                        key={track.id} 
+                        className={`album-track ${currentSong?.id === track.id ? 'active' : ''}`}
+                        onClick={() => {
+                          playSong(track);
+                          setQueue(albumTracks.slice(index + 1));
+                        }}
+                      >
+                        <span className="track-number">{index + 1}</span>
+                        <div className="track-info">
+                          <span className="track-title">{track.title}</span>
+                          <span className="track-duration">{track.duration}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : hasSearched && searchResults.length === 0 ? (
+            ) : (searchResults.songs?.length > 0 || searchResults.albums?.length > 0) ? (
+              <div className="search-results">
+                {/* Albums Section */}
+                {searchResults.albums?.length > 0 && (
+                  <div className="search-section">
+                    <h2 className="section-title">Albums</h2>
+                    <div className="albums-grid">
+                      {searchResults.albums.map(album => (
+                        <div 
+                          key={album.id} 
+                          className="album-card"
+                          onClick={() => fetchAlbumTracks(album)}
+                        >
+                          <img src={album.cover} alt={album.title} />
+                          <div className="album-card-info">
+                            <h3>{album.title}</h3>
+                            <p>{album.artist}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Songs Section */}
+                {searchResults.songs?.length > 0 && (
+                  <div className="search-section">
+                    <h2 className="section-title">Songs</h2>
+                    <div className="songs-grid-full">
+                      {searchResults.songs.map(song => (
+                        <SongCard
+                          key={song.id}
+                          song={song}
+                          currentSong={currentSong}
+                          isLiked={!!likedSongs.find(s => s.id === song.id)}
+                          onPlay={playSong}
+                          onToggleLike={toggleLike}
+                          onAddToPlaylist={(song) => {
+                            setSelectedSongForPlaylist(song);
+                            setShowAddToPlaylist(true);
+                          }}
+                          onPlayNext={handlePlayNext}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : hasSearched && searchResults.songs?.length === 0 && searchResults.albums?.length === 0 ? (
               <div className="empty-state">
                 <p>No results found for "{searchQuery}"</p>
               </div>
