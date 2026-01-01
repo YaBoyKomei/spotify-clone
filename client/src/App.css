@@ -1563,6 +1563,29 @@
   text-align: center;
 }
 
+/* Success Modal */
+.success-modal {
+  text-align: center;
+}
+
+.success-modal .modal-icon {
+  margin-bottom: 16px;
+}
+
+.success-modal .modal-icon.success svg {
+  color: #22c55e;
+}
+
+.success-modal h2 {
+  color: #22c55e;
+  margin-bottom: 8px;
+}
+
+.success-modal .modal-subtitle {
+  color: #b3b3b3;
+  margin-bottom: 24px;
+}
+
 .playlist-list {
   max-height: 300px;
   overflow-y: auto;

@@ -87,6 +87,7 @@ function App() {
   const [showClearHistory, setShowClearHistory] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [savedAlbumPlaylist, setSavedAlbumPlaylist] = useState(null); // For album saved modal
 
   // Save to localStorage whenever data changes
   useEffect(() => {
@@ -1467,7 +1468,7 @@ function App() {
                             onClick={() => {
                               const playlist = saveAlbumAsPlaylist(selectedAlbum.title, albumTracks);
                               if (playlist) {
-                                alert(`Album saved as playlist "${playlist.name}"`);
+                                setSavedAlbumPlaylist(playlist);
                               }
                             }}
                             title="Save album as playlist"
@@ -1802,6 +1803,40 @@ function App() {
                 }}
               >
                 Clear History
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Album Saved as Playlist Modal */}
+      {savedAlbumPlaylist && (
+        <div className="modal-overlay" onClick={() => setSavedAlbumPlaylist(null)}>
+          <div className="modal success-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon success">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="16 8 10 14 8 12"></polyline>
+              </svg>
+            </div>
+            <h2>Album Saved!</h2>
+            <p className="modal-subtitle">
+              "{savedAlbumPlaylist.name}" has been added to your playlists with {savedAlbumPlaylist.songs.length} tracks.
+            </p>
+            <div className="modal-buttons">
+              <button onClick={() => setSavedAlbumPlaylist(null)}>
+                Close
+              </button>
+              <button
+                className="primary"
+                onClick={() => {
+                  setCurrentView(`playlist-${savedAlbumPlaylist.id}`);
+                  setSelectedAlbum(null);
+                  setAlbumTracks([]);
+                  setSavedAlbumPlaylist(null);
+                }}
+              >
+                View Playlist
               </button>
             </div>
           </div>
