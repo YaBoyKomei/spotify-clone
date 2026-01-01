@@ -2,12 +2,20 @@ import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
 import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon } from './Icons';
 
+// Collapse/Expand icons
+const ChevronDownIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
+
 function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [songEnded, setSongEnded] = useState(false);
   const [titleOverflows, setTitleOverflows] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); // Expanded player state
   const titleRef = useRef(null);
   const intervalRef = useRef(null);
   const playerInitialized = useRef(false);
@@ -1048,6 +1056,158 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  // Toggle expanded player
+  const toggleExpanded = () => {
+    setIsExpanded(!isExpanded);
+    // Close queue when expanding
+    if (!isExpanded && showQueue) {
+      onToggleQueue();
+    }
+  };
+
+  // Handle swipe down to collapse expanded player
+  const handleExpandedTouchStart = (e) => {
+    if (e.target.closest('button') || e.target.closest('input')) return;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleExpandedTouchMove = (e) => {
+    if (touchStartY.current !== 0) {
+      touchEndY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleExpandedTouchEnd = () => {
+    if (touchStartY.current === 0) return;
+    const swipeDistance = touchEndY.current - touchStartY.current;
+    if (swipeDistance > 80) {
+      setIsExpanded(false);
+    }
+    touchStartY.current = 0;
+    touchEndY.current = 0;
+  };
+
+  // Expanded Full-Screen Player View
+  if (isExpanded && currentSong) {
+    return (
+      <div 
+        className="player-expanded"
+        onTouchStart={handleExpandedTouchStart}
+        onTouchMove={handleExpandedTouchMove}
+        onTouchEnd={handleExpandedTouchEnd}
+      >
+        {/* Header with collapse button */}
+        <div className="expanded-header">
+          <button className="collapse-btn" onClick={toggleExpanded}>
+            <ChevronDownIcon />
+          </button>
+          <div className="expanded-header-title">Now Playing</div>
+          <div className="expanded-header-spacer"></div>
+        </div>
+
+        {/* Album Art */}
+        <div className="expanded-artwork">
+          <img src={currentSong.cover} alt={currentSong.title} />
+        </div>
+
+        {/* Song Info */}
+        <div className="expanded-song-info">
+          <div className="expanded-song-title">{currentSong.title}</div>
+          <div className="expanded-song-artist">{currentSong.artist}</div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="expanded-progress">
+          <div className="expanded-progress-bar">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="0.1"
+              value={progress}
+              onChange={handleSeek}
+              className="expanded-progress-input"
+            />
+            <div className="expanded-progress-fill" style={{ width: `${progress}%` }}></div>
+          </div>
+          <div className="expanded-time">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="expanded-controls">
+          <button
+            onClick={onToggleShuffle}
+            className={`expanded-control-btn ${shuffle ? 'active' : ''}`}
+          >
+            <ShuffleIcon />
+          </button>
+          <button onClick={onPrevious} className="expanded-control-btn">
+            <SkipBackIcon />
+          </button>
+          <button
+            className="expanded-play-button"
+            onClick={() => {
+              if (songEnded && player) {
+                player.seekTo(0);
+                setSongEnded(false);
+                onTogglePlay();
+              } else {
+                onTogglePlay();
+              }
+            }}
+          >
+            {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
+          </button>
+          <button onClick={onNext} className="expanded-control-btn">
+            <SkipForwardIcon />
+          </button>
+          <button
+            onClick={onToggleRepeat}
+            className={`expanded-control-btn ${repeat !== 'off' ? 'active' : ''}`}
+          >
+            {repeat === 'one' ? <RepeatOneIcon /> : <RepeatIcon />}
+          </button>
+        </div>
+
+        {/* Bottom Actions */}
+        <div className="expanded-actions">
+          <button
+            className={`expanded-action-btn ${isLiked ? 'liked' : ''}`}
+            onClick={onToggleLike}
+          >
+            <HeartIcon filled={isLiked} />
+          </button>
+          <button
+            className={`expanded-action-btn ${autoplay ? 'active' : ''}`}
+            onClick={onToggleAutoplay}
+          >
+            <AutoplayIcon />
+          </button>
+          <button
+            className="expanded-action-btn"
+            onClick={() => {
+              setIsExpanded(false);
+              setTimeout(() => onToggleQueue(), 100);
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Signature */}
+        <div className="expanded-signature">
+          <span>YaBoy Komei</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Collapsed Mini Player View
   return (
     <div
       className="player"
@@ -1055,40 +1215,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       onTouchMove={handlePlayerTouchMove}
       onTouchEnd={handlePlayerTouchEnd}
     >
-      {/* Swipe Up Indicator */}
-      {!showQueue && currentSong && (
-        <div className="swipe-up-indicator">
-          {/* SVG Gradient Definition */}
-          <svg className="swipe-gradient-def" width="0" height="0">
-            <defs>
-              <linearGradient id="chevronGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#a78bfa" stopOpacity="1" />
-                <stop offset="50%" stopColor="#8b5cf6" stopOpacity="1" />
-                <stop offset="100%" stopColor="#7c3aed" stopOpacity="1" />
-              </linearGradient>
-            </defs>
-          </svg>
-
-          <div className="swipe-chevrons">
-            <div className="swipe-chevron">
-              <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 15l-6-6-6 6" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      )}
-
       {currentSong ? (
         <>
-          {/* Time display above progress bar */}
-          <div className="time-display-top">
-            <span className="time">{formatTime(currentTime)}</span>
-            <span className="time">{formatTime(duration)}</span>
-          </div>
-
           {/* Progress bar at the top */}
-          <div className="progress-bar-top">
+          <div className="progress-bar-top" onClick={(e) => e.stopPropagation()}>
             <input
               type="range"
               min="0"
@@ -1101,7 +1231,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             <div className="progress-fill-top" style={{ width: `${progress}%` }}></div>
           </div>
 
-          <div className="player-content">
+          <div className="player-content" onClick={toggleExpanded}>
             <div className="player-song-info">
               <img src={currentSong.cover} alt={currentSong.title} />
               <div className="song-details">
@@ -1118,80 +1248,26 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 </div>
                 <div className="player-song-artist">{currentSong.artist}</div>
               </div>
-              <button
-                className={`player-like-btn ${isLiked ? 'liked' : ''}`}
-                onClick={onToggleLike}
-                title={isLiked ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
-              >
-                <HeartIcon filled={isLiked} />
-              </button>
             </div>
 
-            <div className="player-controls">
-              <div className="control-buttons">
-                <button
-                  onClick={onToggleShuffle}
-                  title={shuffle ? 'Shuffle Off' : 'Shuffle On'}
-                  className={`control-btn ${shuffle ? 'active' : ''}`}
-                >
-                  <ShuffleIcon />
-                </button>
-                <button onClick={onPrevious} title="Previous" className="control-btn">
-                  <SkipBackIcon />
-                </button>
-                <button
-                  className="play-button"
-                  onClick={() => {
-                    if (songEnded && player) {
-                      // Replay from beginning
-                      player.seekTo(0);
-                      setSongEnded(false);
-                      // Force start playing when replaying
-                      onTogglePlay();
-                    } else {
-                      onTogglePlay();
-                    }
-                  }}
-                  title={songEnded ? 'Replay' : isPlaying ? 'Pause' : 'Play'}
-                >
-                  {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
-                </button>
-                <button onClick={onNext} title="Next" className="control-btn">
-                  <SkipForwardIcon />
-                </button>
-                <button
-                  onClick={onToggleRepeat}
-                  title={repeat === 'off' ? 'Repeat Off' : repeat === 'all' ? 'Repeat All' : 'Repeat One'}
-                  className={`control-btn ${repeat !== 'off' ? 'active' : ''}`}
-                >
-                  {repeat === 'one' ? <RepeatOneIcon /> : <RepeatIcon />}
-                </button>
-                <button
-                  onClick={onToggleAutoplay}
-                  title={autoplay ? 'Autoplay On' : 'Autoplay Off'}
-                  className={`control-btn ${autoplay ? 'active' : ''}`}
-                >
-                  <AutoplayIcon />
-                </button>
-              </div>
-            </div>
-
-            <div className="player-volume">
-              <button className="volume-btn" title="Volume">
-                <VolumeIcon />
-              </button>
+            {/* Mini player controls - only play/pause visible */}
+            <div className="mini-controls" onClick={(e) => e.stopPropagation()}>
               <button
-                className="queue-toggle-btn"
-                onClick={onToggleQueue}
-                title={showQueue ? "Hide Queue" : "Show Queue"}
+                className="mini-play-button"
+                onClick={() => {
+                  if (songEnded && player) {
+                    player.seekTo(0);
+                    setSongEnded(false);
+                    onTogglePlay();
+                  } else {
+                    onTogglePlay();
+                  }
+                }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d={showQueue ? "M19 9l-7 7-7-7" : "M5 15l7-7 7 7"} />
-                </svg>
+                {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
               </button>
             </div>
           </div>
-
         </>
       ) : (
         <div className="player-song-info">
@@ -1356,14 +1432,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           </div>
         </div>
       )}
-
-      {/* Developer Signature */}
-      <div className="player-signature">
-        <span>YaBoy Komei</span>
-      </div>
-
-      {/* Decorative Bottom Strip */}
-      <div className="player-bottom-strip"></div>
     </div>
   );
 }

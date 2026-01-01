@@ -14,7 +14,6 @@ import android.provider.Settings
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageView
-import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
@@ -33,8 +32,8 @@ class SplashActivity : AppCompatActivity() {
 
         // Make status bar transparent
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = Color.TRANSPARENT
-        window.navigationBarColor = Color.parseColor("#121212")
+        window.statusBarColor = Color.BLACK
+        window.navigationBarColor = Color.BLACK
         
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
@@ -43,14 +42,11 @@ class SplashActivity : AppCompatActivity() {
 
         // Get views
         val logo = findViewById<ImageView>(R.id.splash_logo)
-        val title = findViewById<TextView>(R.id.splash_title)
 
         // Initial state - invisible and scaled down
         logo.alpha = 0f
         logo.scaleX = 0.5f
         logo.scaleY = 0.5f
-        title.alpha = 0f
-        title.translationY = 50f
 
         // Animate logo - scale up and fade in
         val logoScaleX = ObjectAnimator.ofFloat(logo, View.SCALE_X, 0.5f, 1f)
@@ -63,20 +59,8 @@ class SplashActivity : AppCompatActivity() {
             interpolator = AccelerateDecelerateInterpolator()
         }
 
-        // Animate title - slide up and fade in
-        val titleAlpha = ObjectAnimator.ofFloat(title, View.ALPHA, 0f, 1f)
-        val titleTranslate = ObjectAnimator.ofFloat(title, View.TRANSLATION_Y, 50f, 0f)
-        
-        val titleAnimator = AnimatorSet().apply {
-            playTogether(titleAlpha, titleTranslate)
-            duration = 400
-            startDelay = 300
-            interpolator = AccelerateDecelerateInterpolator()
-        }
-
         // Start animations
         logoAnimator.start()
-        titleAnimator.start()
 
         // Check battery optimization after animation
         Handler(Looper.getMainLooper()).postDelayed({
