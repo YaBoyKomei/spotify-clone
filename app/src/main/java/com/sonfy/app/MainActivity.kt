@@ -82,10 +82,17 @@ class MainActivity : AppCompatActivity() {
             setBackgroundColor(Color.parseColor("#121212"))
             addView(webView)
             
-            // Apply padding for system bars
+            // Apply padding for system bars (top only, bottom handled by CSS)
             ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
                 val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
                 view.setPadding(0, insets.top, 0, 0)
+                
+                // Pass bottom navigation bar height to WebView via CSS variable
+                val bottomInset = insets.bottom
+                val density = resources.displayMetrics.density
+                val bottomInsetPx = bottomInset / density // Convert to dp-like value for CSS
+                injectNavigationBarHeight(bottomInset)
+                
                 windowInsets
             }
         }
@@ -198,6 +205,24 @@ class MainActivity : AppCompatActivity() {
                 customView = null
                 customViewCallback = null
             }
+        }
+    }
+    
+    private var lastInjectedNavHeight = -1
+    
+    private fun injectNavigationBarHeight(heightPx: Int) {
+        if (heightPx == lastInjectedNavHeight) return
+        lastInjectedNavHeight = heightPx
+        
+        val script = """
+            (function() {
+                document.documentElement.style.setProperty('--android-nav-bar-height', '${heightPx}px');
+                console.log('Android nav bar height set to: ${heightPx}px');
+            })();
+        """.trimIndent()
+        
+        webView.post {
+            webView.evaluateJavascript(script, null)
         }
     }
     

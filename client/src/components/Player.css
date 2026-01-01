@@ -1,7 +1,7 @@
 .player {
   position: fixed;
   bottom: 0;
-  bottom: env(safe-area-inset-bottom, 0);
+  bottom: var(--android-nav-bar-height, env(safe-area-inset-bottom, 0px));
   left: 0;
   right: 0;
   height: 72px;
@@ -325,7 +325,7 @@
   flex-direction: column;
   padding: 20px;
   padding-top: env(safe-area-inset-top, 20px);
-  padding-bottom: env(safe-area-inset-bottom, 20px);
+  padding-bottom: var(--android-nav-bar-height, env(safe-area-inset-bottom, 20px));
   animation: slideUp 0.3s ease-out;
 }
 
@@ -816,7 +816,7 @@
 @media (max-width: 768px) {
   .player {
     height: 68px;
-    bottom: 60px; /* Space for bottom nav */
+    bottom: calc(60px + var(--android-nav-bar-height, 0px)); /* Space for bottom nav + system nav */
   }
 
   .mini-player-art {
@@ -866,7 +866,7 @@
 @media (max-width: 480px) {
   .player {
     height: 64px;
-    bottom: 56px; /* Space for bottom nav */
+    bottom: calc(56px + var(--android-nav-bar-height, 0px)); /* Space for bottom nav + system nav */
   }
 
   .mini-player-art {
@@ -1339,7 +1339,7 @@
   .queue-panel {
     width: 100%;
     max-height: 65vh;
-    bottom: calc(125px + env(safe-area-inset-bottom, 0px)); /* Position above mini player + bottom nav */
+    bottom: calc(125px + var(--android-nav-bar-height, env(safe-area-inset-bottom, 0px))); /* Position above mini player + bottom nav */
   }
   
   /* Always show queue action buttons on mobile */
@@ -1355,7 +1355,7 @@
 
 @media (max-width: 480px) {
   .queue-panel {
-    bottom: calc(116px + env(safe-area-inset-bottom, 0px)); /* Position above mini player + bottom nav */
+    bottom: calc(116px + var(--android-nav-bar-height, env(safe-area-inset-bottom, 0px))); /* Position above mini player + bottom nav */
     max-height: 60vh;
   }
 }
