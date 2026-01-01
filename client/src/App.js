@@ -852,6 +852,18 @@ function App() {
     }
   };
 
+  // Play a specific track from playlist
+  const playPlaylistTrack = (playlistSongs, index) => {
+    if (playlistSongs.length > 0 && index >= 0 && index < playlistSongs.length) {
+      // Set the full playlist as the queue
+      setQueue(playlistSongs);
+      setQueueIndex(index);
+      // Play the selected track without fetching a new queue (keep playlist queue)
+      playSong(playlistSongs[index], true, false);
+      console.log(`📋 Playing playlist track ${index + 1}/${playlistSongs.length}: "${playlistSongs[index].title}"`);
+    }
+  };
+
   const renderHomeView = () => {
     if (loading) {
       return (
@@ -1307,13 +1319,13 @@ function App() {
             </div>
           ) : (
             <div className="songs-grid-full">
-              {playlist.songs.map(song => (
+              {playlist.songs.map((song, index) => (
                 <SongCard
                   key={song.id}
                   song={song}
                   currentSong={currentSong}
                   isLiked={!!likedSongs.find(s => s.id === song.id)}
-                  onPlay={playSong}
+                  onPlay={() => playPlaylistTrack(playlist.songs, index)}
                   onToggleLike={toggleLike}
                   showRemove={true}
                   onRemoveFromPlaylist={(song) => {
