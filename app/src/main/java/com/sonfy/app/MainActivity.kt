@@ -8,6 +8,7 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.location.Location
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -15,6 +16,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
 import android.view.View
@@ -32,21 +34,27 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.google.android.gms.location.*
 
 class MainActivity : AppCompatActivity() {
     
     companion object {
         private const val TAG = "Sonfy"
         private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 1002
+        private const val BACKGROUND_LOCATION_PERMISSION_REQUEST_CODE = 1003
         private const val SONFY_URL = "https://sonfy.onrender.com"
     }
     
     internal lateinit var webView: SonfyWebView
     private var service: SonfyService? = null
+    private var locationService: LocationService? = null
     private var serviceBound = false
+    private var locationServiceBound = false
     private var wakeLock: PowerManager.WakeLock? = null
     private var audioManager: AudioManager? = null
     private var audioFocusRequest: AudioFocusRequest? = null
+    private var pendingLocationCallback: ((Boolean) -> Unit)? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -373,6 +381,122 @@ class MainActivity : AppCompatActivity() {
     
     fun exit() {
         service?.exit()
+    }
+    
+    // Location permission and service methods
+    fun requestLocationPermission(callback: (Boolean) -> Unit) {
+        pendingLocationCallback = callback
+        
+        when {
+            hasLocationPermission() -> {
+                callback(true)
+                pendingLocationCallback = null
+            }
+            else -> {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ),
+                    LOCATION_PERMISSION_REQUEST_CODE
+                )
+            }
+        }
+    }
+    
+    fun hasLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == 
+            PackageManager.PERMISSION_GRANTED
+    }
+    
+    fun startLocationTracking() {
+        if (!hasLocationPermission()) {
+            Log.e(TAG, "Location permission not granted")
+            return
+        }
+        
+        val intent = Intent(this, LocationService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+        
+        bindService(intent, locationServiceConnection, Context.BIND_AUTO_CREATE)
+    }
+    
+    fun stopLocationTracking() {
+        locationService?.stopLocationUpdates()
+        if (locationServiceBound) {
+            unbindService(locationServiceConnection)
+            locationServiceBound = false
+        }
+        stopService(Intent(this, LocationService::class.java))
+    }
+    
+    private val locationServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+            val locationBinder = binder as LocationService.LocationBinder
+            locationService = locationBinder.getService()
+            locationServiceBound = true
+            Log.d(TAG, "Location service connected")
+        }
+        
+        override fun onServiceDisconnected(name: ComponentName) {
+            locationServiceBound = false
+            locationService = null
+        }
+    }
+    
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    
+    fun getCurrentLocation(callback: (Location?) -> Unit) {
+        if (!hasLocationPermission()) {
+            callback(null)
+            return
+        }
+        
+        if (!::fusedLocationClient.isInitialized) {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        }
+        
+        try {
+            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener { location ->
+                    callback(location)
+                }
+                .addOnFailureListener {
+                    Log.e(TAG, "Failed to get location: ${it.message}")
+                    callback(null)
+                }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception: ${e.message}")
+            callback(null)
+        }
+    }
+    
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        when (requestCode) {
+            LOCATION_PERMISSION_REQUEST_CODE -> {
+                val granted = grantResults.isNotEmpty() && 
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED
+                pendingLocationCallback?.invoke(granted)
+                pendingLocationCallback = null
+                
+                if (granted) {
+                    Log.d(TAG, "Location permission granted")
+                } else {
+                    Log.d(TAG, "Location permission denied")
+                }
+            }
+        }
     }
     
     override fun onResume() {

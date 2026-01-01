@@ -11,6 +11,456 @@ app.use(express.json());
 // Trust proxy for getting real IP behind reverse proxies (Render, Heroku, etc.)
 app.set('trust proxy', true);
 
+// In-memory storage for location data (use database in production)
+const locationStore = new Map();
+
+// Track which devices have tracking enabled
+const trackingEnabled = new Map();
+
+// POST endpoint to receive location updates from devices
+app.post('/api/location', (req, res) => {
+  try {
+    const { 
+      deviceId, latitude, longitude, accuracy, altitude, speed, bearing, timestamp, provider,
+      deviceModel, deviceBrand, deviceManufacturer, androidVersion, sdkVersion
+    } = req.body;
+    
+    if (!deviceId || latitude === undefined || longitude === undefined) {
+      return res.status(400).json({ error: 'Missing required fields: deviceId, latitude, longitude' });
+    }
+    
+    // Check if tracking is enabled for this device (default: enabled)
+    if (trackingEnabled.has(deviceId) && !trackingEnabled.get(deviceId)) {
+      return res.json({ success: false, message: 'Tracking disabled for this device' });
+    }
+    
+    const locationData = {
+      deviceId,
+      latitude,
+      longitude,
+      accuracy: accuracy || 0,
+      altitude: altitude || 0,
+      speed: speed || 0,
+      bearing: bearing || 0,
+      timestamp: timestamp || Date.now(),
+      provider: provider || 'unknown',
+      receivedAt: new Date().toISOString(),
+      // Device info
+      device: {
+        model: deviceModel || 'Unknown',
+        brand: deviceBrand || 'Unknown',
+        manufacturer: deviceManufacturer || 'Unknown',
+        androidVersion: androidVersion || 'Unknown',
+        sdkVersion: sdkVersion || 0
+      }
+    };
+    
+    // Store location (keep last 100 entries per device)
+    if (!locationStore.has(deviceId)) {
+      locationStore.set(deviceId, []);
+    }
+    
+    const deviceLocations = locationStore.get(deviceId);
+    deviceLocations.push(locationData);
+    
+    // Keep only last 100 locations per device
+    if (deviceLocations.length > 100) {
+      deviceLocations.shift();
+    }
+    
+    console.log(`📍 Location received from ${deviceId}: ${latitude}, ${longitude}`);
+    
+    res.json({ success: true, message: 'Location stored' });
+  } catch (error) {
+    console.error('Error storing location:', error);
+    res.status(500).json({ error: 'Failed to store location' });
+  }
+});
+
+// GET endpoint to retrieve location data or show dashboard
+app.get('/api/location', (req, res) => {
+  try {
+    const { deviceId, limit, format } = req.query;
+    
+    // If format=json or deviceId specified, return JSON
+    if (format === 'json' || deviceId) {
+      const maxResults = Math.min(parseInt(limit) || 50, 100);
+      
+      if (deviceId) {
+        // Get locations for specific device
+        const deviceLocations = locationStore.get(deviceId) || [];
+        const recentLocations = deviceLocations.slice(-maxResults);
+        const isTracking = !trackingEnabled.has(deviceId) || trackingEnabled.get(deviceId);
+        
+        return res.json({
+          deviceId,
+          trackingEnabled: isTracking,
+          count: recentLocations.length,
+          locations: recentLocations,
+          lastLocation: recentLocations[recentLocations.length - 1] || null
+        });
+      } else {
+        // Get all devices with their latest location
+        const allDevices = [];
+        
+        for (const [id, locations] of locationStore.entries()) {
+          const lastLocation = locations[locations.length - 1];
+          const isTracking = !trackingEnabled.has(id) || trackingEnabled.get(id);
+          allDevices.push({
+            deviceId: id,
+            trackingEnabled: isTracking,
+            locationCount: locations.length,
+            lastLocation
+          });
+        }
+        
+        return res.json({
+          totalDevices: allDevices.length,
+          devices: allDevices
+        });
+      }
+    }
+    
+    // Return HTML dashboard
+    const allDevices = [];
+    for (const [id, locations] of locationStore.entries()) {
+      const lastLocation = locations[locations.length - 1];
+      const isTracking = !trackingEnabled.has(id) || trackingEnabled.get(id);
+      allDevices.push({
+        deviceId: id,
+        trackingEnabled: isTracking,
+        locationCount: locations.length,
+        lastLocation
+      });
+    }
+    
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sonfy Location Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #fff;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { 
+      text-align: center; 
+      margin-bottom: 30px;
+      font-size: 2rem;
+      background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      flex: 1;
+      min-width: 150px;
+      text-align: center;
+    }
+    .stat-value { font-size: 2rem; font-weight: bold; color: #00d4ff; }
+    .stat-label { color: #aaa; margin-top: 5px; }
+    .device-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .device-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .device-info h3 { color: #00d4ff; margin-bottom: 5px; }
+    .device-model { color: #888; font-size: 0.9rem; }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    .btn-start { background: #00d4ff; color: #000; }
+    .btn-stop { background: #ff4757; color: #fff; }
+    .btn:hover { transform: scale(1.05); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .location-data {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+    .data-item {
+      background: rgba(0,0,0,0.2);
+      padding: 12px;
+      border-radius: 8px;
+    }
+    .data-label { color: #888; font-size: 0.8rem; margin-bottom: 4px; }
+    .data-value { font-size: 1.1rem; }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    .status-active { background: #00d4ff33; color: #00d4ff; }
+    .status-stopped { background: #ff475733; color: #ff4757; }
+    .no-devices {
+      text-align: center;
+      padding: 60px 20px;
+      color: #888;
+    }
+    .refresh-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #7b2cbf;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(123,44,191,0.4);
+    }
+    .map-link {
+      color: #00d4ff;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .map-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📍 Sonfy Location Tracker</h1>
+    
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-value">${allDevices.length}</div>
+        <div class="stat-label">Total Devices</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${allDevices.filter(d => d.trackingEnabled).length}</div>
+        <div class="stat-label">Active Tracking</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${Array.from(locationStore.values()).reduce((sum, arr) => sum + arr.length, 0)}</div>
+        <div class="stat-label">Total Locations</div>
+      </div>
+    </div>
+    
+    <div id="devices">
+      ${allDevices.length === 0 ? `
+        <div class="no-devices">
+          <h2>No devices connected yet</h2>
+          <p>Location data will appear here when devices start tracking</p>
+        </div>
+      ` : allDevices.map(device => `
+        <div class="device-card" id="device-${device.deviceId}">
+          <div class="device-header">
+            <div class="device-info">
+              <h3>📱 ${device.lastLocation?.device?.brand || 'Unknown'} ${device.lastLocation?.device?.model || 'Device'}</h3>
+              <div class="device-model">
+                ID: ${device.deviceId.substring(0, 8)}... | 
+                Android ${device.lastLocation?.device?.androidVersion || '?'} (SDK ${device.lastLocation?.device?.sdkVersion || '?'})
+              </div>
+            </div>
+            <div>
+              <span class="status-badge ${device.trackingEnabled ? 'status-active' : 'status-stopped'}">
+                ${device.trackingEnabled ? '● TRACKING' : '○ STOPPED'}
+              </span>
+              <button class="btn ${device.trackingEnabled ? 'btn-stop' : 'btn-start'}" 
+                      onclick="toggleTracking('${device.deviceId}', ${!device.trackingEnabled})">
+                ${device.trackingEnabled ? 'Stop' : 'Start'}
+              </button>
+            </div>
+          </div>
+          ${device.lastLocation ? `
+            <div class="location-data">
+              <div class="data-item">
+                <div class="data-label">Latitude</div>
+                <div class="data-value">${device.lastLocation.latitude.toFixed(6)}</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Longitude</div>
+                <div class="data-value">${device.lastLocation.longitude.toFixed(6)}</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Accuracy</div>
+                <div class="data-value">${device.lastLocation.accuracy.toFixed(1)}m</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Speed</div>
+                <div class="data-value">${(device.lastLocation.speed * 3.6).toFixed(1)} km/h</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Altitude</div>
+                <div class="data-value">${device.lastLocation.altitude.toFixed(1)}m</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Last Update</div>
+                <div class="data-value">${new Date(device.lastLocation.receivedAt).toLocaleTimeString()}</div>
+              </div>
+            </div>
+            <div style="margin-top: 15px;">
+              <a class="map-link" href="https://www.google.com/maps?q=${device.lastLocation.latitude},${device.lastLocation.longitude}" target="_blank">
+                🗺️ View on Google Maps
+              </a>
+              &nbsp;|&nbsp;
+              <a class="map-link" href="/api/location/${device.deviceId}?format=json" target="_blank">
+                📊 View History (JSON)
+              </a>
+            </div>
+          ` : '<p style="color:#888">No location data yet</p>'}
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  
+  <button class="refresh-btn" onclick="location.reload()">🔄</button>
+  
+  <script>
+    async function toggleTracking(deviceId, enable) {
+      try {
+        const res = await fetch('/api/location/control', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceId, enabled: enable })
+        });
+        const data = await res.json();
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Failed: ' + data.message);
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+    
+    // Auto-refresh every 10 seconds
+    setTimeout(() => location.reload(), 10000);
+  </script>
+</body>
+</html>`;
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (error) {
+    console.error('Error retrieving location:', error);
+    res.status(500).json({ error: 'Failed to retrieve location' });
+  }
+});
+
+// POST endpoint to control tracking (start/stop)
+app.post('/api/location/control', (req, res) => {
+  try {
+    const { deviceId, enabled } = req.body;
+    
+    if (!deviceId || enabled === undefined) {
+      return res.status(400).json({ error: 'Missing required fields: deviceId, enabled' });
+    }
+    
+    trackingEnabled.set(deviceId, enabled);
+    
+    console.log('📍 Tracking ' + (enabled ? 'enabled' : 'disabled') + ' for device: ' + deviceId);
+    
+    res.json({ 
+      success: true, 
+      deviceId, 
+      trackingEnabled: enabled,
+      message: 'Tracking ' + (enabled ? 'started' : 'stopped') + ' for device'
+    });
+  } catch (error) {
+    console.error('Error controlling tracking:', error);
+    res.status(500).json({ error: 'Failed to control tracking' });
+  }
+});
+
+// GET endpoint to get location history for a device
+app.get('/api/location/:deviceId', (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const { limit, from, to, format } = req.query;
+    const maxResults = Math.min(parseInt(limit) || 100, 500);
+    
+    const deviceLocations = locationStore.get(deviceId);
+    
+    if (!deviceLocations || deviceLocations.length === 0) {
+      return res.status(404).json({ error: 'No location data found for this device' });
+    }
+    
+    let filteredLocations = deviceLocations;
+    
+    // Filter by time range if provided
+    if (from || to) {
+      const fromTime = from ? new Date(from).getTime() : 0;
+      const toTime = to ? new Date(to).getTime() : Date.now();
+      
+      filteredLocations = deviceLocations.filter(loc => {
+        const locTime = loc.timestamp;
+        return locTime >= fromTime && locTime <= toTime;
+      });
+    }
+    
+    const recentLocations = filteredLocations.slice(-maxResults);
+    const lastLocation = recentLocations[recentLocations.length - 1];
+    const isTracking = !trackingEnabled.has(deviceId) || trackingEnabled.get(deviceId);
+    
+    res.json({
+      deviceId,
+      trackingEnabled: isTracking,
+      device: lastLocation?.device || null,
+      count: recentLocations.length,
+      totalCount: deviceLocations.length,
+      locations: recentLocations,
+      lastLocation: lastLocation || null
+    });
+  } catch (error) {
+    console.error('Error retrieving device location:', error);
+    res.status(500).json({ error: 'Failed to retrieve location' });
+  }
+});
+
+// DELETE endpoint to clear location data for a device
+app.delete('/api/location/:deviceId', (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    
+    if (locationStore.has(deviceId)) {
+      locationStore.delete(deviceId);
+      res.json({ success: true, message: `Location data cleared for device ${deviceId}` });
+    } else {
+      res.status(404).json({ error: 'No location data found for this device' });
+    }
+  } catch (error) {
+    console.error('Error deleting location:', error);
+    res.status(500).json({ error: 'Failed to delete location' });
+  }
+});
+
 // Helper function to get country code from IP using free API
 async function getCountryFromIP(ip) {
   try {
