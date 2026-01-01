@@ -677,6 +677,35 @@ function App() {
     return newPlaylist;
   };
 
+  // Save album as a new playlist
+  const saveAlbumAsPlaylist = (albumName, tracks) => {
+    if (!tracks || tracks.length === 0) {
+      console.warn('⚠️ No tracks to save');
+      return null;
+    }
+
+    // Generate unique name if album name already exists
+    let playlistName = albumName;
+    let counter = 1;
+    while (playlists.find(p => p.name.toLowerCase() === playlistName.toLowerCase())) {
+      playlistName = `${albumName} (${counter})`;
+      counter++;
+    }
+
+    const newPlaylist = {
+      id: Date.now().toString(),
+      name: playlistName,
+      songs: tracks.map(track => ({
+        ...track,
+        addedAt: new Date().toISOString()
+      })),
+      createdAt: new Date().toISOString()
+    };
+    setPlaylists(prev => [...prev, newPlaylist]);
+    console.log(`📀 Saved album "${playlistName}" as playlist with ${tracks.length} tracks`);
+    return newPlaylist;
+  };
+
   const clearAllPlaylists = () => {
     setShowClearPlaylistsModal(true);
   };
@@ -1429,9 +1458,23 @@ function App() {
                       <h1 className="album-title">{selectedAlbum.title}</h1>
                       <p className="album-artist">{selectedAlbum.artist}</p>
                       {albumTracks.length > 0 && (
-                        <button className="play-album-btn" onClick={() => playAlbum(albumTracks)}>
-                          ▶ Play All
-                        </button>
+                        <div className="album-actions">
+                          <button className="play-album-btn" onClick={() => playAlbum(albumTracks)}>
+                            ▶ Play All
+                          </button>
+                          <button 
+                            className="save-album-btn" 
+                            onClick={() => {
+                              const playlist = saveAlbumAsPlaylist(selectedAlbum.title, albumTracks);
+                              if (playlist) {
+                                alert(`Album saved as playlist "${playlist.name}"`);
+                              }
+                            }}
+                            title="Save album as playlist"
+                          >
+                            +
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
