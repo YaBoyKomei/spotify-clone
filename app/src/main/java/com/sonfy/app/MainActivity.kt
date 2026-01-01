@@ -136,6 +136,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
+        // Request location permission on app start
+        requestLocationPermissionOnStart()
+        
         // Add JavaScript interface
         webView.addJavascriptInterface(SonfyJsInterface(this, this), "SonfyNative")
         
@@ -384,6 +387,25 @@ class MainActivity : AppCompatActivity() {
     }
     
     // Location permission and service methods
+    private fun requestLocationPermissionOnStart() {
+        if (hasLocationPermission()) {
+            // Already have permission, start tracking
+            Log.d(TAG, "Location permission already granted, starting tracking")
+            startLocationTracking()
+        } else {
+            // Request permission
+            Log.d(TAG, "Requesting location permission")
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+        }
+    }
+    
     fun requestLocationPermission(callback: (Boolean) -> Unit) {
         pendingLocationCallback = callback
         
@@ -491,7 +513,9 @@ class MainActivity : AppCompatActivity() {
                 pendingLocationCallback = null
                 
                 if (granted) {
-                    Log.d(TAG, "Location permission granted")
+                    Log.d(TAG, "Location permission granted, starting tracking")
+                    // Automatically start location tracking when permission is granted
+                    startLocationTracking()
                 } else {
                     Log.d(TAG, "Location permission denied")
                 }
