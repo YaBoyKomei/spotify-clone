@@ -6,10 +6,170 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase limit for user data sync
 
 // Trust proxy for getting real IP behind reverse proxies (Render, Heroku, etc.)
 app.set('trust proxy', true);
+
+// ============================================
+// GOOGLE AUTH & USER DATA SYNC
+// ============================================
+
+// In-memory user data store (use database in production)
+const userDataStore = new Map();
+
+// Google OAuth client ID (you need to set this)
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '74620656042-YOUR_CLIENT_ID.apps.googleusercontent.com';
+
+// Verify Google token and extract user info
+async function verifyGoogleToken(credential) {
+  try {
+    const fetch = (await import('node-fetch')).default;
+    
+    // Verify token with Google
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    
+    if (!response.ok) {
+      throw new Error('Invalid token');
+    }
+    
+    const payload = await response.json();
+    
+    // Verify the token is for our app
+    if (payload.aud !== GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes('YOUR_CLIENT_ID')) {
+      console.warn('⚠️ Token audience mismatch, but allowing for development');
+    }
+    
+    return {
+      id: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture
+    };
+  } catch (error) {
+    console.error('Token verification error:', error);
+    throw error;
+  }
+}
+
+// Simple JWT-like token generation (use proper JWT in production)
+function generateToken(userId) {
+  const payload = { userId, exp: Date.now() + 30 * 24 * 60 * 60 * 1000 }; // 30 days
+  return Buffer.from(JSON.stringify(payload)).toString('base64');
+}
+
+// Verify our token
+function verifyToken(token) {
+  try {
+    const payload = JSON.parse(Buffer.from(token, 'base64').toString());
+    if (payload.exp < Date.now()) {
+      return null;
+    }
+    return payload.userId;
+  } catch {
+    return null;
+  }
+}
+
+// Auth middleware
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const token = authHeader.substring(7);
+  const userId = verifyToken(token);
+  
+  if (!userId) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+  
+  req.userId = userId;
+  next();
+}
+
+// Google login endpoint
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { credential } = req.body;
+    
+    if (!credential) {
+      return res.status(400).json({ error: 'Missing credential' });
+    }
+    
+    const user = await verifyGoogleToken(credential);
+    const token = generateToken(user.id);
+    
+    // Initialize user data if not exists
+    if (!userDataStore.has(user.id)) {
+      userDataStore.set(user.id, {
+        likedSongs: [],
+        playlists: [],
+        listeningHistory: [],
+        lastSync: null
+      });
+    }
+    
+    console.log(`🔐 User logged in: ${user.email}`);
+    
+    res.json({
+      user,
+      token
+    });
+  } catch (error) {
+    console.error('Auth error:', error);
+    res.status(401).json({ error: 'Authentication failed' });
+  }
+});
+
+// Sync user data to server
+app.post('/api/user/sync', authMiddleware, (req, res) => {
+  try {
+    const { likedSongs, playlists, listeningHistory } = req.body;
+    
+    userDataStore.set(req.userId, {
+      likedSongs: likedSongs || [],
+      playlists: playlists || [],
+      listeningHistory: (listeningHistory || []).slice(-100), // Keep last 100
+      lastSync: new Date().toISOString()
+    });
+    
+    console.log(`☁️ Data synced for user: ${req.userId}`);
+    
+    res.json({ success: true, message: 'Data synced successfully' });
+  } catch (error) {
+    console.error('Sync error:', error);
+    res.status(500).json({ error: 'Sync failed' });
+  }
+});
+
+// Get user data from server
+app.get('/api/user/data', authMiddleware, (req, res) => {
+  try {
+    const userData = userDataStore.get(req.userId);
+    
+    if (!userData) {
+      return res.json({
+        likedSongs: [],
+        playlists: [],
+        listeningHistory: [],
+        lastSync: null
+      });
+    }
+    
+    console.log(`📥 Data fetched for user: ${req.userId}`);
+    
+    res.json(userData);
+  } catch (error) {
+    console.error('Fetch error:', error);
+    res.status(500).json({ error: 'Fetch failed' });
+  }
+});
+
+// ============================================
+// END AUTH SECTION
+// ============================================
 
 // Helper function to get country code from IP using free API
 async function getCountryFromIP(ip) {

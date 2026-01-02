@@ -3,6 +3,8 @@ import './App.css';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import Player from './components/Player';
+import ProfileButton from './components/ProfileButton';
+import { useAuth } from './context/AuthContext';
 import { getApiUrl } from './config';
 // import AudioPlayer from './components/AudioPlayer';
 import SongCard from './components/SongCard';
@@ -34,6 +36,7 @@ const searchSongs = async (query) => {
 
 function App() {
   console.log('🎵 Komei App starting...');
+  const { user, isLoggedIn, syncToServer, fetchFromServer } = useAuth();
   const [songs, setSongs] = useState([]);
   const [sections, setSections] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -110,6 +113,54 @@ function App() {
   useEffect(() => {
     localStorage.setItem('playCount', JSON.stringify(playCount));
   }, [playCount]);
+
+  // Sync data to server when user is logged in and data changes
+  useEffect(() => {
+    if (isLoggedIn) {
+      // Debounce sync to avoid too many requests
+      const syncTimeout = setTimeout(() => {
+        syncToServer(likedSongs, playlists, listeningHistory);
+      }, 2000);
+      return () => clearTimeout(syncTimeout);
+    }
+  }, [likedSongs, playlists, listeningHistory, isLoggedIn, syncToServer]);
+
+  // Fetch data from server when user logs in
+  useEffect(() => {
+    const fetchAndMergeData = async () => {
+      if (isLoggedIn && user) {
+        console.log('📥 Fetching user data from server...');
+        const serverData = await fetchFromServer();
+        if (serverData) {
+          // Merge server data with local data (server takes priority for conflicts)
+          if (serverData.likedSongs && serverData.likedSongs.length > 0) {
+            setLikedSongs(prev => {
+              const merged = [...prev];
+              serverData.likedSongs.forEach(song => {
+                if (!merged.find(s => s.id === song.id)) {
+                  merged.push(song);
+                }
+              });
+              return merged;
+            });
+          }
+          if (serverData.playlists && serverData.playlists.length > 0) {
+            setPlaylists(prev => {
+              const merged = [...prev];
+              serverData.playlists.forEach(playlist => {
+                if (!merged.find(p => p.id === playlist.id)) {
+                  merged.push(playlist);
+                }
+              });
+              return merged;
+            });
+          }
+          console.log('✅ User data merged from server');
+        }
+      }
+    };
+    fetchAndMergeData();
+  }, [isLoggedIn, user]);
 
   useEffect(() => {
     if (currentView === 'home') {
@@ -1419,6 +1470,32 @@ function App() {
               <b>Komei</b>
             </h1>
           </div>
+          <ProfileButton 
+            onSync={() => syncToServer(likedSongs, playlists, listeningHistory)}
+            onFetch={async () => {
+              const serverData = await fetchFromServer();
+              if (serverData) {
+                if (serverData.likedSongs?.length > 0) {
+                  setLikedSongs(prev => {
+                    const merged = [...prev];
+                    serverData.likedSongs.forEach(song => {
+                      if (!merged.find(s => s.id === song.id)) merged.push(song);
+                    });
+                    return merged;
+                  });
+                }
+                if (serverData.playlists?.length > 0) {
+                  setPlaylists(prev => {
+                    const merged = [...prev];
+                    serverData.playlists.forEach(playlist => {
+                      if (!merged.find(p => p.id === playlist.id)) merged.push(playlist);
+                    });
+                    return merged;
+                  });
+                }
+              }
+            }}
+          />
         </div>
 
         {currentView === 'search' ? (

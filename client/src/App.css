@@ -111,15 +111,17 @@
 
 /* Sonfy Main Header Branding */
 .main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 40px;
-  text-align: center;
-  padding: 20px 0;
+  padding: 20px;
 }
 
 .sonfy-brand {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
 }
 
@@ -207,9 +209,12 @@
     right: 0;
     z-index: 999;
     margin-bottom: 0;
-    padding: 12px 0;
+    padding: 12px 16px;
     background: #000;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   
   .sonfy-title {
