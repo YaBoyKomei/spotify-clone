@@ -465,7 +465,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             controls: 0,
             playsinline: 1,
             enablejsapi: 1,
-            vq: 'hd720' // Prefer HD quality for better audio
+            vq: 'highres' // Request highest quality for best audio
           },
           events: {
             onReady: (event) => {
@@ -473,10 +473,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               setPlayer(event.target);
               playerInitialized.current = true;
 
-              // Set quality preference for better audio
+              // Set quality preference for better audio - request highest available
               try {
-                event.target.setPlaybackQualityRange('hd720', 'hd1080');
-                console.log('🎵 Set quality range to HD for better audio');
+                event.target.setPlaybackQualityRange('highres', 'highres');
+                console.log('🎵 Set quality range to highres for best audio');
               } catch (error) {
                 console.log('Could not set quality range:', error);
               }
@@ -762,22 +762,21 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       // Load the video with YouTube player
       player.loadVideoById(currentSong.youtubeId);
 
-      // Set quality to HD for better audio after video loads
+      // Set quality to highest available for best audio after video loads
       setTimeout(() => {
         try {
           const availableQualities = player.getAvailableQualityLevels();
           console.log('📺 Available qualities:', availableQualities);
 
-          // Try to set the highest quality available (hd1080, hd720, large, medium)
-          if (availableQualities.includes('hd1080')) {
-            player.setPlaybackQuality('hd1080');
-            console.log('🎵 Set quality to 1080p for best audio');
-          } else if (availableQualities.includes('hd720')) {
-            player.setPlaybackQuality('hd720');
-            console.log('🎵 Set quality to 720p for better audio');
-          } else if (availableQualities.includes('large')) {
-            player.setPlaybackQuality('large');
-            console.log('🎵 Set quality to large (480p)');
+          // Try to set the highest quality available for best audio bitrate
+          // Quality order: highres > hd2160 > hd1440 > hd1080 > hd720 > large > medium > small
+          const qualityPriority = ['highres', 'hd2160', 'hd1440', 'hd1080', 'hd720', 'large'];
+          for (const quality of qualityPriority) {
+            if (availableQualities.includes(quality)) {
+              player.setPlaybackQuality(quality);
+              console.log(`🎵 Set quality to ${quality} for best audio`);
+              break;
+            }
           }
         } catch (error) {
           console.log('Could not set quality:', error);
