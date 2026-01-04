@@ -48,3 +48,12 @@ coverage/
 # Misc
 *.log
 .cache/
+
+
+# Android signing keys - SENSITIVE
+*.keystore
+*.jks
+key.properties
+client/android/key.properties
+local.properties
+client/android/local.properties
