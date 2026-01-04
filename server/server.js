@@ -19,7 +19,7 @@ app.set('trust proxy', true);
 const userDataStore = new Map();
 
 // Google OAuth client ID (you need to set this)
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '74620656042-YOUR_CLIENT_ID.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '426758094719-c6vmj9lvp5bnp9db3ll6l5jabi1dbcte.apps.googleusercontent.com';
 
 // Verify Google token and extract user info
 async function verifyGoogleToken(credential) {

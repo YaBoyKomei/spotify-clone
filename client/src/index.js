@@ -7,7 +7,7 @@ import { AuthProvider } from './context/AuthContext';
 import { registerServiceWorker, trackWebVitals, inlineCriticalCSS } from './utils/performance';
 
 // Google OAuth Client ID - set this in your environment or replace with your actual client ID
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '74620656042-YOUR_CLIENT_ID.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '426758094719-c6vmj9lvp5bnp9db3ll6l5jabi1dbcte.apps.googleusercontent.com';
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
