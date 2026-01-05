@@ -36,10 +36,19 @@
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
-            android:exported="false"
+            android:exported="true"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.Sonfy" />
+            android:theme="@style/Theme.Sonfy">
+            
+            <!-- Deep link for OAuth callback -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sonfy" android:host="auth" />
+            </intent-filter>
+        </activity>
 
         <!-- Music Foreground Service -->
         <service

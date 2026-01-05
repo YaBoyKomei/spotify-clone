@@ -63,14 +63,14 @@ const ProfileButton = ({ onSync, onFetch }) => {
     setLoginError(null);
     
     if (isInApp) {
-      // For Android app, open Google OAuth in external browser
+      // For Android app, use custom scheme redirect
       const clientId = '426758094719-c6vmj9lvp5bnp9db3ll6l5jabi1dbcte.apps.googleusercontent.com';
-      const redirectUri = encodeURIComponent('https://sonfy.onrender.com');
+      const redirectUri = encodeURIComponent('sonfy://auth');
       const scope = encodeURIComponent('email profile');
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&prompt=select_account`;
       
       console.log('📱 Opening OAuth in browser:', authUrl);
-      window.open(authUrl, '_blank');
+      window.location.href = authUrl;
       setShowLoginModal(false);
       return;
     }

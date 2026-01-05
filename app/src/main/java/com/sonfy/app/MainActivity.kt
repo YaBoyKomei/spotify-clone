@@ -131,8 +131,30 @@ class MainActivity : AppCompatActivity() {
         // Add JavaScript interface
         webView.addJavascriptInterface(SonfyJsInterface(this, this), "SonfyNative")
         
+        // Check for OAuth deep link
+        handleIntent(intent)
+        
         // Load Sonfy
         webView.loadUrl(SONFY_URL)
+    }
+    
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+    
+    private fun handleIntent(intent: Intent?) {
+        val uri = intent?.data
+        if (uri != null && uri.scheme == "sonfy" && uri.host == "auth") {
+            // Extract access token from fragment
+            val fragment = uri.fragment
+            if (fragment != null && fragment.contains("access_token")) {
+                Log.d(TAG, "Received OAuth callback with token")
+                // Load the URL with the token fragment so the web app can process it
+                val redirectUrl = "$SONFY_URL#$fragment"
+                webView.loadUrl(redirectUrl)
+            }
+        }
     }
 
     private fun setupWebView() {
