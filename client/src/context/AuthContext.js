@@ -35,7 +35,24 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔐 Processing Google login...');
       
-      // Send credential to server for verification
+      // If we have userInfo directly (from useGoogleLogin flow)
+      if (credentialResponse.userInfo) {
+        const userInfo = credentialResponse.userInfo;
+        const userData = {
+          id: userInfo.sub,
+          email: userInfo.email,
+          name: userInfo.name,
+          picture: userInfo.picture,
+          token: credentialResponse.credential // access token
+        };
+
+        setUser(userData);
+        localStorage.setItem('sonfy_user', JSON.stringify(userData));
+        console.log('✅ Logged in as:', userData.name);
+        return userData;
+      }
+      
+      // Fallback: Send credential to server for verification (old flow)
       const response = await fetch(getApiUrl('/api/auth/google'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
