@@ -88,6 +88,10 @@ function App() {
   const [showDeletePlaylist, setShowDeletePlaylist] = useState(false);
   const [playlistToDelete, setPlaylistToDelete] = useState(null);
   const [showClearHistory, setShowClearHistory] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(() => {
+    const saved = localStorage.getItem('recentSearches');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [aiRecommendations, setAiRecommendations] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [savedAlbumPlaylist, setSavedAlbumPlaylist] = useState(null); // For album saved modal
@@ -113,6 +117,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('playCount', JSON.stringify(playCount));
   }, [playCount]);
+
+  useEffect(() => {
+    localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+  }, [recentSearches]);
 
   // Sync data to server when user is logged in and data changes
   useEffect(() => {
@@ -833,6 +841,13 @@ function App() {
       return;
     }
 
+    // Add to recent searches
+    const query = searchQuery.trim();
+    setRecentSearches(prev => {
+      const filtered = prev.filter(s => s.toLowerCase() !== query.toLowerCase());
+      return [query, ...filtered].slice(0, 10); // Keep max 10 recent searches
+    });
+
     setIsSearching(true);
     setHasSearched(true);
     setSelectedAlbum(null);
@@ -846,6 +861,18 @@ function App() {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const removeRecentSearch = (searchToRemove) => {
+    setRecentSearches(prev => prev.filter(s => s !== searchToRemove));
+  };
+
+  const handleRecentSearchClick = (query) => {
+    setSearchQuery(query);
+    // Trigger search after setting query
+    setTimeout(() => {
+      document.querySelector('.search-button')?.click();
+    }, 0);
   };
 
   const handleSearchKeyPress = (e) => {
@@ -1645,8 +1672,36 @@ function App() {
                 <p>No results found for "{searchQuery}"</p>
               </div>
             ) : (
-              <div className="empty-state">
-                <p>Start typing to search for songs, artists, and albums</p>
+              <div className="search-empty-state">
+                {recentSearches.length > 0 ? (
+                  <div className="recent-searches">
+                    <h2>Recent Searches</h2>
+                    <div className="recent-searches-list">
+                      {recentSearches.map((search, index) => (
+                        <div key={index} className="recent-search-item">
+                          <button 
+                            className="recent-search-text"
+                            onClick={() => handleRecentSearchClick(search)}
+                          >
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="history-icon">
+                              <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                            </svg>
+                            {search}
+                          </button>
+                          <button 
+                            className="remove-recent-search"
+                            onClick={() => removeRecentSearch(search)}
+                            title="Remove"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p>Start typing to search for songs, artists, and albums</p>
+                )}
               </div>
             )}
           </div>
