@@ -30,6 +30,8 @@ class SonfyWebView @JvmOverloads constructor(
             databaseEnabled = true
             allowFileAccess = true
             allowContentAccess = true
+            javaScriptCanOpenWindowsAutomatically = true
+            setSupportMultipleWindows(true)
             @Suppress("DEPRECATION")
             allowUniversalAccessFromFileURLs = true
             @Suppress("DEPRECATION")

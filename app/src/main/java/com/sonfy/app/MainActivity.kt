@@ -149,14 +149,27 @@ class MainActivity : AppCompatActivity() {
             
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
+                val url = uri.toString()
                 val host = uri.host ?: return false
                 
+                // Open Google OAuth in external browser
+                if (host.contains("accounts.google.com") || 
+                    url.contains("oauth") ||
+                    url.contains("signin/oauth")) {
+                    Log.d(TAG, "Opening OAuth URL in browser: $url")
+                    startActivity(Intent(Intent.ACTION_VIEW, uri))
+                    return true
+                }
+                
+                // Allow YouTube and Google domains in WebView
                 if (host.contains("youtube") || 
                     host.contains("youtu.be") ||
                     host.contains("ytimg") ||
                     host.contains("ggpht") ||
                     host.contains("google") ||
-                    host.contains("gstatic")) {
+                    host.contains("gstatic") ||
+                    host.contains("sonfy") ||
+                    host.contains("onrender.com")) {
                     return false
                 }
                 
@@ -197,6 +210,24 @@ class MainActivity : AppCompatActivity() {
                 }
                 customView = null
                 customViewCallback = null
+            }
+            
+            // Support window.open() for OAuth popups
+            override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: android.os.Message?): Boolean {
+                val newWebView = WebView(this@MainActivity)
+                newWebView.webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                        val url = request.url.toString()
+                        Log.d(TAG, "Popup URL: $url")
+                        // Open in external browser
+                        startActivity(Intent(Intent.ACTION_VIEW, request.url))
+                        return true
+                    }
+                }
+                val transport = resultMsg?.obj as? WebView.WebViewTransport
+                transport?.webView = newWebView
+                resultMsg?.sendToTarget()
+                return true
             }
         }
     }
