@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { getApiUrl } from '../config';
 
 const AuthContext = createContext(null);
@@ -16,19 +16,77 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
-  // Load user from localStorage on mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem('sonfy_user');
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
-        console.log('👤 User loaded from storage:', userData.name);
-      } catch (e) {
-        localStorage.removeItem('sonfy_user');
+  // Handle OAuth redirect callback (for Android app)
+  const handleOAuthCallback = async (accessToken) => {
+    try {
+      console.log('🔐 Processing OAuth callback...');
+      
+      // Get user info from Google using access token
+      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      
+      if (!userInfoResponse.ok) {
+        throw new Error('Failed to get user info');
       }
+      
+      const userInfo = await userInfoResponse.json();
+      console.log('👤 User info from callback:', userInfo);
+      
+      const userData = {
+        id: userInfo.sub,
+        email: userInfo.email,
+        name: userInfo.name,
+        picture: userInfo.picture,
+        token: accessToken
+      };
+
+      setUser(userData);
+      localStorage.setItem('sonfy_user', JSON.stringify(userData));
+      console.log('✅ Logged in via redirect as:', userData.name);
+      
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      return userData;
+    } catch (error) {
+      console.error('❌ OAuth callback error:', error);
+      return null;
     }
-    setLoading(false);
+  };
+
+  // Load user from localStorage on mount AND check for OAuth redirect
+  useEffect(() => {
+    const init = async () => {
+      // Check for OAuth redirect (access_token in URL hash)
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token')) {
+        console.log('📱 Detected OAuth redirect callback');
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        
+        if (accessToken) {
+          await handleOAuthCallback(accessToken);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Load from localStorage
+      const savedUser = localStorage.getItem('sonfy_user');
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          setUser(userData);
+          console.log('👤 User loaded from storage:', userData.name);
+        } catch (e) {
+          localStorage.removeItem('sonfy_user');
+        }
+      }
+      setLoading(false);
+    };
+    
+    init();
   }, []);
 
   const login = async (credentialResponse) => {

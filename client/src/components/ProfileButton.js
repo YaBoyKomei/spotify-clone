@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import './ProfileButton.css';
@@ -8,6 +8,16 @@ const ProfileButton = ({ onSync, onFetch }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginError, setLoginError] = useState(null);
+  const [isInApp, setIsInApp] = useState(false);
+
+  // Detect if running in Android WebView
+  useEffect(() => {
+    const userAgent = navigator.userAgent || '';
+    const isWebView = userAgent.includes('wv') || 
+                      userAgent.includes('WebView') ||
+                      (window.SonfyNative !== undefined);
+    setIsInApp(isWebView);
+  }, []);
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -42,11 +52,29 @@ const ProfileButton = ({ onSync, onFetch }) => {
     onNonOAuthError: (error) => {
       console.error('Non-OAuth error:', error);
       setLoginError(`Error: ${error.type || 'Unknown error'}`);
-    }
+    },
+    flow: 'implicit',
+    ux_mode: isInApp ? 'redirect' : 'popup',
+    redirect_uri: isInApp ? 'https://sonfy.onrender.com' : undefined
   });
 
   const handleGoogleLogin = () => {
-    console.log('🔐 Starting Google login...');
+    console.log('🔐 Starting Google login... isInApp:', isInApp);
+    setLoginError(null);
+    
+    if (isInApp) {
+      // For Android app, open Google OAuth in external browser
+      const clientId = '426758094719-c6vmj9lvp5bnp9db3ll6l5jabi1dbcte.apps.googleusercontent.com';
+      const redirectUri = encodeURIComponent('https://sonfy.onrender.com');
+      const scope = encodeURIComponent('email profile');
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&prompt=select_account`;
+      
+      console.log('📱 Opening OAuth in browser:', authUrl);
+      window.open(authUrl, '_blank');
+      setShowLoginModal(false);
+      return;
+    }
+    
     try {
       googleLogin();
     } catch (error) {
