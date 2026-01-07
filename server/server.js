@@ -71,15 +71,35 @@ function verifyToken(token) {
   }
 }
 
-// Auth middleware
-function authMiddleware(req, res, next) {
+// Auth middleware - supports both custom tokens and Google access tokens
+async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
   const token = authHeader.substring(7);
-  const userId = verifyToken(token);
+  
+  // First try our custom token format
+  let userId = verifyToken(token);
+  
+  // If custom token fails, try Google access token
+  if (!userId) {
+    try {
+      const fetch = (await import('node-fetch')).default;
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const userInfo = await response.json();
+        userId = userInfo.sub;
+        console.log(`🔐 Verified Google token for user: ${userInfo.email}`);
+      }
+    } catch (error) {
+      console.error('Google token verification failed:', error);
+    }
+  }
   
   if (!userId) {
     return res.status(401).json({ error: 'Invalid or expired token' });
