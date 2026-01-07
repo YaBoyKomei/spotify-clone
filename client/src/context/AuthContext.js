@@ -148,7 +148,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Sync user data to server
-  const syncToServer = async (likedSongs, playlists, listeningHistory) => {
+  const syncToServer = async (likedSongs, playlists, listeningHistory, playCount) => {
     if (!user) return false;
 
     setSyncing(true);
@@ -162,7 +162,8 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({
           likedSongs,
           playlists,
-          listeningHistory
+          listeningHistory,
+          playCount
         })
       });
 

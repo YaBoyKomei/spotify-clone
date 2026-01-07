@@ -126,12 +126,13 @@ app.post('/api/auth/google', async (req, res) => {
 // Sync user data to server
 app.post('/api/user/sync', authMiddleware, (req, res) => {
   try {
-    const { likedSongs, playlists, listeningHistory } = req.body;
+    const { likedSongs, playlists, listeningHistory, playCount } = req.body;
     
     userDataStore.set(req.userId, {
       likedSongs: likedSongs || [],
       playlists: playlists || [],
       listeningHistory: (listeningHistory || []).slice(-100), // Keep last 100
+      playCount: playCount || {},
       lastSync: new Date().toISOString()
     });
     
@@ -154,6 +155,7 @@ app.get('/api/user/data', authMiddleware, (req, res) => {
         likedSongs: [],
         playlists: [],
         listeningHistory: [],
+        playCount: {},
         lastSync: null
       });
     }

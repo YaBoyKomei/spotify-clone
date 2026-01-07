@@ -319,18 +319,34 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "Auth page finished: $url")
                 
                 // Check if we've been redirected back to Sonfy with token
-                if (url.startsWith(SONFY_URL) && url.contains("access_token")) {
-                    Log.d(TAG, "OAuth success! Redirecting to main WebView")
-                    dialog.dismiss()
-                    authDialog = null
-                    // Load the URL with token in main WebView
-                    webView.loadUrl(url)
-                } else if (url.startsWith(SONFY_URL) && !url.contains("accounts.google.com")) {
-                    // Redirected back without token (cancelled or error)
-                    Log.d(TAG, "OAuth redirect back to Sonfy")
-                    dialog.dismiss()
-                    authDialog = null
-                    webView.loadUrl(url)
+                // The token is in the URL fragment (after #)
+                if (url.startsWith(SONFY_URL)) {
+                    Log.d(TAG, "OAuth redirect to Sonfy detected, checking for token...")
+                    
+                    // Use JavaScript to get the full URL including fragment
+                    view.evaluateJavascript(
+                        "(function() { return window.location.href; })()"
+                    ) { result ->
+                        val fullUrl = result?.trim('"') ?: url
+                        Log.d(TAG, "Full URL with fragment: $fullUrl")
+                        
+                        if (fullUrl.contains("access_token")) {
+                            Log.d(TAG, "OAuth success! Token found, redirecting to main WebView")
+                            runOnUiThread {
+                                dialog.dismiss()
+                                authDialog = null
+                                webView.loadUrl(fullUrl)
+                            }
+                        } else if (!fullUrl.contains("accounts.google.com")) {
+                            // Redirected back without token (cancelled or error)
+                            Log.d(TAG, "OAuth redirect back to Sonfy without token")
+                            runOnUiThread {
+                                dialog.dismiss()
+                                authDialog = null
+                                webView.reload()
+                            }
+                        }
+                    }
                 }
             }
             
@@ -338,16 +354,7 @@ class MainActivity : AppCompatActivity() {
                 val reqUrl = request.url.toString()
                 Log.d(TAG, "Auth WebView loading: $reqUrl")
                 
-                // If redirected back to Sonfy, close dialog and load in main WebView
-                if (reqUrl.startsWith(SONFY_URL)) {
-                    Log.d(TAG, "Redirect to Sonfy detected")
-                    dialog.dismiss()
-                    authDialog = null
-                    webView.loadUrl(reqUrl)
-                    return true
-                }
-                
-                // Allow Google auth URLs
+                // Allow all URLs in auth WebView - don't override
                 return false
             }
         }

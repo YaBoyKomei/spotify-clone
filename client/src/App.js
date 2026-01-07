@@ -127,11 +127,11 @@ function App() {
     if (isLoggedIn) {
       // Debounce sync to avoid too many requests
       const syncTimeout = setTimeout(() => {
-        syncToServer(likedSongs, playlists, listeningHistory);
+        syncToServer(likedSongs, playlists, listeningHistory, playCount);
       }, 2000);
       return () => clearTimeout(syncTimeout);
     }
-  }, [likedSongs, playlists, listeningHistory, isLoggedIn, syncToServer]);
+  }, [likedSongs, playlists, listeningHistory, playCount, isLoggedIn, syncToServer]);
 
   // Fetch data from server when user logs in
   useEffect(() => {
@@ -158,6 +158,34 @@ function App() {
               serverData.playlists.forEach(playlist => {
                 if (!merged.find(p => p.id === playlist.id)) {
                   merged.push(playlist);
+                }
+              });
+              return merged;
+            });
+          }
+          if (serverData.listeningHistory && serverData.listeningHistory.length > 0) {
+            setListeningHistory(prev => {
+              const merged = [...prev];
+              serverData.listeningHistory.forEach(song => {
+                if (!merged.find(s => s.id === song.id)) {
+                  merged.push(song);
+                }
+              });
+              return merged.slice(-100); // Keep last 100
+            });
+          }
+          if (serverData.playCount && Object.keys(serverData.playCount).length > 0) {
+            setPlayCount(prev => {
+              const merged = { ...prev };
+              Object.entries(serverData.playCount).forEach(([id, data]) => {
+                if (merged[id]) {
+                  // Merge counts - take the higher count
+                  merged[id] = {
+                    song: data.song,
+                    count: Math.max(merged[id].count || 0, data.count || 0)
+                  };
+                } else {
+                  merged[id] = data;
                 }
               });
               return merged;
@@ -1498,7 +1526,7 @@ function App() {
             </h1>
           </div>
           <ProfileButton 
-            onSync={() => syncToServer(likedSongs, playlists, listeningHistory)}
+            onSync={() => syncToServer(likedSongs, playlists, listeningHistory, playCount)}
             onFetch={async () => {
               const serverData = await fetchFromServer();
               if (serverData) {
@@ -1516,6 +1544,28 @@ function App() {
                     const merged = [...prev];
                     serverData.playlists.forEach(playlist => {
                       if (!merged.find(p => p.id === playlist.id)) merged.push(playlist);
+                    });
+                    return merged;
+                  });
+                }
+                if (serverData.listeningHistory?.length > 0) {
+                  setListeningHistory(prev => {
+                    const merged = [...prev];
+                    serverData.listeningHistory.forEach(song => {
+                      if (!merged.find(s => s.id === song.id)) merged.push(song);
+                    });
+                    return merged.slice(-100);
+                  });
+                }
+                if (serverData.playCount && Object.keys(serverData.playCount).length > 0) {
+                  setPlayCount(prev => {
+                    const merged = { ...prev };
+                    Object.entries(serverData.playCount).forEach(([id, data]) => {
+                      if (merged[id]) {
+                        merged[id] = { song: data.song, count: Math.max(merged[id].count || 0, data.count || 0) };
+                      } else {
+                        merged[id] = data;
+                      }
                     });
                     return merged;
                   });
