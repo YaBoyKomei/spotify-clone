@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const compression = require('compression');
-const Database = require('better-sqlite3');
+const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -13,49 +13,85 @@ app.use(express.json({ limit: '10mb' })); // Increase limit for user data sync
 app.set('trust proxy', true);
 
 // ============================================
-// SQLITE DATABASE SETUP
+// SQLITE DATABASE SETUP (using sql.js - pure JS)
 // ============================================
 
-const db = new Database('sonfy.db');
+let db = null;
+const DB_PATH = './sonfy.db';
 
-// Create users table if not exists
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT,
-    name TEXT,
-    picture TEXT,
-    liked_songs TEXT DEFAULT '[]',
-    playlists TEXT DEFAULT '[]',
-    listening_history TEXT DEFAULT '[]',
-    play_count TEXT DEFAULT '{}',
-    recent_items TEXT DEFAULT '[]',
-    last_sync TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+// Initialize database
+async function initDatabase() {
+  const initSqlJs = require('sql.js');
+  const SQL = await initSqlJs();
+  
+  // Load existing database or create new one
+  if (fs.existsSync(DB_PATH)) {
+    const fileBuffer = fs.readFileSync(DB_PATH);
+    db = new SQL.Database(fileBuffer);
+    console.log('📦 SQLite database loaded from file');
+  } else {
+    db = new SQL.Database();
+    console.log('📦 SQLite database created');
+  }
+  
+  // Create users table if not exists
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT,
+      name TEXT,
+      picture TEXT,
+      liked_songs TEXT DEFAULT '[]',
+      playlists TEXT DEFAULT '[]',
+      listening_history TEXT DEFAULT '[]',
+      play_count TEXT DEFAULT '{}',
+      recent_items TEXT DEFAULT '[]',
+      last_sync TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  
+  saveDatabase();
+  console.log('📦 SQLite database initialized');
+}
 
-console.log('📦 SQLite database initialized');
+// Save database to file
+function saveDatabase() {
+  if (db) {
+    const data = db.export();
+    const buffer = Buffer.from(data);
+    fs.writeFileSync(DB_PATH, buffer);
+  }
+}
 
 // Helper functions for database operations
 function getUserData(userId) {
-  const row = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-  if (!row) return null;
-  return {
-    likedSongs: JSON.parse(row.liked_songs || '[]'),
-    playlists: JSON.parse(row.playlists || '[]'),
-    listeningHistory: JSON.parse(row.listening_history || '[]'),
-    playCount: JSON.parse(row.play_count || '{}'),
-    recentItems: JSON.parse(row.recent_items || '[]'),
-    lastSync: row.last_sync
-  };
+  if (!db) return null;
+  const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
+  stmt.bind([userId]);
+  if (stmt.step()) {
+    const row = stmt.getAsObject();
+    stmt.free();
+    return {
+      likedSongs: JSON.parse(row.liked_songs || '[]'),
+      playlists: JSON.parse(row.playlists || '[]'),
+      listeningHistory: JSON.parse(row.listening_history || '[]'),
+      playCount: JSON.parse(row.play_count || '{}'),
+      recentItems: JSON.parse(row.recent_items || '[]'),
+      lastSync: row.last_sync
+    };
+  }
+  stmt.free();
+  return null;
 }
 
 function saveUserData(userId, data) {
-  const existing = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+  if (!db) return;
+  
+  const existing = getUserData(userId);
   
   if (existing) {
-    db.prepare(`
+    db.run(`
       UPDATE users SET 
         liked_songs = ?,
         playlists = ?,
@@ -64,7 +100,7 @@ function saveUserData(userId, data) {
         recent_items = ?,
         last_sync = ?
       WHERE id = ?
-    `).run(
+    `, [
       JSON.stringify(data.likedSongs || []),
       JSON.stringify(data.playlists || []),
       JSON.stringify(data.listeningHistory || []),
@@ -72,12 +108,12 @@ function saveUserData(userId, data) {
       JSON.stringify(data.recentItems || []),
       new Date().toISOString(),
       userId
-    );
+    ]);
   } else {
-    db.prepare(`
+    db.run(`
       INSERT INTO users (id, liked_songs, playlists, listening_history, play_count, recent_items, last_sync)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
       userId,
       JSON.stringify(data.likedSongs || []),
       JSON.stringify(data.playlists || []),
@@ -85,8 +121,10 @@ function saveUserData(userId, data) {
       JSON.stringify(data.playCount || {}),
       JSON.stringify(data.recentItems || []),
       new Date().toISOString()
-    );
+    ]);
   }
+  
+  saveDatabase();
 }
 
 // ============================================
@@ -1636,7 +1674,13 @@ if (process.env.NODE_ENV === 'production') {
   app.use(compression());
 }
 
-app.listen(PORT, () => {
-  console.log(`🎵 Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+// Initialize database and start server
+initDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log(`🎵 Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}).catch(err => {
+  console.error('Failed to initialize database:', err);
+  process.exit(1);
 });
