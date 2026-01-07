@@ -401,16 +401,18 @@ function App() {
     }
   };
 
-  const playSong = async (song, addToHistory = true, fetchNewQueue = true) => {
+  const playSong = async (song, addToHistory = true, fetchNewQueue = true, addToRecent = true) => {
     console.log(`🎵 Playing song: "${song.title}" by ${song.artist} (ID: ${song.youtubeId})`);
     setCurrentSong(song);
     setIsPlaying(true);
 
-    // Add to recent items (songs/albums)
-    setRecentItems(prev => {
-      const filtered = prev.filter(item => item.id !== song.id);
-      return [{ ...song, type: 'song', addedAt: new Date().toISOString() }, ...filtered].slice(0, 10);
-    });
+    // Add to recent items (songs/albums) - skip if playing from album
+    if (addToRecent) {
+      setRecentItems(prev => {
+        const filtered = prev.filter(item => item.id !== song.id);
+        return [{ ...song, type: 'song', addedAt: new Date().toISOString() }, ...filtered].slice(0, 10);
+      });
+    }
 
     // Add to play history (unless we're navigating history)
     if (addToHistory) {
@@ -960,8 +962,8 @@ function App() {
       // Set the full album as the queue first
       setQueue(tracks);
       setQueueIndex(0);
-      // Play the first track without fetching a new queue (keep album queue)
-      playSong(tracks[0], true, false);
+      // Play the first track without fetching a new queue (keep album queue), don't add to recent (album already added)
+      playSong(tracks[0], true, false, false);
       console.log(`📀 Playing album with ${tracks.length} tracks`);
     }
   };
@@ -972,8 +974,8 @@ function App() {
       // Set the full album as the queue
       setQueue(tracks);
       setQueueIndex(index);
-      // Play the selected track without fetching a new queue (keep album queue)
-      playSong(tracks[index], true, false);
+      // Play the selected track without fetching a new queue (keep album queue), don't add to recent (album already added)
+      playSong(tracks[index], true, false, false);
       console.log(`📀 Playing album track ${index + 1}/${tracks.length}: "${tracks[index].title}"`);
     }
   };
