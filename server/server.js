@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const compression = require('compression');
+const Database = require('better-sqlite3');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -12,11 +13,85 @@ app.use(express.json({ limit: '10mb' })); // Increase limit for user data sync
 app.set('trust proxy', true);
 
 // ============================================
-// GOOGLE AUTH & USER DATA SYNC
+// SQLITE DATABASE SETUP
 // ============================================
 
-// In-memory user data store (use database in production)
-const userDataStore = new Map();
+const db = new Database('sonfy.db');
+
+// Create users table if not exists
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT,
+    name TEXT,
+    picture TEXT,
+    liked_songs TEXT DEFAULT '[]',
+    playlists TEXT DEFAULT '[]',
+    listening_history TEXT DEFAULT '[]',
+    play_count TEXT DEFAULT '{}',
+    recent_items TEXT DEFAULT '[]',
+    last_sync TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+console.log('📦 SQLite database initialized');
+
+// Helper functions for database operations
+function getUserData(userId) {
+  const row = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  if (!row) return null;
+  return {
+    likedSongs: JSON.parse(row.liked_songs || '[]'),
+    playlists: JSON.parse(row.playlists || '[]'),
+    listeningHistory: JSON.parse(row.listening_history || '[]'),
+    playCount: JSON.parse(row.play_count || '{}'),
+    recentItems: JSON.parse(row.recent_items || '[]'),
+    lastSync: row.last_sync
+  };
+}
+
+function saveUserData(userId, data) {
+  const existing = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+  
+  if (existing) {
+    db.prepare(`
+      UPDATE users SET 
+        liked_songs = ?,
+        playlists = ?,
+        listening_history = ?,
+        play_count = ?,
+        recent_items = ?,
+        last_sync = ?
+      WHERE id = ?
+    `).run(
+      JSON.stringify(data.likedSongs || []),
+      JSON.stringify(data.playlists || []),
+      JSON.stringify(data.listeningHistory || []),
+      JSON.stringify(data.playCount || {}),
+      JSON.stringify(data.recentItems || []),
+      new Date().toISOString(),
+      userId
+    );
+  } else {
+    db.prepare(`
+      INSERT INTO users (id, liked_songs, playlists, listening_history, play_count, recent_items, last_sync)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      userId,
+      JSON.stringify(data.likedSongs || []),
+      JSON.stringify(data.playlists || []),
+      JSON.stringify(data.listeningHistory || []),
+      JSON.stringify(data.playCount || {}),
+      JSON.stringify(data.recentItems || []),
+      new Date().toISOString()
+    );
+  }
+}
+
+// ============================================
+// GOOGLE AUTH & USER DATA SYNC
+// ============================================
 
 // Google OAuth client ID (you need to set this)
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '426758094719-c6vmj9lvp5bnp9db3ll6l5jabi1dbcte.apps.googleusercontent.com';
@@ -121,16 +196,6 @@ app.post('/api/auth/google', async (req, res) => {
     const user = await verifyGoogleToken(credential);
     const token = generateToken(user.id);
     
-    // Initialize user data if not exists
-    if (!userDataStore.has(user.id)) {
-      userDataStore.set(user.id, {
-        likedSongs: [],
-        playlists: [],
-        listeningHistory: [],
-        lastSync: null
-      });
-    }
-    
     console.log(`🔐 User logged in: ${user.email}`);
     
     res.json({
@@ -148,13 +213,12 @@ app.post('/api/user/sync', authMiddleware, (req, res) => {
   try {
     const { likedSongs, playlists, listeningHistory, playCount, recentItems } = req.body;
     
-    userDataStore.set(req.userId, {
+    saveUserData(req.userId, {
       likedSongs: likedSongs || [],
       playlists: playlists || [],
       listeningHistory: (listeningHistory || []).slice(-100), // Keep last 100
       playCount: playCount || {},
-      recentItems: (recentItems || []).slice(0, 10), // Keep last 10
-      lastSync: new Date().toISOString()
+      recentItems: (recentItems || []).slice(0, 10) // Keep last 10
     });
     
     console.log(`☁️ Data synced for user: ${req.userId}`);
@@ -169,7 +233,7 @@ app.post('/api/user/sync', authMiddleware, (req, res) => {
 // Get user data from server
 app.get('/api/user/data', authMiddleware, (req, res) => {
   try {
-    const userData = userDataStore.get(req.userId);
+    const userData = getUserData(req.userId);
     
     if (!userData) {
       return res.json({
