@@ -92,18 +92,26 @@ function App() {
     const saved = localStorage.getItem('recentSearches');
     return saved ? JSON.parse(saved) : [];
   });
+  const [recentItems, setRecentItems] = useState(() => {
+    const saved = localStorage.getItem('recentItems');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [aiRecommendations, setAiRecommendations] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [savedAlbumPlaylist, setSavedAlbumPlaylist] = useState(null); // For album saved modal
 
-  // Save to localStorage whenever data changes
+  // Save to localStorage only when NOT logged in (server handles storage for logged in users)
   useEffect(() => {
-    localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
-  }, [likedSongs]);
+    if (!isLoggedIn) {
+      localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
+    }
+  }, [likedSongs, isLoggedIn]);
 
   useEffect(() => {
-    localStorage.setItem('playlists', JSON.stringify(playlists));
-  }, [playlists]);
+    if (!isLoggedIn) {
+      localStorage.setItem('playlists', JSON.stringify(playlists));
+    }
+  }, [playlists, isLoggedIn]);
 
   useEffect(() => {
     // Keep only last 100 songs in listening history
@@ -111,12 +119,27 @@ function App() {
     if (limitedHistory.length !== listeningHistory.length) {
       setListeningHistory(limitedHistory);
     }
-    localStorage.setItem('listeningHistory', JSON.stringify(limitedHistory));
-  }, [listeningHistory]);
+    if (!isLoggedIn) {
+      localStorage.setItem('listeningHistory', JSON.stringify(limitedHistory));
+    }
+  }, [listeningHistory, isLoggedIn]);
 
   useEffect(() => {
-    localStorage.setItem('playCount', JSON.stringify(playCount));
-  }, [playCount]);
+    if (!isLoggedIn) {
+      localStorage.setItem('playCount', JSON.stringify(playCount));
+    }
+  }, [playCount, isLoggedIn]);
+
+  useEffect(() => {
+    // Keep only last 10 recent items
+    const limitedRecent = recentItems.slice(0, 10);
+    if (limitedRecent.length !== recentItems.length) {
+      setRecentItems(limitedRecent);
+    }
+    if (!isLoggedIn) {
+      localStorage.setItem('recentItems', JSON.stringify(limitedRecent));
+    }
+  }, [recentItems, isLoggedIn]);
 
   useEffect(() => {
     localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
@@ -127,11 +150,11 @@ function App() {
     if (isLoggedIn) {
       // Debounce sync to avoid too many requests
       const syncTimeout = setTimeout(() => {
-        syncToServer(likedSongs, playlists, listeningHistory, playCount);
+        syncToServer(likedSongs, playlists, listeningHistory, playCount, recentItems);
       }, 2000);
       return () => clearTimeout(syncTimeout);
     }
-  }, [likedSongs, playlists, listeningHistory, playCount, isLoggedIn, syncToServer]);
+  }, [likedSongs, playlists, listeningHistory, playCount, recentItems, isLoggedIn, syncToServer]);
 
   // Fetch data from server when user logs in
   useEffect(() => {
@@ -140,58 +163,23 @@ function App() {
         console.log('📥 Fetching user data from server...');
         const serverData = await fetchFromServer();
         if (serverData) {
-          // Merge server data with local data (server takes priority for conflicts)
+          // Replace local data with server data when logged in
           if (serverData.likedSongs && serverData.likedSongs.length > 0) {
-            setLikedSongs(prev => {
-              const merged = [...prev];
-              serverData.likedSongs.forEach(song => {
-                if (!merged.find(s => s.id === song.id)) {
-                  merged.push(song);
-                }
-              });
-              return merged;
-            });
+            setLikedSongs(serverData.likedSongs);
           }
           if (serverData.playlists && serverData.playlists.length > 0) {
-            setPlaylists(prev => {
-              const merged = [...prev];
-              serverData.playlists.forEach(playlist => {
-                if (!merged.find(p => p.id === playlist.id)) {
-                  merged.push(playlist);
-                }
-              });
-              return merged;
-            });
+            setPlaylists(serverData.playlists);
           }
           if (serverData.listeningHistory && serverData.listeningHistory.length > 0) {
-            setListeningHistory(prev => {
-              const merged = [...prev];
-              serverData.listeningHistory.forEach(song => {
-                if (!merged.find(s => s.id === song.id)) {
-                  merged.push(song);
-                }
-              });
-              return merged.slice(-100); // Keep last 100
-            });
+            setListeningHistory(serverData.listeningHistory);
           }
           if (serverData.playCount && Object.keys(serverData.playCount).length > 0) {
-            setPlayCount(prev => {
-              const merged = { ...prev };
-              Object.entries(serverData.playCount).forEach(([id, data]) => {
-                if (merged[id]) {
-                  // Merge counts - take the higher count
-                  merged[id] = {
-                    song: data.song,
-                    count: Math.max(merged[id].count || 0, data.count || 0)
-                  };
-                } else {
-                  merged[id] = data;
-                }
-              });
-              return merged;
-            });
+            setPlayCount(serverData.playCount);
           }
-          console.log('✅ User data merged from server');
+          if (serverData.recentItems && serverData.recentItems.length > 0) {
+            setRecentItems(serverData.recentItems);
+          }
+          console.log('✅ User data loaded from server');
         }
       }
     };
@@ -347,6 +335,25 @@ function App() {
         return () => mostPlayedCarousel.removeEventListener('scroll', updateMostPlayedScrollState);
       }
 
+      // Also initialize Recent carousel
+      const recentCarousel = document.getElementById('carousel-recent');
+      if (recentCarousel) {
+        const updateRecentScrollState = () => {
+          const isAtStart = recentCarousel.scrollLeft <= 0;
+          const isAtEnd = recentCarousel.scrollLeft + recentCarousel.clientWidth >= recentCarousel.scrollWidth - 1;
+
+          setScrollStates(prev => ({
+            ...prev,
+            'recent': { isAtStart, isAtEnd }
+          }));
+        };
+
+        updateRecentScrollState();
+        recentCarousel.addEventListener('scroll', updateRecentScrollState);
+
+        return () => recentCarousel.removeEventListener('scroll', updateRecentScrollState);
+      }
+
       // Also initialize AI Recommendations carousel
       const aiRecommendationsCarousel = document.getElementById('carousel-ai-recommendations');
       if (aiRecommendationsCarousel) {
@@ -366,7 +373,7 @@ function App() {
         return () => aiRecommendationsCarousel.removeEventListener('scroll', updateAIRecommendationsScrollState);
       }
     }
-  }, [sections, currentView, playCount, aiRecommendations]);
+  }, [sections, currentView, playCount, aiRecommendations, recentItems]);
 
   const updateScrollState = (index) => {
     const carousel = document.getElementById(`carousel-${index}`);
@@ -398,6 +405,12 @@ function App() {
     console.log(`🎵 Playing song: "${song.title}" by ${song.artist} (ID: ${song.youtubeId})`);
     setCurrentSong(song);
     setIsPlaying(true);
+
+    // Add to recent items (songs/albums)
+    setRecentItems(prev => {
+      const filtered = prev.filter(item => item.id !== song.id);
+      return [{ ...song, type: 'song', addedAt: new Date().toISOString() }, ...filtered].slice(0, 10);
+    });
 
     // Add to play history (unless we're navigating history)
     if (addToHistory) {
@@ -921,6 +934,13 @@ function App() {
   const fetchAlbumTracks = async (album) => {
     setLoadingAlbum(true);
     setSelectedAlbum(album);
+    
+    // Add album to recent items
+    setRecentItems(prev => {
+      const filtered = prev.filter(item => item.id !== album.id);
+      return [{ ...album, type: 'album', addedAt: new Date().toISOString() }, ...filtered].slice(0, 10);
+    });
+    
     try {
       const response = await fetch(getApiUrl(`/api/album/${album.browseId}`));
       if (!response.ok) throw new Error('Failed to fetch album');
@@ -1008,6 +1028,69 @@ function App() {
           <h2 className="welcome-title">Welcome to Komei</h2>
           <p className="welcome-subtitle">Discover millions of songs, create playlists, and enjoy high-quality music streaming - all for free!</p>
         </div>
+
+        {/* Recent Section */}
+        {recentItems.length > 0 && (
+          <div className="music-section">
+            <div className="section-header">
+              <h2 className="section-title">Recent</h2>
+            </div>
+            <div className="section-carousel">
+              {scrollStates['recent'] && !scrollStates['recent'].isAtStart && (
+                <button
+                  className="scroll-button left"
+                  onClick={() => scrollCarousel('recent', 'left')}
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeftIcon />
+                </button>
+              )}
+              {scrollStates['recent'] && !scrollStates['recent'].isAtEnd && (
+                <button
+                  className="scroll-button right"
+                  onClick={() => scrollCarousel('recent', 'right')}
+                  aria-label="Scroll right"
+                >
+                  <ChevronRightIcon />
+                </button>
+              )}
+              <div className="songs-carousel" id="carousel-recent">
+                {recentItems.map(item => (
+                  item.type === 'album' ? (
+                    <div
+                      key={item.id}
+                      className="album-card"
+                      onClick={() => fetchAlbumTracks(item)}
+                    >
+                      <div className="album-cover">
+                        <img src={item.cover} alt={item.title} loading="lazy" />
+                        <div className="album-badge">Album</div>
+                      </div>
+                      <div className="album-info">
+                        <h4 className="album-title">{item.title}</h4>
+                        <p className="album-artist">{item.artist}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <SongCard
+                      key={item.id}
+                      song={item}
+                      currentSong={currentSong}
+                      isLiked={!!likedSongs.find(s => s.id === item.id)}
+                      onPlay={playSong}
+                      onToggleLike={toggleLike}
+                      onAddToPlaylist={(song) => {
+                        setSelectedSongForPlaylist(song);
+                        setShowAddToPlaylist(true);
+                      }}
+                      onPlayNext={handlePlayNext}
+                    />
+                  )
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Most Played Section */}
         {mostPlayedSongs.length > 0 && (
