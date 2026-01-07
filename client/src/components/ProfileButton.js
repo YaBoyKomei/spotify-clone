@@ -5,8 +5,8 @@ import './ProfileButton.css';
 
 const ProfileButton = ({ onSync, onFetch }) => {
   const { user, login, logout, syncing, isLoggedIn } = useAuth();
-  const [showMenu, setShowMenu] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showAccountModal, setShowAccountModal] = useState(false);
   const [loginError, setLoginError] = useState(null);
   const [isInApp, setIsInApp] = useState(false);
 
@@ -89,12 +89,12 @@ const ProfileButton = ({ onSync, onFetch }) => {
     if (onSync) {
       await onSync();
     }
-    setShowMenu(false);
+    setShowAccountModal(false);
   };
 
   const handleLogout = () => {
     logout();
-    setShowMenu(false);
+    setShowAccountModal(false);
   };
 
   if (!isLoggedIn) {
@@ -146,7 +146,7 @@ const ProfileButton = ({ onSync, onFetch }) => {
     <div className="profile-container">
       <button 
         className="profile-button"
-        onClick={() => setShowMenu(!showMenu)}
+        onClick={() => setShowAccountModal(true)}
       >
         {user.picture ? (
           <img src={user.picture} alt={user.name} className="profile-avatar" />
@@ -157,32 +157,46 @@ const ProfileButton = ({ onSync, onFetch }) => {
         )}
       </button>
 
-      {showMenu && (
-        <>
-          <div className="profile-menu-overlay" onClick={() => setShowMenu(false)} />
-          <div className="profile-menu">
-            <div className="profile-menu-header">
-              <img src={user.picture} alt={user.name} className="menu-avatar" />
-              <div className="menu-user-info">
-                <span className="menu-user-name">{user.name}</span>
-                <span className="menu-user-email">{user.email}</span>
+      {/* Account Modal */}
+      {showAccountModal && (
+        <div className="login-modal-overlay" onClick={() => setShowAccountModal(false)}>
+          <div className="login-modal account-modal" onClick={e => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setShowAccountModal(false)}>×</button>
+            <div className="login-modal-content">
+              <div className="account-header">
+                {user.picture ? (
+                  <img src={user.picture} alt={user.name} className="account-avatar" />
+                ) : (
+                  <div className="account-avatar-placeholder">
+                    {user.name?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <h2>{user.name}</h2>
+                <p className="account-email">{user.email}</p>
               </div>
+              
+              <div className="account-actions">
+                <button className="account-action-btn sync-btn" onClick={handleSync} disabled={syncing}>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                  </svg>
+                  {syncing ? 'Syncing...' : 'Sync Now'}
+                </button>
+                
+                <button className="account-action-btn signout-btn" onClick={handleLogout}>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                  </svg>
+                  Sign Out
+                </button>
+              </div>
+              
+              <p className="account-note">
+                Your data is synced across all devices
+              </p>
             </div>
-            <div className="profile-menu-divider" />
-            <button className="profile-menu-item" onClick={handleSync} disabled={syncing}>
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
-              </svg>
-              {syncing ? 'Syncing...' : 'Sync Now'}
-            </button>
-            <button className="profile-menu-item logout" onClick={handleLogout}>
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-              </svg>
-              Sign Out
-            </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

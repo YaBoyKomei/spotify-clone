@@ -296,3 +296,108 @@
     min-width: auto;
   }
 }
+
+
+/* Account Modal */
+.account-modal {
+  max-width: 360px;
+}
+
+.account-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.account-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 16px;
+  border: 3px solid rgba(167, 139, 250, 0.5);
+}
+
+.account-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.account-header h2 {
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+  color: #fff;
+}
+
+.account-email {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.account-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.account-action-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.account-action-btn.sync-btn {
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  color: #fff;
+}
+
+.account-action-btn.sync-btn:hover {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  transform: scale(1.02);
+}
+
+.account-action-btn.sync-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.account-action-btn.signout-btn {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.account-action-btn.signout-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.account-note {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+}
