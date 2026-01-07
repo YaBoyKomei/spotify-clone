@@ -8,7 +8,7 @@
     "server": "node server/server.js",
     "client": "cd client && npm start",
     "build": "cd client && npm install && npm run build",
-    "postinstall": "npm run build",
+    "postinstall": "cd server && npm install && cd .. && npm run build",
     "install-all": "cd server && npm install && cd ../client && npm install && cd .."
   },
   "engines": {
