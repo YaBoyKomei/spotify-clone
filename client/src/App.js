@@ -1850,34 +1850,36 @@ function App() {
           </>
         )}
       </div>
-      <Player
-        currentSong={currentSong}
-        isPlaying={isPlaying}
-        onTogglePlay={togglePlay}
-        onNext={playNext}
-        onPrevious={playPrevious}
-        shuffle={shuffle}
-        onToggleShuffle={toggleShuffle}
-        repeat={repeat}
-        onToggleRepeat={toggleRepeat}
-        autoplay={autoplay}
-        onToggleAutoplay={toggleAutoplay}
-        isLiked={currentSong ? !!likedSongs.find(s => s.id === currentSong.id) : false}
-        onToggleLike={() => currentSong && toggleLike(currentSong)}
-        queue={queue}
-        showQueue={showQueue}
-        onToggleQueue={toggleQueue}
-        onPlayFromQueue={playFromQueue}
-        onRefreshQueue={refreshQueue}
-        onExtendQueue={extendQueue}
-        onReorderQueue={reorderQueue}
-        likedSongs={likedSongs}
-        onToggleLikeInQueue={toggleLike}
-        onAddToPlaylistFromQueue={(song) => {
-          setSelectedSongForPlaylist(song);
-          setShowAddToPlaylist(true);
-        }}
-      />
+      {currentSong && (
+        <Player
+          currentSong={currentSong}
+          isPlaying={isPlaying}
+          onTogglePlay={togglePlay}
+          onNext={playNext}
+          onPrevious={playPrevious}
+          shuffle={shuffle}
+          onToggleShuffle={toggleShuffle}
+          repeat={repeat}
+          onToggleRepeat={toggleRepeat}
+          autoplay={autoplay}
+          onToggleAutoplay={toggleAutoplay}
+          isLiked={currentSong ? !!likedSongs.find(s => s.id === currentSong.id) : false}
+          onToggleLike={() => currentSong && toggleLike(currentSong)}
+          queue={queue}
+          showQueue={showQueue}
+          onToggleQueue={toggleQueue}
+          onPlayFromQueue={playFromQueue}
+          onRefreshQueue={refreshQueue}
+          onExtendQueue={extendQueue}
+          onReorderQueue={reorderQueue}
+          likedSongs={likedSongs}
+          onToggleLikeInQueue={toggleLike}
+          onAddToPlaylistFromQueue={(song) => {
+            setSelectedSongForPlaylist(song);
+            setShowAddToPlaylist(true);
+          }}
+        />
+      )}
 
       <BottomNav
         currentView={currentView}
