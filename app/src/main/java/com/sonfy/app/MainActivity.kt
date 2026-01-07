@@ -1,6 +1,7 @@
 package com.sonfy.app
 
 import android.Manifest
+import android.app.Dialog
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -18,12 +19,17 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
+import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.ImageButton
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -47,6 +53,7 @@ class MainActivity : AppCompatActivity() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var audioManager: AudioManager? = null
     private var audioFocusRequest: AudioFocusRequest? = null
+    private var authDialog: Dialog? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -158,12 +165,11 @@ class MainActivity : AppCompatActivity() {
                 val url = uri.toString()
                 val host = uri.host ?: return false
                 
-                // Open Google OAuth in external browser
+                // Open Google OAuth in a dialog WebView
                 if (host.contains("accounts.google.com") || 
-                    url.contains("oauth") ||
-                    url.contains("signin/oauth")) {
-                    Log.d(TAG, "Opening OAuth URL in browser: $url")
-                    startActivity(Intent(Intent.ACTION_VIEW, uri))
+                    url.contains("oauth2/v2/auth")) {
+                    Log.d(TAG, "Opening OAuth in dialog: $url")
+                    showAuthDialog(url)
                     return true
                 }
                 
@@ -220,14 +226,26 @@ class MainActivity : AppCompatActivity() {
             
             // Support window.open() for OAuth popups
             override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: android.os.Message?): Boolean {
+                // Get the URL from the message
+                val href = view?.handler?.obtainMessage()
+                view?.requestFocusNodeHref(href)
+                val url = href?.data?.getString("url") ?: ""
+                
+                if (url.contains("accounts.google.com") || url.contains("oauth")) {
+                    showAuthDialog(url)
+                    return false
+                }
+                
                 val newWebView = WebView(this@MainActivity)
                 newWebView.webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                        val url = request.url.toString()
-                        Log.d(TAG, "Popup URL: $url")
-                        // Open in external browser
-                        startActivity(Intent(Intent.ACTION_VIEW, request.url))
-                        return true
+                        val reqUrl = request.url.toString()
+                        Log.d(TAG, "Popup URL: $reqUrl")
+                        if (reqUrl.contains("accounts.google.com") || reqUrl.contains("oauth")) {
+                            showAuthDialog(reqUrl)
+                            return true
+                        }
+                        return false
                     }
                 }
                 val transport = resultMsg?.obj as? WebView.WebViewTransport
@@ -236,6 +254,109 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         }
+    }
+    
+    private fun showAuthDialog(url: String) {
+        Log.d(TAG, "Showing auth dialog for: $url")
+        
+        authDialog?.dismiss()
+        
+        val dialog = Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        authDialog = dialog
+        
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.WHITE)
+        }
+        
+        // Close button bar
+        val toolbar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setBackgroundColor(Color.parseColor("#4285F4"))
+            setPadding(16, 8, 16, 8)
+        }
+        
+        val closeButton = ImageButton(this).apply {
+            setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+            setBackgroundColor(Color.TRANSPARENT)
+            setColorFilter(Color.WHITE)
+            setOnClickListener {
+                dialog.dismiss()
+                authDialog = null
+            }
+        }
+        toolbar.addView(closeButton)
+        container.addView(toolbar)
+        
+        // Auth WebView
+        val authWebView = WebView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            
+            settings.apply {
+                javaScriptEnabled = true
+                domStorageEnabled = true
+                databaseEnabled = true
+                setSupportZoom(true)
+                builtInZoomControls = true
+                displayZoomControls = false
+                userAgentString = "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36"
+                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            }
+        }
+        
+        // Enable cookies
+        CookieManager.getInstance().apply {
+            setAcceptCookie(true)
+            setAcceptThirdPartyCookies(authWebView, true)
+        }
+        
+        authWebView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView, url: String) {
+                super.onPageFinished(view, url)
+                Log.d(TAG, "Auth page finished: $url")
+                
+                // Check if we've been redirected back to Sonfy with token
+                if (url.startsWith(SONFY_URL) && url.contains("access_token")) {
+                    Log.d(TAG, "OAuth success! Redirecting to main WebView")
+                    dialog.dismiss()
+                    authDialog = null
+                    // Load the URL with token in main WebView
+                    webView.loadUrl(url)
+                } else if (url.startsWith(SONFY_URL) && !url.contains("accounts.google.com")) {
+                    // Redirected back without token (cancelled or error)
+                    Log.d(TAG, "OAuth redirect back to Sonfy")
+                    dialog.dismiss()
+                    authDialog = null
+                    webView.loadUrl(url)
+                }
+            }
+            
+            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                val reqUrl = request.url.toString()
+                Log.d(TAG, "Auth WebView loading: $reqUrl")
+                
+                // If redirected back to Sonfy, close dialog and load in main WebView
+                if (reqUrl.startsWith(SONFY_URL)) {
+                    Log.d(TAG, "Redirect to Sonfy detected")
+                    dialog.dismiss()
+                    authDialog = null
+                    webView.loadUrl(reqUrl)
+                    return true
+                }
+                
+                // Allow Google auth URLs
+                return false
+            }
+        }
+        
+        container.addView(authWebView)
+        dialog.setContentView(container)
+        dialog.show()
+        
+        authWebView.loadUrl(url)
     }
     
     private fun injectControlScript() {
