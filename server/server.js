@@ -1434,6 +1434,128 @@ function parseAlbumData(data) {
   }
 }
 
+// Get lyrics for a song by video ID
+app.get('/api/lyrics/:videoId', async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId) {
+    return res.status(400).json({ error: 'Video ID is required' });
+  }
+
+  try {
+    const fetch = (await import('node-fetch')).default;
+
+    // First, get the lyrics browse ID from the watch page
+    const nextBody = {
+      context: {
+        client: {
+          clientName: "WEB_REMIX",
+          clientVersion: "1.20260105.03.00",
+          hl: "en",
+          gl: "US"
+        }
+      },
+      videoId: videoId,
+      isAudioOnly: true,
+      enablePersistentPlaylistPanel: true
+    };
+
+    console.log(`🎤 Fetching lyrics for video: ${videoId}`);
+
+    // Get the next/watch data to find lyrics browseId
+    const nextResponse = await fetch('https://music.youtube.com/youtubei/v1/next?prettyPrint=false', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+        'Origin': 'https://music.youtube.com',
+        'Referer': `https://music.youtube.com/watch?v=${videoId}`,
+        'X-Youtube-Client-Name': '67',
+        'X-Youtube-Client-Version': '1.20260105.03.00'
+      },
+      body: JSON.stringify(nextBody)
+    });
+
+    if (!nextResponse.ok) {
+      throw new Error(`Next API error: ${nextResponse.status}`);
+    }
+
+    const nextData = await nextResponse.json();
+    
+    // Find lyrics browseId in the tabs
+    let lyricsBrowseId = null;
+    const tabs = nextData?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs || [];
+    
+    for (const tab of tabs) {
+      const tabRenderer = tab?.tabRenderer;
+      if (tabRenderer?.title === 'Lyrics') {
+        lyricsBrowseId = tabRenderer?.endpoint?.browseEndpoint?.browseId;
+        break;
+      }
+    }
+
+    if (!lyricsBrowseId) {
+      console.log(`⚠️ No lyrics available for video: ${videoId}`);
+      return res.json({ lyrics: null, message: 'No lyrics available for this song' });
+    }
+
+    console.log(`🎤 Found lyrics browseId: ${lyricsBrowseId}`);
+
+    // Now fetch the actual lyrics
+    const lyricsBody = {
+      context: {
+        client: {
+          clientName: "WEB_REMIX",
+          clientVersion: "1.20260105.03.00",
+          hl: "en",
+          gl: "US"
+        }
+      },
+      browseId: lyricsBrowseId
+    };
+
+    const lyricsResponse = await fetch('https://music.youtube.com/youtubei/v1/browse?prettyPrint=false', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+        'Origin': 'https://music.youtube.com',
+        'Referer': `https://music.youtube.com/watch?v=${videoId}`,
+        'X-Youtube-Client-Name': '67',
+        'X-Youtube-Client-Version': '1.20260105.03.00'
+      },
+      body: JSON.stringify(lyricsBody)
+    });
+
+    if (!lyricsResponse.ok) {
+      throw new Error(`Lyrics API error: ${lyricsResponse.status}`);
+    }
+
+    const lyricsData = await lyricsResponse.json();
+    
+    // Parse lyrics from response
+    const lyricsContent = lyricsData?.contents?.sectionListRenderer?.contents?.[0]?.musicDescriptionShelfRenderer;
+    
+    if (!lyricsContent) {
+      return res.json({ lyrics: null, message: 'No lyrics available for this song' });
+    }
+
+    const lyrics = lyricsContent?.description?.runs?.[0]?.text || null;
+    const source = lyricsContent?.footer?.runs?.[0]?.text || 'Unknown source';
+
+    console.log(`✅ Got lyrics for video: ${videoId} (source: ${source})`);
+    
+    res.json({
+      lyrics: lyrics,
+      source: source,
+      videoId: videoId
+    });
+  } catch (error) {
+    console.error('Error fetching lyrics:', error);
+    res.status(500).json({ error: 'Failed to fetch lyrics' });
+  }
+});
+
 // AI-powered recommendations
 app.post('/api/recommendations', async (req, res) => {
   const { likedSongs, listeningHistory } = req.body;

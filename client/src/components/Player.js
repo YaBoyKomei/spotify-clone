@@ -1,11 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
 import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon } from './Icons';
+import { getApiUrl } from '../config';
 
 // Collapse/Expand icons
 const ChevronDownIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 9l6 6 6-6" />
+  </svg>
+);
+
+// Lyrics icon
+const LyricsIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 18V5l12-2v13" />
+    <circle cx="6" cy="18" r="3" />
+    <circle cx="18" cy="16" r="3" />
   </svg>
 );
 
@@ -16,6 +26,10 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const [songEnded, setSongEnded] = useState(false);
   const [titleOverflows, setTitleOverflows] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false); // Expanded player state
+  const [showLyrics, setShowLyrics] = useState(false);
+  const [lyrics, setLyrics] = useState(null);
+  const [lyricsLoading, setLyricsLoading] = useState(false);
+  const [lyricsSource, setLyricsSource] = useState('');
   const titleRef = useRef(null);
   const intervalRef = useRef(null);
   const playerInitialized = useRef(false);
@@ -1055,6 +1069,49 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  // Fetch lyrics for current song
+  const fetchLyrics = async () => {
+    if (!currentSong || !currentSong.youtubeId) return;
+    
+    setLyricsLoading(true);
+    setLyrics(null);
+    setLyricsSource('');
+    
+    try {
+      const response = await fetch(getApiUrl(`/api/lyrics/${currentSong.youtubeId}`));
+      const data = await response.json();
+      
+      if (data.lyrics) {
+        setLyrics(data.lyrics);
+        setLyricsSource(data.source || '');
+        console.log('🎤 Lyrics loaded');
+      } else {
+        setLyrics(null);
+        console.log('🎤 No lyrics available');
+      }
+    } catch (error) {
+      console.error('Error fetching lyrics:', error);
+      setLyrics(null);
+    } finally {
+      setLyricsLoading(false);
+    }
+  };
+
+  // Toggle lyrics panel
+  const toggleLyrics = () => {
+    if (!showLyrics && !lyrics && !lyricsLoading) {
+      fetchLyrics();
+    }
+    setShowLyrics(!showLyrics);
+  };
+
+  // Reset lyrics when song changes
+  useEffect(() => {
+    setLyrics(null);
+    setLyricsSource('');
+    setShowLyrics(false);
+  }, [currentSong?.id]);
+
   // Toggle expanded player
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
@@ -1184,6 +1241,12 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             <HeartIcon filled={isLiked} />
           </button>
           <button
+            className={`expanded-action-btn ${showLyrics ? 'active' : ''}`}
+            onClick={toggleLyrics}
+          >
+            <LyricsIcon />
+          </button>
+          <button
             className={`expanded-action-btn ${autoplay ? 'active' : ''}`}
             onClick={onToggleAutoplay}
           >
@@ -1201,6 +1264,35 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             </svg>
           </button>
         </div>
+
+        {/* Lyrics Panel */}
+        {showLyrics && (
+          <div className="lyrics-panel">
+            <div className="lyrics-header">
+              <h3>Lyrics</h3>
+              <button className="lyrics-close" onClick={() => setShowLyrics(false)}>×</button>
+            </div>
+            <div className="lyrics-content">
+              {lyricsLoading ? (
+                <div className="lyrics-loading">
+                  <div className="spinner"></div>
+                  <p>Loading lyrics...</p>
+                </div>
+              ) : lyrics ? (
+                <>
+                  <pre className="lyrics-text">{lyrics}</pre>
+                  {lyricsSource && (
+                    <p className="lyrics-source">{lyricsSource}</p>
+                  )}
+                </>
+              ) : (
+                <div className="lyrics-not-found">
+                  <p>No lyrics available for this song</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Signature */}
         <div className="expanded-signature">
