@@ -1133,7 +1133,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
   // Handle swipe down to collapse expanded player
   const handleExpandedTouchStart = (e) => {
-    if (e.target.closest('button') || e.target.closest('input')) return;
+    // Don't trigger swipe-to-close if touching buttons, inputs, or lyrics content
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('.expanded-lyrics-content')) return;
     touchStartY.current = e.touches[0].clientY;
   };
 
