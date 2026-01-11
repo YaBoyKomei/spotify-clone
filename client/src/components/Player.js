@@ -1168,6 +1168,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             <ChevronDownIcon />
           </button>
           <div className="expanded-toggle-switch">
+            <div className={`toggle-slider ${expandedView === 'lyrics' ? 'right' : ''}`}></div>
             <button 
               className={`toggle-option ${expandedView === 'playing' ? 'active' : ''}`}
               onClick={() => toggleExpandedView('playing')}
@@ -1180,7 +1181,6 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             >
               Lyrics
             </button>
-            <div className={`toggle-slider ${expandedView === 'lyrics' ? 'right' : ''}`}></div>
           </div>
           <div className="expanded-header-spacer"></div>
         </div>
