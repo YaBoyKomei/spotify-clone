@@ -156,35 +156,46 @@ function App() {
     }
   }, [likedSongs, playlists, listeningHistory, playCount, recentItems, isLoggedIn, syncToServer]);
 
-  // Fetch data from server when user logs in
+  // Fetch data from server when user is logged in (on mount and when user changes)
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchAndMergeData = async () => {
       if (isLoggedIn && user) {
         console.log('📥 Fetching user data from server...');
         const serverData = await fetchFromServer();
+        
+        if (!isMounted) return;
+        
         if (serverData) {
-          // Replace local data with server data when logged in
-          if (serverData.likedSongs && serverData.likedSongs.length > 0) {
-            setLikedSongs(serverData.likedSongs);
-          }
-          if (serverData.playlists && serverData.playlists.length > 0) {
-            setPlaylists(serverData.playlists);
-          }
-          if (serverData.listeningHistory && serverData.listeningHistory.length > 0) {
-            setListeningHistory(serverData.listeningHistory);
-          }
-          if (serverData.playCount && Object.keys(serverData.playCount).length > 0) {
-            setPlayCount(serverData.playCount);
-          }
-          if (serverData.recentItems && serverData.recentItems.length > 0) {
-            setRecentItems(serverData.recentItems);
-          }
+          // Replace local data with server data when logged in (server is source of truth)
+          setLikedSongs(serverData.likedSongs || []);
+          setPlaylists(serverData.playlists || []);
+          setListeningHistory(serverData.listeningHistory || []);
+          setPlayCount(serverData.playCount || {});
+          setRecentItems(serverData.recentItems || []);
           console.log('✅ User data loaded from server');
         }
       }
     };
+    
     fetchAndMergeData();
-  }, [isLoggedIn, user]);
+    
+    // Also fetch when app becomes visible again (e.g., returning from notification)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isLoggedIn && user) {
+        console.log('👁️ App became visible, refreshing data...');
+        fetchAndMergeData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isLoggedIn, user, fetchFromServer]);
 
   useEffect(() => {
     if (currentView === 'home') {
