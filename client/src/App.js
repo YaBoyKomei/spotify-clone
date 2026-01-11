@@ -84,6 +84,7 @@ function App() {
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const [selectedSongForPlaylist, setSelectedSongForPlaylist] = useState(null);
+  const [createPlaylistFromAddModal, setCreatePlaylistFromAddModal] = useState(false);
   const [showClearPlaylistsModal, setShowClearPlaylistsModal] = useState(false);
   const [showDeletePlaylist, setShowDeletePlaylist] = useState(false);
   const [playlistToDelete, setPlaylistToDelete] = useState(null);
@@ -1902,7 +1903,10 @@ function App() {
 
       {/* Create Playlist Modal */}
       {showCreatePlaylist && (
-        <div className="modal-overlay" onClick={() => setShowCreatePlaylist(false)}>
+        <div className="modal-overlay" onClick={() => {
+          setShowCreatePlaylist(false);
+          setCreatePlaylistFromAddModal(false);
+        }}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Create Playlist</h2>
             <input
@@ -1917,7 +1921,12 @@ function App() {
                     const newPlaylist = createPlaylist(name);
                     if (newPlaylist) {
                       setShowCreatePlaylist(false);
-                      setCurrentView(`playlist-${newPlaylist.id}`);
+                      if (createPlaylistFromAddModal) {
+                        setCreatePlaylistFromAddModal(false);
+                        setShowAddToPlaylist(true);
+                      } else {
+                        setCurrentView(`playlist-${newPlaylist.id}`);
+                      }
                     } else {
                       // Show error for duplicate name
                       e.target.style.borderColor = '#ef4444';
@@ -1929,7 +1938,10 @@ function App() {
               }}
             />
             <div className="modal-buttons">
-              <button onClick={() => setShowCreatePlaylist(false)}>Cancel</button>
+              <button onClick={() => {
+                setShowCreatePlaylist(false);
+                setCreatePlaylistFromAddModal(false);
+              }}>Cancel</button>
               <button
                 className="primary"
                 onClick={() => {
@@ -1939,7 +1951,12 @@ function App() {
                     const newPlaylist = createPlaylist(name);
                     if (newPlaylist) {
                       setShowCreatePlaylist(false);
-                      setCurrentView(`playlist-${newPlaylist.id}`);
+                      if (createPlaylistFromAddModal) {
+                        setCreatePlaylistFromAddModal(false);
+                        setShowAddToPlaylist(true);
+                      } else {
+                        setCurrentView(`playlist-${newPlaylist.id}`);
+                      }
                     } else {
                       // Show error for duplicate name
                       input.style.borderColor = '#ef4444';
@@ -1968,6 +1985,7 @@ function App() {
               className="create-playlist-btn"
               onClick={() => {
                 setShowAddToPlaylist(false);
+                setCreatePlaylistFromAddModal(true);
                 setShowCreatePlaylist(true);
               }}
             >
