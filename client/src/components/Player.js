@@ -1269,6 +1269,12 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                 <HeartIcon filled={isLiked} />
               </button>
               <button
+                className="expanded-action-btn"
+                onClick={() => onAddToPlaylistFromQueue(currentSong)}
+              >
+                <PlusIcon />
+              </button>
+              <button
                 className={`expanded-action-btn ${autoplay ? 'active' : ''}`}
                 onClick={onToggleAutoplay}
               >
