@@ -1529,40 +1529,47 @@
   display: flex;
   align-items: center;
   position: relative;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 25px;
+  padding: 3px;
   gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .toggle-option {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 8px 16px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 20px;
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
   position: relative;
   z-index: 2;
   white-space: nowrap;
+  letter-spacing: 0.3px;
 }
 
 .toggle-option.active {
   color: #fff;
 }
 
+.toggle-option:not(.active):hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .toggle-slider {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  width: calc(50% - 4px);
-  height: calc(100% - 8px);
-  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
-  border-radius: 16px;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+  border-radius: 22px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.4);
 }
 
 .toggle-slider.right {
@@ -1732,9 +1739,17 @@
 
 /* Responsive adjustments for toggle */
 @media (max-width: 480px) {
+  .expanded-toggle-switch {
+    border-radius: 20px;
+  }
+  
   .toggle-option {
-    font-size: 0.8rem;
-    padding: 6px 12px;
+    font-size: 0.75rem;
+    padding: 6px 14px;
+  }
+  
+  .toggle-slider {
+    border-radius: 18px;
   }
   
   .lyrics-mini-cover {
