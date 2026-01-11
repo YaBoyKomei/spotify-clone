@@ -144,8 +144,9 @@ class MainActivity : AppCompatActivity() {
     
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Reload the page when returning to app to pick up any login state
-        webView.reload()
+        // Don't reload - just bring the activity to front
+        // The WebView state is preserved
+        Log.d(TAG, "onNewIntent called - keeping WebView state")
     }
 
     private fun setupWebView() {
