@@ -1520,3 +1520,238 @@
 .queue-item .drag-handle {
   touch-action: none;
 }
+
+/* ============================================
+   TOGGLE SWITCH - NOW PLAYING / LYRICS
+   ============================================ */
+
+.expanded-toggle-switch {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 4px;
+  gap: 0;
+}
+
+.toggle-option {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  position: relative;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.toggle-option.active {
+  color: #fff;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  border-radius: 16px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.toggle-slider.right {
+  transform: translateX(100%);
+}
+
+/* ============================================
+   EXPANDED LYRICS VIEW
+   ============================================ */
+
+.expanded-lyrics-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  padding: 0 10px;
+}
+
+.lyrics-mini-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lyrics-mini-cover {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.lyrics-mini-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.lyrics-mini-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.lyrics-mini-artist {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expanded-lyrics-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.expanded-lyrics-content .lyrics-text {
+  font-family: inherit;
+  font-size: 1.1rem;
+  line-height: 2;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  text-align: center;
+}
+
+.expanded-lyrics-content .lyrics-source {
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.expanded-lyrics-content .lyrics-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.expanded-lyrics-content .lyrics-not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: rgba(255, 255, 255, 0.4);
+  gap: 16px;
+}
+
+.expanded-lyrics-content .lyrics-not-found svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
+}
+
+/* Mini Controls in Lyrics View */
+.lyrics-mini-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lyrics-control-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.lyrics-control-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lyrics-control-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.lyrics-play-btn {
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(167, 139, 250, 0.4);
+}
+
+.lyrics-play-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(167, 139, 250, 0.5);
+}
+
+.lyrics-play-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Responsive adjustments for toggle */
+@media (max-width: 480px) {
+  .toggle-option {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+  
+  .lyrics-mini-cover {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .lyrics-mini-title {
+    font-size: 0.9rem;
+  }
+  
+  .lyrics-mini-artist {
+    font-size: 0.8rem;
+  }
+  
+  .expanded-lyrics-content .lyrics-text {
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+}

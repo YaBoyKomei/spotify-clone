@@ -30,6 +30,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
   const [lyrics, setLyrics] = useState(null);
   const [lyricsLoading, setLyricsLoading] = useState(false);
   const [lyricsSource, setLyricsSource] = useState('');
+  const [expandedView, setExpandedView] = useState('playing'); // 'playing' or 'lyrics'
   const titleRef = useRef(null);
   const intervalRef = useRef(null);
   const playerInitialized = useRef(false);
@@ -1105,11 +1106,20 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     setShowLyrics(!showLyrics);
   };
 
+  // Toggle expanded view between 'playing' and 'lyrics'
+  const toggleExpandedView = (view) => {
+    if (view === 'lyrics' && !lyrics && !lyricsLoading) {
+      fetchLyrics();
+    }
+    setExpandedView(view);
+  };
+
   // Reset lyrics when song changes
   useEffect(() => {
     setLyrics(null);
     setLyricsSource('');
     setShowLyrics(false);
+    setExpandedView('playing');
   }, [currentSong?.id]);
 
   // Toggle expanded player
@@ -1152,120 +1162,193 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         onTouchMove={handleExpandedTouchMove}
         onTouchEnd={handleExpandedTouchEnd}
       >
-        {/* Header with collapse button */}
+        {/* Header with collapse button and toggle */}
         <div className="expanded-header">
           <button className="collapse-btn" onClick={toggleExpanded}>
             <ChevronDownIcon />
           </button>
-          <div className="expanded-header-title">Now Playing</div>
+          <div className="expanded-toggle-switch">
+            <button 
+              className={`toggle-option ${expandedView === 'playing' ? 'active' : ''}`}
+              onClick={() => toggleExpandedView('playing')}
+            >
+              Now Playing
+            </button>
+            <button 
+              className={`toggle-option ${expandedView === 'lyrics' ? 'active' : ''}`}
+              onClick={() => toggleExpandedView('lyrics')}
+            >
+              Lyrics
+            </button>
+            <div className={`toggle-slider ${expandedView === 'lyrics' ? 'right' : ''}`}></div>
+          </div>
           <div className="expanded-header-spacer"></div>
         </div>
 
-        {/* Album Art */}
-        <div className="expanded-artwork">
-          <img src={currentSong.cover} alt={currentSong.title} />
-        </div>
+        {/* Now Playing View */}
+        {expandedView === 'playing' && (
+          <>
+            {/* Album Art */}
+            <div className="expanded-artwork">
+              <img src={currentSong.cover} alt={currentSong.title} />
+            </div>
 
-        {/* Song Info */}
-        <div className="expanded-song-info">
-          <div className={`expanded-song-title ${titleOverflows ? 'marquee' : ''}`}>
-            <span className="expanded-song-title-text" data-text={currentSong.title}>
-              {currentSong.title}
-            </span>
+            {/* Song Info */}
+            <div className="expanded-song-info">
+              <div className={`expanded-song-title ${titleOverflows ? 'marquee' : ''}`}>
+                <span className="expanded-song-title-text" data-text={currentSong.title}>
+                  {currentSong.title}
+                </span>
+              </div>
+              <div className="expanded-song-artist">{currentSong.artist}</div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="expanded-progress">
+              <div className="expanded-progress-bar">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={progress}
+                  onChange={handleSeek}
+                  className="expanded-progress-input"
+                />
+                <div className="expanded-progress-fill" style={{ width: `${progress}%` }}></div>
+              </div>
+              <div className="expanded-time">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="expanded-controls">
+              <button
+                onClick={onToggleShuffle}
+                className={`expanded-control-btn ${shuffle ? 'active' : ''}`}
+              >
+                <ShuffleIcon />
+              </button>
+              <button onClick={onPrevious} className="expanded-control-btn">
+                <SkipBackIcon />
+              </button>
+              <button
+                className="expanded-play-button"
+                onClick={() => {
+                  if (songEnded && player) {
+                    player.seekTo(0);
+                    setSongEnded(false);
+                    onTogglePlay();
+                  } else {
+                    onTogglePlay();
+                  }
+                }}
+              >
+                {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
+              </button>
+              <button onClick={onNext} className="expanded-control-btn">
+                <SkipForwardIcon />
+              </button>
+              <button
+                onClick={onToggleRepeat}
+                className={`expanded-control-btn ${repeat !== 'off' ? 'active' : ''}`}
+              >
+                {repeat === 'one' ? <RepeatOneIcon /> : <RepeatIcon />}
+              </button>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="expanded-actions">
+              <button
+                className={`expanded-action-btn ${isLiked ? 'liked' : ''}`}
+                onClick={onToggleLike}
+              >
+                <HeartIcon filled={isLiked} />
+              </button>
+              <button
+                className={`expanded-action-btn ${autoplay ? 'active' : ''}`}
+                onClick={onToggleAutoplay}
+              >
+                <AutoplayIcon />
+              </button>
+              <button
+                className="expanded-action-btn"
+                onClick={() => {
+                  setIsExpanded(false);
+                  setTimeout(() => onToggleQueue(), 100);
+                }}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+                </svg>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Lyrics View */}
+        {expandedView === 'lyrics' && (
+          <div className="expanded-lyrics-view">
+            {/* Mini song info */}
+            <div className="lyrics-mini-info">
+              <img src={currentSong.cover} alt={currentSong.title} className="lyrics-mini-cover" />
+              <div className="lyrics-mini-details">
+                <div className="lyrics-mini-title">{currentSong.title}</div>
+                <div className="lyrics-mini-artist">{currentSong.artist}</div>
+              </div>
+            </div>
+
+            {/* Lyrics content */}
+            <div className="expanded-lyrics-content">
+              {lyricsLoading ? (
+                <div className="lyrics-loading">
+                  <div className="spinner"></div>
+                  <p>Loading lyrics...</p>
+                </div>
+              ) : lyrics ? (
+                <>
+                  <pre className="lyrics-text">{lyrics}</pre>
+                  {lyricsSource && (
+                    <p className="lyrics-source">{lyricsSource}</p>
+                  )}
+                </>
+              ) : (
+                <div className="lyrics-not-found">
+                  <LyricsIcon />
+                  <p>No lyrics available for this song</p>
+                </div>
+              )}
+            </div>
+
+            {/* Mini controls */}
+            <div className="lyrics-mini-controls">
+              <button onClick={onPrevious} className="lyrics-control-btn">
+                <SkipBackIcon />
+              </button>
+              <button
+                className="lyrics-play-btn"
+                onClick={() => {
+                  if (songEnded && player) {
+                    player.seekTo(0);
+                    setSongEnded(false);
+                    onTogglePlay();
+                  } else {
+                    onTogglePlay();
+                  }
+                }}
+              >
+                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+              </button>
+              <button onClick={onNext} className="lyrics-control-btn">
+                <SkipForwardIcon />
+              </button>
+            </div>
           </div>
-          <div className="expanded-song-artist">{currentSong.artist}</div>
-        </div>
+        )}
 
-        {/* Progress Bar */}
-        <div className="expanded-progress">
-          <div className="expanded-progress-bar">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="0.1"
-              value={progress}
-              onChange={handleSeek}
-              className="expanded-progress-input"
-            />
-            <div className="expanded-progress-fill" style={{ width: `${progress}%` }}></div>
-          </div>
-          <div className="expanded-time">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="expanded-controls">
-          <button
-            onClick={onToggleShuffle}
-            className={`expanded-control-btn ${shuffle ? 'active' : ''}`}
-          >
-            <ShuffleIcon />
-          </button>
-          <button onClick={onPrevious} className="expanded-control-btn">
-            <SkipBackIcon />
-          </button>
-          <button
-            className="expanded-play-button"
-            onClick={() => {
-              if (songEnded && player) {
-                player.seekTo(0);
-                setSongEnded(false);
-                onTogglePlay();
-              } else {
-                onTogglePlay();
-              }
-            }}
-          >
-            {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
-          </button>
-          <button onClick={onNext} className="expanded-control-btn">
-            <SkipForwardIcon />
-          </button>
-          <button
-            onClick={onToggleRepeat}
-            className={`expanded-control-btn ${repeat !== 'off' ? 'active' : ''}`}
-          >
-            {repeat === 'one' ? <RepeatOneIcon /> : <RepeatIcon />}
-          </button>
-        </div>
-
-        {/* Bottom Actions */}
-        <div className="expanded-actions">
-          <button
-            className={`expanded-action-btn ${isLiked ? 'liked' : ''}`}
-            onClick={onToggleLike}
-          >
-            <HeartIcon filled={isLiked} />
-          </button>
-          <button
-            className={`expanded-action-btn ${showLyrics ? 'active' : ''}`}
-            onClick={toggleLyrics}
-          >
-            <LyricsIcon />
-          </button>
-          <button
-            className={`expanded-action-btn ${autoplay ? 'active' : ''}`}
-            onClick={onToggleAutoplay}
-          >
-            <AutoplayIcon />
-          </button>
-          <button
-            className="expanded-action-btn"
-            onClick={() => {
-              setIsExpanded(false);
-              setTimeout(() => onToggleQueue(), 100);
-            }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Lyrics Panel */}
+        {/* Lyrics Panel (old overlay - keeping for backward compatibility) */}
         {showLyrics && (
           <div className="lyrics-panel">
             <div className="lyrics-header">
