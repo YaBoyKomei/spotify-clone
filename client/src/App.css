@@ -1673,6 +1673,34 @@
   margin-bottom: 16px;
 }
 
+/* Create New Playlist Button in Add to Playlist Modal */
+.create-playlist-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.create-playlist-btn:hover {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  transform: scale(1.02);
+}
+
+.create-playlist-btn svg {
+  flex-shrink: 0;
+}
+
 .playlist-item {
   display: flex;
   align-items: center;

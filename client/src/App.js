@@ -1962,9 +1962,24 @@ function App() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Add to Playlist</h2>
             <p className="modal-subtitle">"{selectedSongForPlaylist.title}"</p>
+            
+            {/* Create New Playlist Button */}
+            <button
+              className="create-playlist-btn"
+              onClick={() => {
+                setShowAddToPlaylist(false);
+                setShowCreatePlaylist(true);
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
+              <span>Create New Playlist</span>
+            </button>
+            
             {playlists.length === 0 ? (
               <div className="empty-state">
-                <p>No playlists yet. Create one first!</p>
+                <p>No playlists yet. Create one above!</p>
               </div>
             ) : (
               <div className="playlist-list">
