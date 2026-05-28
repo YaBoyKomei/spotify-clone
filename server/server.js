@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const compression = require('compression');
 const fs = require('fs');
+const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -13,118 +14,78 @@ app.use(express.json({ limit: '10mb' })); // Increase limit for user data sync
 app.set('trust proxy', true);
 
 // ============================================
-// SQLITE DATABASE SETUP (using sql.js - pure JS)
+// MONGODB DATABASE SETUP (using mongoose)
 // ============================================
 
-let db = null;
-const DB_PATH = './sonfy.db';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/sonfy';
+
+// Define User Schema
+const userSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  email: String,
+  name: String,
+  picture: String,
+  likedSongs: { type: Array, default: [] },
+  playlists: { type: Array, default: [] },
+  listeningHistory: { type: Array, default: [] },
+  playCount: { type: Object, default: {} },
+  recentItems: { type: Array, default: [] },
+  lastSync: { type: String },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const User = mongoose.model('User', userSchema);
 
 // Initialize database
 async function initDatabase() {
-  const initSqlJs = require('sql.js');
-  const SQL = await initSqlJs();
-  
-  // Load existing database or create new one
-  if (fs.existsSync(DB_PATH)) {
-    const fileBuffer = fs.readFileSync(DB_PATH);
-    db = new SQL.Database(fileBuffer);
-    console.log('📦 SQLite database loaded from file');
-  } else {
-    db = new SQL.Database();
-    console.log('📦 SQLite database created');
-  }
-  
-  // Create users table if not exists
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      email TEXT,
-      name TEXT,
-      picture TEXT,
-      liked_songs TEXT DEFAULT '[]',
-      playlists TEXT DEFAULT '[]',
-      listening_history TEXT DEFAULT '[]',
-      play_count TEXT DEFAULT '{}',
-      recent_items TEXT DEFAULT '[]',
-      last_sync TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-  
-  saveDatabase();
-  console.log('📦 SQLite database initialized');
-}
-
-// Save database to file
-function saveDatabase() {
-  if (db) {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(DB_PATH, buffer);
+  try {
+    await mongoose.connect(MONGODB_URI);
+    console.log('📦 MongoDB database connected');
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
   }
 }
 
 // Helper functions for database operations
-function getUserData(userId) {
-  if (!db) return null;
-  const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
-  stmt.bind([userId]);
-  if (stmt.step()) {
-    const row = stmt.getAsObject();
-    stmt.free();
-    return {
-      likedSongs: JSON.parse(row.liked_songs || '[]'),
-      playlists: JSON.parse(row.playlists || '[]'),
-      listeningHistory: JSON.parse(row.listening_history || '[]'),
-      playCount: JSON.parse(row.play_count || '{}'),
-      recentItems: JSON.parse(row.recent_items || '[]'),
-      lastSync: row.last_sync
-    };
+async function getUserData(userId) {
+  try {
+    const user = await User.findOne({ id: userId });
+    if (user) {
+      return {
+        likedSongs: user.likedSongs || [],
+        playlists: user.playlists || [],
+        listeningHistory: user.listeningHistory || [],
+        playCount: user.playCount || {},
+        recentItems: user.recentItems || [],
+        lastSync: user.lastSync
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return null;
   }
-  stmt.free();
-  return null;
 }
 
-function saveUserData(userId, data) {
-  if (!db) return;
-  
-  const existing = getUserData(userId);
-  
-  if (existing) {
-    db.run(`
-      UPDATE users SET 
-        liked_songs = ?,
-        playlists = ?,
-        listening_history = ?,
-        play_count = ?,
-        recent_items = ?,
-        last_sync = ?
-      WHERE id = ?
-    `, [
-      JSON.stringify(data.likedSongs || []),
-      JSON.stringify(data.playlists || []),
-      JSON.stringify(data.listeningHistory || []),
-      JSON.stringify(data.playCount || {}),
-      JSON.stringify(data.recentItems || []),
-      new Date().toISOString(),
-      userId
-    ]);
-  } else {
-    db.run(`
-      INSERT INTO users (id, liked_songs, playlists, listening_history, play_count, recent_items, last_sync)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [
-      userId,
-      JSON.stringify(data.likedSongs || []),
-      JSON.stringify(data.playlists || []),
-      JSON.stringify(data.listeningHistory || []),
-      JSON.stringify(data.playCount || {}),
-      JSON.stringify(data.recentItems || []),
-      new Date().toISOString()
-    ]);
+async function saveUserData(userId, data) {
+  try {
+    const update = {
+      likedSongs: data.likedSongs || [],
+      playlists: data.playlists || [],
+      listeningHistory: data.listeningHistory || [],
+      playCount: data.playCount || {},
+      recentItems: data.recentItems || [],
+      lastSync: new Date().toISOString()
+    };
+    
+    await User.findOneAndUpdate(
+      { id: userId },
+      { $set: update },
+      { upsert: true, new: true }
+    );
+  } catch (error) {
+    console.error('Error saving user data:', error);
   }
-  
-  saveDatabase();
 }
 
 // ============================================
@@ -247,11 +208,11 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 // Sync user data to server
-app.post('/api/user/sync', authMiddleware, (req, res) => {
+app.post('/api/user/sync', authMiddleware, async (req, res) => {
   try {
     const { likedSongs, playlists, listeningHistory, playCount, recentItems } = req.body;
     
-    saveUserData(req.userId, {
+    await saveUserData(req.userId, {
       likedSongs: likedSongs || [],
       playlists: playlists || [],
       listeningHistory: (listeningHistory || []).slice(-100), // Keep last 100
@@ -269,9 +230,9 @@ app.post('/api/user/sync', authMiddleware, (req, res) => {
 });
 
 // Get user data from server
-app.get('/api/user/data', authMiddleware, (req, res) => {
+app.get('/api/user/data', authMiddleware, async (req, res) => {
   try {
-    const userData = getUserData(req.userId);
+    const userData = await getUserData(req.userId);
     
     if (!userData) {
       return res.json({
