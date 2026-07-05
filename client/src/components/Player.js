@@ -1165,6 +1165,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
   const renderQueuePanel = () => {
     return (
+      <>
       {showQueue && currentSong && (
         <div className="queue-panel">
           {/* Drag handle for mobile */}
@@ -1320,7 +1321,8 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             )}
           </div>
         </div>
-
+      )}
+      </>
     );
   };
 
