@@ -99,16 +99,16 @@
    ============================================ */
 
 .glass-card {
-  background: var(--glass-bg, rgba(32, 31, 31, 0.6));
-  backdrop-filter: blur(var(--glass-blur, 20px));
-  -webkit-backdrop-filter: blur(var(--glass-blur, 20px));
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  background: var(--glass-bg, rgba(16, 16, 16, 0.65));
+  backdrop-filter: blur(var(--glass-blur, 24px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 24px));
+  border: 1px solid var(--glass-border, rgba(168, 85, 247, 0.15));
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
-  background: var(--glass-bg-hover, rgba(42, 42, 42, 0.7));
-  border-color: var(--glass-border-hover, rgba(255, 255, 255, 0.15));
+  background: var(--glass-bg-hover, rgba(24, 24, 24, 0.8));
+  border-color: var(--glass-border-hover, rgba(168, 85, 247, 0.3));
 }
 
 .neon-glow-purple {
@@ -153,17 +153,17 @@
 .floating-orb.purple {
   top: 15%;
   left: -5%;
-  width: 350px;
-  height: 350px;
-  background: rgba(183, 109, 255, 0.12);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0) 70%);
 }
 
 .floating-orb.teal {
   bottom: 20%;
   right: -5%;
-  width: 300px;
-  height: 300px;
-  background: rgba(0, 219, 233, 0.08);
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(107, 33, 168, 0.15) 0%, rgba(107, 33, 168, 0) 70%);
   animation-delay: -7s;
 }
 
@@ -190,7 +190,7 @@
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: var(--background, #131313);
+  background: var(--background, #0a0a0a);
   position: relative;
   /* Improve font rendering */
   -webkit-font-smoothing: antialiased;
@@ -235,8 +235,10 @@
   font-weight: 800;
   font-family: 'Sora', sans-serif;
   margin: 0;
-  color: var(--primary, #ddb7ff);
-  text-shadow: 0 0 40px rgba(183, 109, 255, 0.4);
+  background: linear-gradient(135deg, #a855f7 0%, #d8b4fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 40px rgba(168, 85, 247, 0.3);
   letter-spacing: -0.02em;
 }
 
@@ -272,13 +274,13 @@
 .welcome-section {
   margin-bottom: 40px;
   text-align: center;
-  padding: 30px 20px;
-  background: var(--glass-bg, rgba(32, 31, 31, 0.6));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  padding: 40px 20px;
+  background: linear-gradient(180deg, rgba(168,85,247,0.05) 0%, rgba(10,10,10,0) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-radius: 24px;
-  border: 1px solid rgba(183, 109, 255, 0.15);
-  box-shadow: 0 0 40px rgba(183, 109, 255, 0.05);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  box-shadow: 0 10px 40px rgba(168, 85, 247, 0.08);
   position: relative;
   overflow: hidden;
 }
@@ -290,7 +292,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(183, 109, 255, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.6), transparent);
 }
 
 .welcome-title {

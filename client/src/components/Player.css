@@ -135,8 +135,8 @@
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, var(--primary-container, #b76dff), var(--primary, #ddb7ff));
-  box-shadow: 0 0 8px rgba(183, 109, 255, 0.4);
+  background: linear-gradient(90deg, #6b21a8, #a855f7);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
   pointer-events: none;
   transition: width 0.1s linear;
 }
@@ -296,7 +296,7 @@
 }
 
 .mini-play-button {
-  background: linear-gradient(135deg, var(--primary-container, #b76dff) 0%, var(--secondary-container, #691ea6) 100%);
+  background: linear-gradient(135deg, #a855f7 0%, #6b21a8 100%);
   border: none;
   color: #fff;
   cursor: pointer;
@@ -307,7 +307,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(183, 109, 255, 0.4);
+  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4);
 }
 
 .mini-play-button:hover {
@@ -330,7 +330,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, #2e153f 0%, #15091a 60%, #0a040d 100%);
+  background: radial-gradient(circle at center, rgba(107, 33, 168, 0.3) 0%, #0a0a0a 60%, #0a0a0a 100%);
   z-index: 10000;
   display: flex;
   flex-direction: column;
@@ -573,8 +573,8 @@
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, #b886f8 0%, #e0caff 100%);
-  box-shadow: 0 0 12px rgba(184, 134, 248, 0.5);
+  background: linear-gradient(90deg, #6b21a8 0%, #a855f7 100%);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
   border-radius: 3px;
   pointer-events: none;
 }
@@ -673,7 +673,7 @@
 }
 
 .expanded-play-button {
-  background: linear-gradient(135deg, #c49aff 0%, #8b44e0 100%);
+  background: linear-gradient(135deg, #a855f7 0%, #6b21a8 100%);
   border: none;
   color: #fff;
   cursor: pointer;
@@ -684,12 +684,12 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 10px 25px rgba(139, 68, 224, 0.5), inset 0 2px 5px rgba(255,255,255,0.3);
+  box-shadow: 0 10px 25px rgba(168, 85, 247, 0.5), inset 0 2px 5px rgba(255,255,255,0.3);
 }
 
 .expanded-play-button:hover {
   transform: scale(1.05);
-  box-shadow: 0 15px 35px rgba(139, 68, 224, 0.6), inset 0 2px 5px rgba(255,255,255,0.4);
+  box-shadow: 0 15px 35px rgba(168, 85, 247, 0.6), inset 0 2px 5px rgba(255,255,255,0.4);
 }
 
 .expanded-play-button svg {
