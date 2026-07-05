@@ -338,6 +338,7 @@
   padding-top: env(safe-area-inset-top, 30px);
   padding-bottom: env(safe-area-inset-bottom, 30px);
   animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow-y: auto;
 }
 
 @keyframes slideUp {
@@ -443,7 +444,8 @@
 .expanded-song-info {
   text-align: center;
   padding: 20px 20px 10px;
-  overflow: hidden;
+  overflow: visible; /* Prevent cutting if squished */
+  flex-shrink: 0;
 }
 
 .expanded-song-title {
@@ -453,9 +455,9 @@
   color: #fff;
   margin-bottom: 4px;
   white-space: nowrap;
-  overflow: hidden;
-  line-height: 1.3;
+  line-height: 1.4;
   padding-bottom: 5px;
+  position: relative;
 }
 
 .expanded-song-artist {
@@ -468,6 +470,11 @@
 .expanded-song-title-text {
   display: inline-block;
   white-space: nowrap;
+}
+/* Masking for the marquee instead of overflow hidden on the container, to prevent cutting height */
+.expanded-song-title-wrapper {
+  overflow: hidden;
+  width: 100%;
 }
 
 /* Marquee animation for long titles in expanded player */
@@ -499,6 +506,7 @@
   flex-direction: column;
   align-items: center;
   box-shadow: inset 0 1px 10px rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.3);
+  flex-shrink: 0;
 }
 
 .lyrics-scroller-container {
@@ -567,6 +575,7 @@
 .expanded-progress {
   padding: 0 20px;
   margin-bottom: 30px;
+  flex-shrink: 0;
 }
 
 .expanded-progress-bar {
@@ -645,8 +654,10 @@
 .expanded-controls {
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
-  padding: 0 20px 20px;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .expanded-control-btn {

@@ -1362,10 +1362,12 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
 
             {/* Song Info */}
             <div className="expanded-song-info">
-              <div className={`expanded-song-title ${titleOverflows ? 'marquee' : ''}`}>
-                <span className="expanded-song-title-text" data-text={currentSong.title}>
-                  {currentSong.title}
-                </span>
+              <div className="expanded-song-title-wrapper">
+                <div className={`expanded-song-title ${titleOverflows ? 'marquee' : ''}`}>
+                  <span className="expanded-song-title-text" data-text={currentSong.title}>
+                    {currentSong.title}
+                  </span>
+                </div>
               </div>
               <div className="expanded-song-artist">
                 {currentSong.artist}
