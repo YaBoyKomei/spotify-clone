@@ -482,9 +482,12 @@
   flex: 0 0 auto;
   width: 160px;
   min-width: 160px;
+  aspect-ratio: 1;
   position: relative;
   border-radius: 16px;
   overflow: hidden;
+  background: var(--surface-container-lowest, #0e0e0e);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
