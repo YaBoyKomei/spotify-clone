@@ -1086,7 +1086,7 @@ function App() {
                     <div className="recent-item-left">
                       <div className="recent-item-cover">
                         <img 
-                          src={item.type === 'album' ? item.cover : (item.thumbnails?.[1]?.url || item.thumbnails?.[0]?.url)} 
+                          src={item.cover || (item.thumbnails && item.thumbnails.length > 0 ? (item.thumbnails[1]?.url || item.thumbnails[0]?.url) : null)} 
                           alt={item.title} 
                           loading="lazy" 
                         />

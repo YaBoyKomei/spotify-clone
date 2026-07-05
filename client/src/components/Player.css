@@ -456,6 +456,13 @@
   overflow: hidden;
 }
 
+.expanded-song-artist {
+  font-size: 1.1rem;
+  color: var(--on-surface-variant, #cfc2d6);
+  margin-top: 12px;
+  font-weight: 500;
+}
+
 .expanded-song-title-text {
   display: inline-block;
   white-space: nowrap;
