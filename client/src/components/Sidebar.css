@@ -1,11 +1,16 @@
+/* ============================================
+   VIBEFLOW SIDEBAR — GLASS & GLOW DESIGN
+   ============================================ */
+
 .sidebar {
   width: 280px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(20px);
+  background: rgba(14, 14, 14, 0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   padding: 32px 20px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   height: 100vh;
   overflow: hidden;
 }
@@ -26,8 +31,10 @@
 .sidebar-logo-img {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: 12px;
   object-fit: contain;
+  box-shadow: 0 0 15px rgba(183, 109, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .logo-text {
@@ -39,19 +46,18 @@
 .logo h2 {
   font-size: 1.8rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #f59e0b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-family: 'Sora', sans-serif;
+  color: var(--primary, #ddb7ff);
   letter-spacing: -0.5px;
   margin: 0;
-  text-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+  text-shadow: 0 0 20px rgba(183, 109, 255, 0.3);
 }
 
 .logo-subtitle {
   font-size: 0.75rem;
-  color: rgba(167, 139, 250, 0.8);
+  color: var(--on-surface-variant, #cfc2d6);
   font-weight: 500;
+  font-family: 'Inter', sans-serif;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -59,10 +65,10 @@
 /* Glow animation for logo icon */
 @keyframes glow {
   0% {
-    filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.5));
+    filter: drop-shadow(0 0 8px rgba(183, 109, 255, 0.4));
   }
   100% {
-    filter: drop-shadow(0 0 15px rgba(167, 139, 250, 0.8));
+    filter: drop-shadow(0 0 15px rgba(183, 109, 255, 0.7));
   }
 }
 
@@ -74,14 +80,15 @@
   padding: 12px 16px;
   margin-bottom: 4px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   gap: 16px;
   font-size: 0.95rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Inter', sans-serif;
+  color: var(--on-surface-variant, #cfc2d6);
   position: relative;
   overflow: hidden;
 }
@@ -97,26 +104,28 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 4px;
+  width: 3px;
   height: 100%;
-  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  background: linear-gradient(180deg, var(--primary-container, #b76dff) 0%, var(--primary, #ddb7ff) 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
+  border-radius: 0 2px 2px 0;
 }
 
 .nav-item:hover {
-  color: #fff;
+  color: var(--on-surface, #e5e2e1);
   background: rgba(255, 255, 255, 0.05);
 }
 
 .nav-item:hover svg {
   transform: scale(1.1);
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
 }
 
 .nav-item.active {
-  color: #fff;
-  background: rgba(167, 139, 250, 0.15);
+  color: var(--on-surface, #e5e2e1);
+  background: rgba(183, 109, 255, 0.1);
+  box-shadow: 0 0 15px rgba(183, 109, 255, 0.05);
 }
 
 .nav-item.active::before {
@@ -124,16 +133,17 @@
 }
 
 .nav-item.active svg {
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
+  filter: drop-shadow(0 0 6px rgba(183, 109, 255, 0.4));
 }
 
 .nav-item .count {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--outline, #988d9f);
 }
 
 .playlists {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--outline-variant, #4d4354);
   padding-top: 24px;
   padding-bottom: 120px;
   margin-top: 24px;
@@ -147,7 +157,7 @@
 /* Playlist divider */
 .playlist-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--outline-variant, #4d4354);
   margin: 16px 0;
 }
 
@@ -162,8 +172,9 @@
 
 .playlist-section-title {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--on-surface-variant, #cfc2d6);
   font-weight: 600;
+  font-family: 'Inter', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -171,10 +182,10 @@
 .clear-playlists-btn {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.3);
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -182,7 +193,7 @@
 }
 
 .clear-playlists-btn:hover {
-  color: #ef4444;
+  color: var(--error, #ffb4ab);
   background: rgba(239, 68, 68, 0.1);
   transform: scale(1.1);
 }
@@ -201,17 +212,17 @@
 }
 
 .playlists::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 2px;
 }
 
 .playlists::-webkit-scrollbar-thumb {
-  background: rgba(167, 139, 250, 0.5);
+  background: rgba(183, 109, 255, 0.4);
   border-radius: 2px;
 }
 
 .playlists::-webkit-scrollbar-thumb:hover {
-  background: rgba(167, 139, 250, 0.7);
+  background: rgba(183, 109, 255, 0.6);
 }
 
 /* Mobile scrollbar styling */
@@ -221,27 +232,25 @@
   }
   
   .playlists::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 2px;
   }
   
   .playlists::-webkit-scrollbar-thumb {
-    background: rgba(167, 139, 250, 0.6);
+    background: rgba(183, 109, 255, 0.5);
     border-radius: 2px;
   }
   
   .playlists::-webkit-scrollbar-thumb:hover {
-    background: rgba(167, 139, 250, 0.8);
+    background: rgba(183, 109, 255, 0.7);
   }
 
   /* Force scrolling on mobile */
   .playlists {
     scrollbar-width: thin;
-    scrollbar-color: rgba(167, 139, 250, 0.6) rgba(255, 255, 255, 0.05);
+    scrollbar-color: rgba(183, 109, 255, 0.5) rgba(255, 255, 255, 0.03);
   }
 }
-
-
 
 
 /* ============================================
@@ -263,7 +272,8 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 10001;
     animation: fadeIn 0.3s ease;
     touch-action: manipulation;
@@ -287,7 +297,7 @@
     width: 280px;
     height: 100vh;
     padding: 24px;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
     z-index: 10002;
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
@@ -297,7 +307,7 @@
 
   .sidebar.open {
     left: 0;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5), 0 0 40px rgba(183, 109, 255, 0.05);
   }
 
   .logo {
@@ -336,7 +346,7 @@
     flex-direction: row;
     gap: 12px;
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: 10px;
     min-width: auto;
     flex-shrink: 0;
   }
@@ -354,7 +364,7 @@
     display: inline;
     margin-left: 4px;
     font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--outline, #988d9f);
   }
 
   .developer-signature {
@@ -412,13 +422,12 @@
     margin-right: -6px;
   }
 
-
-
   .developer-signature span {
     font-size: 0.7rem;
   }
-}/* Develo
-per Signature - Mobile Only */
+}
+
+/* Developer Signature - Mobile Only */
 .developer-signature-mobile {
   display: none;
 }
@@ -431,26 +440,24 @@ per Signature - Mobile Only */
     left: 0;
     right: 0;
     padding: 16px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--outline-variant, #4d4354);
     text-align: center;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(14, 14, 14, 0.85);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .developer-signature-mobile span {
     font-size: 0.75rem;
-    color: rgba(167, 139, 250, 0.6);
+    color: var(--primary, #ddb7ff);
     font-weight: 500;
+    font-family: 'Inter', sans-serif;
     letter-spacing: 0.5px;
-    background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #f59e0b 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
     transition: all 0.3s ease;
   }
 
   .developer-signature-mobile:hover span {
-    color: rgba(167, 139, 250, 1);
+    text-shadow: 0 0 10px rgba(183, 109, 255, 0.4);
     transform: scale(1.05);
   }
 }

@@ -1,16 +1,23 @@
+/* ============================================
+   VIBEFLOW BOTTOM NAV — GLASS & GLOW DESIGN
+   ============================================ */
+
 .bottom-nav {
   display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(18, 18, 18, 0.98);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(14, 14, 14, 0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding: 8px 0;
+  padding-bottom: env(safe-area-inset-bottom, 8px);
   z-index: 10000;
   justify-content: space-around;
   align-items: center;
+  box-shadow: 0 -4px 30px rgba(183, 109, 255, 0.08);
 }
 
 .bottom-nav-item {
@@ -20,9 +27,9 @@
   gap: 4px;
   padding: 8px 16px;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--on-surface-variant, #cfc2d6);
   transition: all 0.2s ease;
-  border-radius: 8px;
+  border-radius: 12px;
   min-width: 60px;
 }
 
@@ -35,24 +42,26 @@
 .bottom-nav-item span {
   font-size: 0.7rem;
   font-weight: 500;
+  font-family: 'Inter', sans-serif;
   letter-spacing: 0.3px;
 }
 
 .bottom-nav-item:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
 }
 
 .bottom-nav-item.active {
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
 }
 
 .bottom-nav-item.active svg {
-  color: #a78bfa;
-  filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.5));
+  color: var(--primary, #ddb7ff);
+  filter: drop-shadow(0 0 8px rgba(183, 109, 255, 0.5));
 }
 
 .bottom-nav-item.active span {
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
+  font-weight: 700;
 }
 
 /* Show bottom nav on mobile */

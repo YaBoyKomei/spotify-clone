@@ -1,3 +1,84 @@
+/* ============================================
+   VIBEFLOW DESIGN SYSTEM — ROOT STYLES
+   ============================================ */
+
+/* CSS Custom Properties — VibeFlow M3 Color Palette */
+:root {
+  /* Primary */
+  --primary: #ddb7ff;
+  --primary-container: #b76dff;
+  --primary-fixed: #f0dbff;
+  --primary-fixed-dim: #ddb7ff;
+  --on-primary: #490080;
+  --on-primary-container: #400071;
+  --on-primary-fixed: #2c0051;
+  --on-primary-fixed-variant: #6900b3;
+  --inverse-primary: #842bd2;
+
+  /* Secondary */
+  --secondary: #dfb7ff;
+  --secondary-container: #691ea6;
+  --secondary-fixed: #f1dbff;
+  --secondary-fixed-dim: #dfb7ff;
+  --on-secondary: #4a007f;
+  --on-secondary-container: #d5a4ff;
+  --on-secondary-fixed: #2d0050;
+  --on-secondary-fixed-variant: #661aa3;
+
+  /* Tertiary */
+  --tertiary: #00dbe9;
+  --tertiary-container: #00a0aa;
+  --tertiary-fixed: #7df4ff;
+  --tertiary-fixed-dim: #00dbe9;
+  --on-tertiary: #00363a;
+  --on-tertiary-container: #002f33;
+  --on-tertiary-fixed: #002022;
+  --on-tertiary-fixed-variant: #004f54;
+
+  /* Surface */
+  --surface: #131313;
+  --surface-dim: #131313;
+  --surface-bright: #3a3939;
+  --surface-container-lowest: #0e0e0e;
+  --surface-container-low: #1c1b1b;
+  --surface-container: #201f1f;
+  --surface-container-high: #2a2a2a;
+  --surface-container-highest: #353534;
+  --surface-variant: #353534;
+  --surface-tint: #ddb7ff;
+  --on-surface: #e5e2e1;
+  --on-surface-variant: #cfc2d6;
+  --inverse-surface: #e5e2e1;
+  --inverse-on-surface: #313030;
+
+  /* Background */
+  --background: #131313;
+  --on-background: #e5e2e1;
+
+  /* Outline */
+  --outline: #988d9f;
+  --outline-variant: #4d4354;
+
+  /* Error */
+  --error: #ffb4ab;
+  --error-container: #93000a;
+  --on-error: #690005;
+  --on-error-container: #ffdad6;
+
+  /* Glow & Shadow */
+  --glow-primary: rgba(183, 109, 255, 0.3);
+  --glow-primary-strong: rgba(183, 109, 255, 0.6);
+  --glow-tertiary: rgba(0, 219, 233, 0.2);
+  --glow-ambient: rgba(168, 85, 247, 0.15);
+
+  /* Glass */
+  --glass-bg: rgba(32, 31, 31, 0.6);
+  --glass-bg-hover: rgba(42, 42, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.15);
+  --glass-blur: 20px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,13 +86,13 @@
 }
 
 body {
-  font-family: 'Circular', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
-  color: #fff;
+  background: var(--background);
+  color: var(--on-surface);
   overflow: hidden;
 }
 
@@ -24,18 +105,37 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
+  background: rgba(183, 109, 255, 0.5);
+  border-radius: 3px;
+  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(183, 109, 255, 0.8);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Floating Ambient Background Keyframes */
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+  33% { transform: translate(30px, -20px) scale(1.1); opacity: 0.8; }
+  66% { transform: translate(-20px, 20px) scale(0.95); opacity: 0.5; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
 }

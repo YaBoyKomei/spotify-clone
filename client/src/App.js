@@ -1532,6 +1532,12 @@ function App() {
 
   return (
     <div className="app">
+      {/* Floating ambient background orbs */}
+      <div className="floating-orbs">
+        <div className="floating-orb purple"></div>
+        <div className="floating-orb teal"></div>
+        <div className="floating-orb pink"></div>
+      </div>
       <Sidebar
         currentView={currentView}
         onViewChange={(view) => {

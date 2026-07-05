@@ -1,10 +1,17 @@
+/* ============================================
+   VIBEFLOW PLAYER — GLASS & GLOW DESIGN
+   ============================================ */
+
 .player {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   height: 72px;
-  background: #212121;
+  background: rgba(14, 14, 14, 0.92);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 9999;
 }
 
@@ -24,7 +31,8 @@
   object-fit: cover;
   flex-shrink: 0;
   margin: 0 10px;
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Mini Player Song Info */
@@ -38,7 +46,8 @@
 .mini-player-title {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #fff;
+  font-family: 'Sora', sans-serif;
+  color: var(--on-surface, #e5e2e1);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -74,7 +83,8 @@
 
 .mini-player-artist {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-family: 'Inter', sans-serif;
+  color: var(--on-surface-variant, #cfc2d6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -125,7 +135,8 @@
   top: 0;
   left: 0;
   height: 100%;
-  background: #a78bfa; /* Purple to match app theme */
+  background: linear-gradient(90deg, var(--primary-container, #b76dff), var(--primary, #ddb7ff));
+  box-shadow: 0 0 8px rgba(183, 109, 255, 0.4);
   pointer-events: none;
   transition: width 0.1s linear;
 }
@@ -263,11 +274,12 @@
 }
 
 .player-like-btn.liked {
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
+  filter: drop-shadow(0 0 6px rgba(183, 109, 255, 0.4));
 }
 
 .player-like-btn.liked:hover {
-  color: #8b5cf6;
+  color: var(--primary-container, #b76dff);
 }
 
 .player-like-btn svg {
@@ -284,7 +296,7 @@
 }
 
 .mini-play-button {
-  background: #a78bfa;
+  background: linear-gradient(135deg, var(--primary-container, #b76dff) 0%, var(--secondary-container, #691ea6) 100%);
   border: none;
   color: #fff;
   cursor: pointer;
@@ -295,11 +307,11 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.4);
+  box-shadow: 0 4px 16px rgba(183, 109, 255, 0.4);
 }
 
 .mini-play-button:hover {
-  background: #8b5cf6;
+  box-shadow: 0 6px 24px rgba(183, 109, 255, 0.6);
   transform: scale(1.08);
 }
 
@@ -318,7 +330,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 50%, #000 100%);
+  background: linear-gradient(180deg, #1a1024 0%, #0e0e0e 50%, var(--background, #131313) 100%);
   z-index: 10000;
   display: flex;
   flex-direction: column;
@@ -366,7 +378,8 @@
 .expanded-header-title {
   font-size: 0.9rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
+  font-family: 'Sora', sans-serif;
+  color: var(--on-surface-variant, #cfc2d6);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -390,8 +403,8 @@
   max-width: 320px;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 100px rgba(167, 139, 250, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 80px rgba(183, 109, 255, 0.15), 0 0 120px rgba(0, 219, 233, 0.05);
 }
 
 /* Expanded Song Info */
@@ -404,7 +417,8 @@
 .expanded-song-title {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #fff;
+  font-family: 'Sora', sans-serif;
+  color: var(--on-surface, #e5e2e1);
   margin-bottom: 8px;
   white-space: nowrap;
   overflow: hidden;
@@ -432,7 +446,8 @@
 
 .expanded-song-artist {
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-family: 'Inter', sans-serif;
+  color: var(--on-surface-variant, #cfc2d6);
 }
 
 /* Expanded Progress Bar */
@@ -454,7 +469,8 @@
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, #a78bfa 0%, #8b5cf6 100%);
+  background: linear-gradient(90deg, var(--primary-container, #b76dff) 0%, var(--primary, #ddb7ff) 100%);
+  box-shadow: 0 0 8px rgba(183, 109, 255, 0.3);
   border-radius: 2px;
   pointer-events: none;
 }
@@ -529,7 +545,8 @@
 }
 
 .expanded-control-btn.active {
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
+  filter: drop-shadow(0 0 6px rgba(183, 109, 255, 0.4));
 }
 
 .expanded-control-btn svg {
@@ -538,7 +555,7 @@
 }
 
 .expanded-play-button {
-  background: #a78bfa;
+  background: linear-gradient(135deg, var(--primary-container, #b76dff) 0%, var(--secondary-container, #691ea6) 100%);
   border: none;
   color: #fff;
   cursor: pointer;
@@ -549,11 +566,11 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 8px 24px rgba(167, 139, 250, 0.5);
+  box-shadow: 0 8px 24px rgba(183, 109, 255, 0.4), 0 0 30px rgba(183, 109, 255, 0.15);
 }
 
 .expanded-play-button:hover {
-  background: #8b5cf6;
+  box-shadow: 0 12px 32px rgba(183, 109, 255, 0.6), 0 0 40px rgba(183, 109, 255, 0.2);
   transform: scale(1.05);
 }
 
@@ -591,7 +608,8 @@
 
 .expanded-action-btn.active,
 .expanded-action-btn.liked {
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
+  filter: drop-shadow(0 0 6px rgba(183, 109, 255, 0.4));
 }
 
 .expanded-action-btn svg {
@@ -607,10 +625,9 @@
 
 .expanded-signature span {
   font-size: 0.7rem;
-  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #f59e0b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-family: 'Inter', sans-serif;
+  color: var(--primary, #ddb7ff);
+  opacity: 0.6;
 }
 
 /* Lyrics Panel */
@@ -620,7 +637,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(18, 18, 18, 0.98);
+  background: rgba(14, 14, 14, 0.95);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   z-index: 10002;
   display: flex;
   flex-direction: column;
@@ -643,17 +662,15 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--outline-variant, #4d4354);
 }
 
 .lyrics-header h3 {
   font-size: 1.2rem;
   font-weight: 600;
+  font-family: 'Sora', sans-serif;
   margin: 0;
-  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary, #ddb7ff);
 }
 
 .lyrics-close {
@@ -694,7 +711,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #a78bfa;
+  border-top-color: var(--primary-container, #b76dff);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -782,11 +799,12 @@
 }
 
 .control-btn.active {
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
+  filter: drop-shadow(0 0 6px rgba(183, 109, 255, 0.3));
 }
 
 .control-btn.active:hover {
-  color: #8b5cf6;
+  color: var(--primary-container, #b76dff);
 }
 
 .control-btn svg {
@@ -795,7 +813,7 @@
 }
 
 .play-button {
-  background: #a78bfa;
+  background: linear-gradient(135deg, var(--primary-container, #b76dff) 0%, var(--secondary-container, #691ea6) 100%);
   border: none;
   color: #fff;
   cursor: pointer;
@@ -806,13 +824,12 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.4);
+  box-shadow: 0 4px 16px rgba(183, 109, 255, 0.4);
 }
 
 .play-button:hover {
-  background: #8b5cf6;
   transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(167, 139, 250, 0.6);
+  box-shadow: 0 6px 24px rgba(183, 109, 255, 0.6), 0 0 20px rgba(183, 109, 255, 0.2);
 }
 
 .play-button:active {
@@ -846,7 +863,7 @@
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, #a78bfa 0%, #8b5cf6 100%);
+  background: linear-gradient(90deg, var(--primary-container, #b76dff) 0%, var(--primary, #ddb7ff) 100%);
   border-radius: 2px;
   pointer-events: none;
   transition: width 0.1s linear;
@@ -1102,9 +1119,12 @@
   right: 0;
   width: 400px;
   max-height: 60vh;
-  background: #181818;
-  border-radius: 8px 8px 0 0;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  background: rgba(20, 20, 20, 0.95);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-radius: 16px 16px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(183, 109, 255, 0.05);
   display: flex;
   flex-direction: column;
   z-index: 9998;
@@ -1129,7 +1149,7 @@
 .drag-indicator {
   width: 40px;
   height: 4px;
-  background: #3e3e3e;
+  background: var(--outline-variant, #4d4354);
   border-radius: 2px;
   transition: background 0.2s;
 }
@@ -1154,7 +1174,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #282828;
+  border-bottom: 1px solid var(--outline-variant, #4d4354);
   touch-action: none; /* Allow swipe gestures on header */
   user-select: none;
   -webkit-user-select: none;
@@ -1164,10 +1184,8 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #f59e0b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-family: 'Sora', sans-serif;
+  color: var(--primary, #ddb7ff);
 }
 
 .queue-header-actions {
@@ -1192,8 +1210,8 @@
 }
 
 .queue-refresh-btn:hover {
-  background: #282828;
-  color: #a78bfa;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--primary, #ddb7ff);
   transform: rotate(180deg);
 }
 
@@ -1218,7 +1236,7 @@
 }
 
 .queue-close-btn:hover {
-  background: #282828;
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
 
@@ -1258,16 +1276,16 @@
 }
 
 .queue-item:hover {
-  background: #282828;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .queue-item.current-queue-item {
-  background: #282828;
+  background: rgba(183, 109, 255, 0.08);
   cursor: default;
 }
 
 .queue-item.current-queue-item:hover {
-  background: #282828;
+  background: rgba(183, 109, 255, 0.08);
 }
 
 .queue-item img {
@@ -1286,7 +1304,7 @@
 .queue-item-title {
   font-size: 14px;
   font-weight: 500;
-  color: #fff;
+  color: var(--on-surface, #e5e2e1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1295,7 +1313,7 @@
 
 .queue-item-artist {
   font-size: 12px;
-  color: #b3b3b3;
+  color: var(--on-surface-variant, #cfc2d6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1334,7 +1352,7 @@
 }
 
 .queue-action-btn.liked {
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
   opacity: 1;
 }
 
@@ -1353,7 +1371,7 @@
 
 .now-playing-badge {
   font-size: 11px;
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1388,7 +1406,7 @@
   width: 24px;
   height: 24px;
   border: 2px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #1db954;
+  border-top-color: var(--primary-container, #b76dff);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -1415,7 +1433,7 @@
 
 .drag-handle:active {
   cursor: grabbing;
-  color: #a78bfa;
+  color: var(--primary, #ddb7ff);
 }
 
 .queue-item:hover .drag-handle {
@@ -1440,8 +1458,8 @@
 }
 
 .queue-item.drag-over {
-  border-top: 3px solid #a78bfa;
-  background: rgba(167, 139, 250, 0.15);
+  border-top: 3px solid var(--primary-container, #b76dff);
+  background: rgba(183, 109, 255, 0.12);
   transition: all 0.2s ease;
 }
 
@@ -1530,7 +1548,7 @@
   display: flex;
   width: 220px;
   height: 44px;
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.06);
   border-radius: 22px;
   padding: 4px;
   cursor: pointer;
@@ -1544,9 +1562,9 @@
   left: 4px;
   width: calc(50% - 4px);
   height: calc(100% - 8px);
-  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+  background: linear-gradient(135deg, var(--primary-container, #b76dff) 0%, var(--tertiary, #00dbe9) 100%);
   border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.4);
+  box-shadow: 0 2px 8px rgba(183, 109, 255, 0.4);
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   z-index: 1;
 }
@@ -1712,7 +1730,7 @@
 }
 
 .lyrics-play-btn {
-  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--primary-container, #b76dff) 0%, var(--secondary-container, #691ea6) 100%);
   border: none;
   color: #fff;
   cursor: pointer;
