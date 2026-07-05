@@ -1120,7 +1120,16 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     setLyricsSource('');
     setShowLyrics(false);
     setExpandedView('playing');
-  }, [currentSong?.id]);
+
+    // Auto-fetch lyrics for the preview card
+    if (currentSong && currentSong.youtubeId) {
+      // Small delay to prevent rapid fetching when skipping songs quickly
+      const timer = setTimeout(() => {
+        fetchLyrics();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentSong?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Toggle expanded player
   const toggleExpanded = () => {
@@ -1198,8 +1207,21 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             </div>
 
             {/* Lyrics Preview Card */}
-            <div className="expanded-lyrics-preview">
-              <p>Floating through the neon lights</p>
+            <div 
+              className="expanded-lyrics-preview"
+              onClick={() => toggleExpandedView('lyrics')}
+              style={{ cursor: 'pointer' }}
+              title="Click to view full lyrics"
+            >
+              {lyricsLoading ? (
+                <p>Loading lyrics...</p>
+              ) : lyrics ? (
+                <p style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {lyrics.split('\n').find(line => line.trim().length > 5) || "Lyrics available"}
+                </p>
+              ) : (
+                <p>Now Playing</p>
+              )}
               <div className="pagination-dots">
                 <span className="dot active"></span>
                 <span className="dot"></span>
