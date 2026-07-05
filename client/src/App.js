@@ -3,8 +3,7 @@ import './App.css';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import Player from './components/Player';
-import ProfileButton from './components/ProfileButton';
-import { useAuth } from './context/AuthContext';
+// Auth components removed
 import { getApiUrl } from './config';
 // import AudioPlayer from './components/AudioPlayer';
 import SongCard from './components/SongCard';
@@ -36,7 +35,7 @@ const searchSongs = async (query) => {
 
 function App() {
   console.log('🎵 Komei App starting...');
-  const { user, isLoggedIn, syncToServer, fetchFromServer } = useAuth();
+  // Removed useAuth
   const [songs, setSongs] = useState([]);
   const [sections, setSections] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -101,18 +100,14 @@ function App() {
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [savedAlbumPlaylist, setSavedAlbumPlaylist] = useState(null); // For album saved modal
 
-  // Save to localStorage only when NOT logged in (server handles storage for logged in users)
+  // Save to localStorage unconditionally
   useEffect(() => {
-    if (!isLoggedIn) {
-      localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
-    }
-  }, [likedSongs, isLoggedIn]);
+    localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
+  }, [likedSongs]);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      localStorage.setItem('playlists', JSON.stringify(playlists));
-    }
-  }, [playlists, isLoggedIn]);
+    localStorage.setItem('playlists', JSON.stringify(playlists));
+  }, [playlists]);
 
   useEffect(() => {
     // Keep only last 100 songs in listening history
@@ -120,16 +115,12 @@ function App() {
     if (limitedHistory.length !== listeningHistory.length) {
       setListeningHistory(limitedHistory);
     }
-    if (!isLoggedIn) {
-      localStorage.setItem('listeningHistory', JSON.stringify(limitedHistory));
-    }
-  }, [listeningHistory, isLoggedIn]);
+    localStorage.setItem('listeningHistory', JSON.stringify(limitedHistory));
+  }, [listeningHistory]);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      localStorage.setItem('playCount', JSON.stringify(playCount));
-    }
-  }, [playCount, isLoggedIn]);
+    localStorage.setItem('playCount', JSON.stringify(playCount));
+  }, [playCount]);
 
   useEffect(() => {
     // Keep only last 10 recent items
@@ -137,66 +128,14 @@ function App() {
     if (limitedRecent.length !== recentItems.length) {
       setRecentItems(limitedRecent);
     }
-    if (!isLoggedIn) {
-      localStorage.setItem('recentItems', JSON.stringify(limitedRecent));
-    }
-  }, [recentItems, isLoggedIn]);
+    localStorage.setItem('recentItems', JSON.stringify(limitedRecent));
+  }, [recentItems]);
 
   useEffect(() => {
     localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
   }, [recentSearches]);
 
-  // Sync data to server when user is logged in and data changes
-  useEffect(() => {
-    if (isLoggedIn) {
-      // Debounce sync to avoid too many requests
-      const syncTimeout = setTimeout(() => {
-        syncToServer(likedSongs, playlists, listeningHistory, playCount, recentItems);
-      }, 2000);
-      return () => clearTimeout(syncTimeout);
-    }
-  }, [likedSongs, playlists, listeningHistory, playCount, recentItems, isLoggedIn, syncToServer]);
-
-  // Fetch data from server when user is logged in (on mount and when user changes)
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchAndMergeData = async () => {
-      if (isLoggedIn && user) {
-        console.log('📥 Fetching user data from server...');
-        const serverData = await fetchFromServer();
-        
-        if (!isMounted) return;
-        
-        if (serverData) {
-          // Replace local data with server data when logged in (server is source of truth)
-          setLikedSongs(serverData.likedSongs || []);
-          setPlaylists(serverData.playlists || []);
-          setListeningHistory(serverData.listeningHistory || []);
-          setPlayCount(serverData.playCount || {});
-          setRecentItems(serverData.recentItems || []);
-          console.log('✅ User data loaded from server');
-        }
-      }
-    };
-    
-    fetchAndMergeData();
-    
-    // Also fetch when app becomes visible again (e.g., returning from notification)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && isLoggedIn && user) {
-        console.log('👁️ App became visible, refreshing data...');
-        fetchAndMergeData();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      isMounted = false;
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [isLoggedIn, user, fetchFromServer]);
+  // Removed server sync logic
 
   useEffect(() => {
     if (currentView === 'home') {
@@ -1622,54 +1561,7 @@ function App() {
               <b>Komei</b>
             </h1>
           </div>
-          <ProfileButton 
-            onSync={() => syncToServer(likedSongs, playlists, listeningHistory, playCount)}
-            onFetch={async () => {
-              const serverData = await fetchFromServer();
-              if (serverData) {
-                if (serverData.likedSongs?.length > 0) {
-                  setLikedSongs(prev => {
-                    const merged = [...prev];
-                    serverData.likedSongs.forEach(song => {
-                      if (!merged.find(s => s.id === song.id)) merged.push(song);
-                    });
-                    return merged;
-                  });
-                }
-                if (serverData.playlists?.length > 0) {
-                  setPlaylists(prev => {
-                    const merged = [...prev];
-                    serverData.playlists.forEach(playlist => {
-                      if (!merged.find(p => p.id === playlist.id)) merged.push(playlist);
-                    });
-                    return merged;
-                  });
-                }
-                if (serverData.listeningHistory?.length > 0) {
-                  setListeningHistory(prev => {
-                    const merged = [...prev];
-                    serverData.listeningHistory.forEach(song => {
-                      if (!merged.find(s => s.id === song.id)) merged.push(song);
-                    });
-                    return merged.slice(-100);
-                  });
-                }
-                if (serverData.playCount && Object.keys(serverData.playCount).length > 0) {
-                  setPlayCount(prev => {
-                    const merged = { ...prev };
-                    Object.entries(serverData.playCount).forEach(([id, data]) => {
-                      if (merged[id]) {
-                        merged[id] = { song: data.song, count: Math.max(merged[id].count || 0, data.count || 0) };
-                      } else {
-                        merged[id] = data;
-                      }
-                    });
-                    return merged;
-                  });
-                }
-              }
-            }}
-          />
+
         </div>
 
         {currentView === 'search' ? (
