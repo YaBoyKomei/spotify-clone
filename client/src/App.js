@@ -982,118 +982,7 @@ function App() {
           <h2 className="welcome-title">Good Morning</h2>
         </div>
 
-        {/* Recent Section */}
-        {recentItems.length > 0 && (
-          <div className="music-section">
-            <div className="section-header">
-              <h2 className="section-title">Recent</h2>
-            </div>
-            <div className="section-carousel">
-              {scrollStates['recent'] && !scrollStates['recent'].isAtStart && (
-                <button
-                  className="scroll-button left"
-                  onClick={() => scrollCarousel('recent', 'left')}
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeftIcon />
-                </button>
-              )}
-              {scrollStates['recent'] && !scrollStates['recent'].isAtEnd && (
-                <button
-                  className="scroll-button right"
-                  onClick={() => scrollCarousel('recent', 'right')}
-                  aria-label="Scroll right"
-                >
-                  <ChevronRightIcon />
-                </button>
-              )}
-              <div className="songs-carousel" id="carousel-recent">
-                {recentItems.map(item => (
-                  item.type === 'album' ? (
-                    <div
-                      key={item.id}
-                      className="album-card"
-                      onClick={() => fetchAlbumTracks(item)}
-                    >
-                      <div className="album-cover">
-                        <img src={item.cover} alt={item.title} loading="lazy" />
-                        <div className="album-badge">Album</div>
-                      </div>
-                      <div className="album-info">
-                        <h4 className="album-title">{item.title}</h4>
-                        <p className="album-artist">{item.artist}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <SongCard
-                      key={item.id}
-                      song={item}
-                      currentSong={currentSong}
-                      isLiked={!!likedSongs.find(s => s.id === item.id)}
-                      onPlay={playSong}
-                      onToggleLike={toggleLike}
-                      onAddToPlaylist={(song) => {
-                        setSelectedSongForPlaylist(song);
-                        setShowAddToPlaylist(true);
-                      }}
-                      onPlayNext={handlePlayNext}
-                    />
-                  )
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Most Played Section */}
-        {mostPlayedSongs.length > 0 && (
-          <div className="music-section">
-            <div className="section-header">
-              <h2 className="section-title">Most Played</h2>
-            </div>
-            <div className="section-carousel">
-              {scrollStates['most-played'] && !scrollStates['most-played'].isAtStart && (
-                <button
-                  className="scroll-button left"
-                  onClick={() => scrollCarousel('most-played', 'left')}
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeftIcon />
-                </button>
-              )}
-              {scrollStates['most-played'] && !scrollStates['most-played'].isAtEnd && (
-                <button
-                  className="scroll-button right"
-                  onClick={() => scrollCarousel('most-played', 'right')}
-                  aria-label="Scroll right"
-                >
-                  <ChevronRightIcon />
-                </button>
-              )}
-              <div className="songs-carousel" id="carousel-most-played">
-                {mostPlayedSongs.map(({ song, count }) => (
-                  <div key={song.id} className="song-card-wrapper">
-                    <div className="play-count-badge">{count}× played</div>
-                    <SongCard
-                      song={song}
-                      currentSong={currentSong}
-                      isLiked={!!likedSongs.find(s => s.id === song.id)}
-                      onPlay={playSong}
-                      onToggleLike={toggleLike}
-                      onAddToPlaylist={(song) => {
-                        setSelectedSongForPlaylist(song);
-                        setShowAddToPlaylist(true);
-                      }}
-                      onPlayNext={handlePlayNext}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* AI Recommendations Section */}
+        {/* Recommendations Section (now first) */}
         {(likedSongs.length > 0 || listeningHistory.length > 0) && (
           <div className="music-section">
             <div className="section-header">
@@ -1159,6 +1048,100 @@ function App() {
                 <p>Click "Get Recommendations" to discover songs based on your taste!</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Recent Section (now using vertical list layout) */}
+        {recentItems.length > 0 && (
+          <div className="music-section">
+            <div className="section-header">
+              <h2 className="section-title">Recently Played</h2>
+            </div>
+            <div className="recent-list-container">
+              {recentItems.slice(0, 16).map(item => (
+                <div
+                  key={item.id}
+                  className="recent-list-item"
+                  onClick={() => item.type === 'album' ? fetchAlbumTracks(item) : playSong(item)}
+                >
+                  <div className="recent-item-left">
+                    <div className="recent-item-cover">
+                      <img 
+                        src={item.type === 'album' ? item.cover : (item.thumbnails?.[1]?.url || item.thumbnails?.[0]?.url)} 
+                        alt={item.title} 
+                        loading="lazy" 
+                      />
+                    </div>
+                    <div className="recent-item-info">
+                      <h4 className="recent-item-title">{item.title}</h4>
+                      <p className="recent-item-artist">{item.artist || 'Various Artists'}</p>
+                    </div>
+                  </div>
+                  <button
+                    className="recent-item-more"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if(item.type !== 'album') {
+                        setSelectedSongForPlaylist(item);
+                        setShowAddToPlaylist(true);
+                      }
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Most Played Section (now third) */}
+        {mostPlayedSongs.length > 0 && (
+          <div className="music-section">
+            <div className="section-header">
+              <h2 className="section-title">Most Played</h2>
+            </div>
+            <div className="section-carousel">
+              {scrollStates['most-played'] && !scrollStates['most-played'].isAtStart && (
+                <button
+                  className="scroll-button left"
+                  onClick={() => scrollCarousel('most-played', 'left')}
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeftIcon />
+                </button>
+              )}
+              {scrollStates['most-played'] && !scrollStates['most-played'].isAtEnd && (
+                <button
+                  className="scroll-button right"
+                  onClick={() => scrollCarousel('most-played', 'right')}
+                  aria-label="Scroll right"
+                >
+                  <ChevronRightIcon />
+                </button>
+              )}
+              <div className="songs-carousel" id="carousel-most-played">
+                {mostPlayedSongs.map(({ song, count }) => (
+                  <div key={song.id} className="song-card-wrapper">
+                    <div className="play-count-badge">{count}× played</div>
+                    <SongCard
+                      song={song}
+                      currentSong={currentSong}
+                      isLiked={!!likedSongs.find(s => s.id === song.id)}
+                      onPlay={playSong}
+                      onToggleLike={toggleLike}
+                      onAddToPlaylist={(song) => {
+                        setSelectedSongForPlaylist(song);
+                        setShowAddToPlaylist(true);
+                      }}
+                      onPlayNext={handlePlayNext}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
