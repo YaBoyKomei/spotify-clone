@@ -1216,16 +1216,27 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               {lyricsLoading ? (
                 <div className="lyrics-scroller-container"><p className="lyric-line loading">Loading lyrics...</p></div>
               ) : lyrics ? (
-                <div className="lyrics-scroller-container">
-                  <div 
-                    className="lyrics-scroller"
-                    style={{ transform: `translateY(-${progress}%)` }}
-                  >
-                    {lyrics.split('\n').map((line, index) => (
-                      <p key={index} className="lyric-line">{line || '\u00A0'}</p>
-                    ))}
-                  </div>
-                </div>
+                (() => {
+                  const lines = lyrics.split('\n');
+                  const activeIndex = Math.min(lines.length - 1, Math.max(0, Math.floor((progress / 100) * lines.length)));
+                  return (
+                    <div className="lyrics-scroller-container">
+                      <div 
+                        className="lyrics-scroller"
+                        style={{ transform: `translateY(-${progress}%)` }}
+                      >
+                        {lines.map((line, index) => {
+                          const distance = Math.abs(index - activeIndex);
+                          let className = "lyric-line";
+                          if (index === activeIndex) className += " active";
+                          else if (distance === 1) className += " adjacent";
+                          else className += " distant";
+                          return <p key={index} className={className}>{line || '\u00A0'}</p>;
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()
               ) : (
                 <div className="lyrics-scroller-container"><p className="lyric-line">Now Playing</p></div>
               )}
