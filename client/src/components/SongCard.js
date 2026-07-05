@@ -123,20 +123,30 @@ function SongCard({ song, currentSong, isLiked, onPlay, onToggleLike, onAddToPla
         </div>
       )}
       <div className="song-card-content" onClick={() => onPlay(song)}>
-        <img 
-          ref={imgRef}
-          data-src={getOptimizedImageUrl(song.cover, 300)}
-          alt={`${song.title} album cover`}
-          className="lazy"
-          loading="lazy"
-          itemProp="image"
-          onLoad={(e) => e.target.classList.add('loaded')}
-        />
-        <div className="song-info">
-          <h3 itemProp="name">{song.title}</h3>
-          <p itemProp="byArtist" itemScope itemType="https://schema.org/MusicGroup">
-            <span itemProp="name">{song.artist}</span>
-          </p>
+        <div className="song-image-wrapper">
+          <img 
+            ref={imgRef}
+            data-src={getOptimizedImageUrl(song.cover, 300)}
+            alt={`${song.title} album cover`}
+            className="lazy song-cover"
+            loading="lazy"
+            itemProp="image"
+            onLoad={(e) => e.target.classList.add('loaded')}
+          />
+          <div className="song-gradient-overlay"></div>
+          <div className="song-details-overlay">
+            <div className="song-info">
+              <h3 itemProp="name">{song.title}</h3>
+              <p itemProp="byArtist" itemScope itemType="https://schema.org/MusicGroup">
+                <span itemProp="name">{song.artist}</span>
+              </p>
+            </div>
+            <div className="song-play-circle">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </div>
           {song.duration && (
             <meta itemProp="duration" content={song.duration} />
           )}

@@ -978,8 +978,8 @@ function App() {
     return (
       <div className="home-view">
         <div className="welcome-section">
-          <h2 className="welcome-title">Welcome to Komei</h2>
-          <p className="welcome-subtitle">Discover millions of songs, create playlists, and enjoy high-quality music streaming - all for free!</p>
+          <p className="welcome-subtitle-top">Welcome Back</p>
+          <h2 className="welcome-title">Good Morning</h2>
         </div>
 
         {/* Recent Section */}
