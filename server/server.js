@@ -546,6 +546,27 @@ function parseSearchResults(data) {
           }
         }
       }
+
+      // Handle itemSectionRenderer (newer format where items are in individual sections)
+      if (section.itemSectionRenderer) {
+        const itemContents = section.itemSectionRenderer.contents || [];
+
+        for (const item of itemContents) {
+          if (item.musicResponsiveListItemRenderer) {
+            const parsed = parseSearchItem(item.musicResponsiveListItemRenderer, false);
+            if (parsed) {
+              if (parsed.type === 'album' && !seenAlbumIds.has(parsed.id)) {
+                results.albums.push(parsed);
+                seenAlbumIds.add(parsed.id);
+                console.log(`    ✅ Album: ${parsed.title}`);
+              } else if (parsed.type === 'song' && !seenSongIds.has(parsed.id)) {
+                results.songs.push(parsed);
+                seenSongIds.add(parsed.id);
+              }
+            }
+          }
+        }
+      }
     }
 
     console.log(`✅ Parsed ${results.songs.length} songs and ${results.albums.length} albums`);
@@ -569,7 +590,8 @@ function parseSearchItem(item, isAlbumSection = false) {
     const flexColumns = item.flexColumns || [];
     const title = flexColumns[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || '';
     const secondColumn = flexColumns[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
-    const artist = secondColumn.find(r => r.text && r.text !== ' • ' && r.text !== ' · ' && r.text !== 'Album')?.text || 'Unknown Artist';
+    const artistRun = secondColumn.find(r => r.navigationEndpoint) || secondColumn.find(r => r.text && ![' • ', ' · ', 'Album', 'Song', 'Video', 'EP', 'Single'].includes(r.text));
+    const artist = artistRun?.text || 'Unknown Artist';
 
     const thumbnail = item.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
 
