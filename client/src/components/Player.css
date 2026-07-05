@@ -509,7 +509,7 @@
 }
 
 .lyrics-scroller-container {
-  height: 110px;
+  height: 120px;
   width: 100%;
   position: relative;
   overflow: hidden;
@@ -519,7 +519,7 @@
 
 .lyrics-scroller {
   position: absolute;
-  top: 40px; /* start slightly offset from center */
+  top: 45px; /* start slightly offset from center */
   left: 0;
   right: 0;
   display: flex;
@@ -540,6 +540,8 @@
   filter: blur(1.5px);
   transform: scale(0.95);
   will-change: transform, opacity, filter;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .lyric-line.adjacent {
@@ -1946,14 +1948,15 @@
     padding: 12px 15px;
   }
   .lyrics-scroller-container {
-    height: 65px;
+    height: 80px;
   }
   .lyrics-scroller {
-    top: 20px;
+    top: 25px;
   }
   .lyric-line {
     margin: 0 0 10px 0;
     font-size: 1rem;
+    padding: 0 12px;
   }
   .expanded-progress {
     margin-bottom: 15px;
