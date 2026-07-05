@@ -99,6 +99,7 @@ function App() {
   const [aiRecommendations, setAiRecommendations] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [savedAlbumPlaylist, setSavedAlbumPlaylist] = useState(null); // For album saved modal
+  const [activePlaylistName, setActivePlaylistName] = useState(null);
 
   // Save to localStorage unconditionally
   useEffect(() => {
@@ -352,10 +353,11 @@ function App() {
     }
   };
 
-  const playSong = async (song, addToHistory = true, fetchNewQueue = true, addToRecent = true) => {
+  const playSong = async (song, addToHistory = true, fetchNewQueue = true, addToRecent = true, playlistName = null) => {
     console.log(`🎵 Playing song: "${song.title}" by ${song.artist} (ID: ${song.youtubeId})`);
     setCurrentSong(song);
     setIsPlaying(true);
+    setActivePlaylistName(playlistName);
 
     // Add to recent items (songs/albums) - skip if playing from album
     if (addToRecent) {
@@ -932,14 +934,15 @@ function App() {
   };
 
   // Play a specific track from playlist
-  const playPlaylistTrack = (playlistSongs, index) => {
-    if (playlistSongs.length > 0 && index >= 0 && index < playlistSongs.length) {
+  const playPlaylistTrack = (playlist, index) => {
+    if (playlist.songs.length > 0 && index >= 0 && index < playlist.songs.length) {
       // Set the full playlist as the queue
-      setQueue(playlistSongs);
+      setQueue(playlist.songs);
       setQueueIndex(index);
       // Play the selected track without fetching a new queue (keep playlist queue)
-      playSong(playlistSongs[index], true, false);
-      console.log(`📋 Playing playlist track ${index + 1}/${playlistSongs.length}: "${playlistSongs[index].title}"`);
+      setActivePlaylistName(playlist.name);
+      playSong(playlist.songs[index], true, false, true, playlist.name);
+      console.log(`🎵 Playing playlist track ${index + 1}/${playlist.songs.length}: "${playlist.songs[index].title}"`);
     }
   };
 
@@ -1238,6 +1241,8 @@ function App() {
     
     setQueue(reorderedQueue);
     setQueueIndex(0);
+    playSong(song, true, false, true, "Liked Songs");
+    setQueueIndex(0);
     setCurrentSong(song);
     setIsPlaying(true);
     
@@ -1470,7 +1475,7 @@ function App() {
                   song={song}
                   currentSong={currentSong}
                   isLiked={!!likedSongs.find(s => s.id === song.id)}
-                  onPlay={() => playPlaylistTrack(playlist.songs, index)}
+                  onPlay={() => playPlaylistTrack(playlist, index)}
                   onToggleLike={toggleLike}
                   showRemove={true}
                   onRemoveFromPlaylist={(song) => {
@@ -1766,6 +1771,7 @@ function App() {
       {currentSong && (
         <Player
           currentSong={currentSong}
+          activePlaylistName={activePlaylistName}
           isPlaying={isPlaying}
           onTogglePlay={togglePlay}
           onNext={playNext}

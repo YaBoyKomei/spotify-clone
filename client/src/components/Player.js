@@ -19,7 +19,9 @@ const LyricsIcon = () => (
   </svg>
 );
 
-function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
+function Player({ 
+  currentSong, 
+  activePlaylistName, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -1342,8 +1344,12 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           </button>
           
           <div className="expanded-header-info">
-            <span className="header-subtitle">PLAYING FROM PLAYLIST</span>
-            <span className="header-title">Midnight Chill Radio</span>
+            <span className="header-subtitle">
+              {activePlaylistName ? "PLAYING FROM PLAYLIST" : "PLAYING NOW"}
+            </span>
+            {activePlaylistName && (
+              <span className="header-title">{activePlaylistName}</span>
+            )}
           </div>
 
           <div className="expanded-header-actions">
