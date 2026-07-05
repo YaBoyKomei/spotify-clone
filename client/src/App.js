@@ -1057,42 +1057,62 @@ function App() {
             <div className="section-header">
               <h2 className="section-title">Recently Played</h2>
             </div>
-            <div className="recent-list-container">
-              {recentItems.slice(0, 10).map(item => (
-                <div
-                  key={item.id}
-                  className="recent-list-item"
-                  onClick={() => item.type === 'album' ? fetchAlbumTracks(item) : playSong(item)}
+            <div className="section-carousel">
+              {scrollStates['recent'] && !scrollStates['recent'].isAtStart && (
+                <button
+                  className="scroll-button left"
+                  onClick={() => scrollCarousel('recent', 'left')}
+                  aria-label="Scroll left"
                 >
-                  <div className="recent-item-left">
-                    <div className="recent-item-cover">
-                      <img 
-                        src={item.type === 'album' ? item.cover : (item.thumbnails?.[1]?.url || item.thumbnails?.[0]?.url)} 
-                        alt={item.title} 
-                        loading="lazy" 
-                      />
-                    </div>
-                    <div className="recent-item-info">
-                      <h4 className="recent-item-title">{item.title}</h4>
-                      <p className="recent-item-artist">{item.artist || 'Various Artists'}</p>
-                    </div>
-                  </div>
-                  <button
-                    className="recent-item-more"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if(item.type !== 'album') {
-                        setSelectedSongForPlaylist(item);
-                        setShowAddToPlaylist(true);
-                      }
-                    }}
+                  <ChevronLeftIcon />
+                </button>
+              )}
+              {scrollStates['recent'] && !scrollStates['recent'].isAtEnd && (
+                <button
+                  className="scroll-button right"
+                  onClick={() => scrollCarousel('recent', 'right')}
+                  aria-label="Scroll right"
+                >
+                  <ChevronRightIcon />
+                </button>
+              )}
+              <div className="recent-list-container" id="carousel-recent">
+                {recentItems.slice(0, 8).map(item => (
+                  <div
+                    key={item.id}
+                    className="recent-list-item"
+                    onClick={() => item.type === 'album' ? fetchAlbumTracks(item) : playSong(item)}
                   >
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
+                    <div className="recent-item-left">
+                      <div className="recent-item-cover">
+                        <img 
+                          src={item.type === 'album' ? item.cover : (item.thumbnails?.[1]?.url || item.thumbnails?.[0]?.url)} 
+                          alt={item.title} 
+                          loading="lazy" 
+                        />
+                      </div>
+                      <div className="recent-item-info">
+                        <h4 className="recent-item-title">{item.title}</h4>
+                        <p className="recent-item-artist">{item.artist || 'Various Artists'}</p>
+                      </div>
+                    </div>
+                    <button
+                      className="recent-item-more"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if(item.type !== 'album') {
+                          setSelectedSongForPlaylist(item);
+                          setShowAddToPlaylist(true);
+                        }
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
