@@ -473,6 +473,201 @@
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
+  font-size: 0.75rem; /* 12px */
+  color: var(--primary, #a855f7);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 4px 0;
+  font-weight: 600;
+}
+
+.welcome-title {
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: 'Sora', sans-serif;
+  margin: 0;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+/* Pulse animation for logo */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+/* Mobile responsive styles for branding */
+@media (max-width: 768px) {
+  .main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    margin-bottom: 0;
+    padding: 12px 16px;
+    background: rgba(19, 19, 19, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .sonfy-title {
+    font-size: 1.5rem;
+    gap: 8px;
+  }
+  
+  .sonfy-logo img {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+  
+  .sonfy-tagline {
+    display: none;
+  }
+  
+  .welcome-section {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .sonfy-title {
+    font-size: 1.8rem;
+    flex-direction: row;
+    gap: 8px;
+  }
+  
+  .sonfy-logo img {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .welcome-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* ============================================
+   MAIN CONTENT HEADINGS
+   ============================================ */
+
+.main-content h1 {
+  margin-bottom: 30px;
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-family: 'Sora', sans-serif;
+  color: var(--on-surface, #e5e2e1);
+  letter-spacing: -0.02em;
+}
+
+.home-view {
+  width: 100%;
+}
+
+/* ============================================
+   MUSIC SECTIONS
+   ============================================ */
+
+.music-section {
+  margin-bottom: 56px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+
+.section-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: 'Sora', sans-serif;
+  margin: 0;
+  color: var(--on-surface, #e5e2e1);
+  letter-spacing: -0.01em;
+}
+
+/* ============================================
+   SECTION CAROUSEL
+   ============================================ */
+
+.section-carousel {
+  position: relative;
+  overflow: hidden;
+}
+
+.scroll-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(19, 19, 19, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.section-carousel:hover .scroll-button {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.scroll-button:hover {
+  background: rgba(183, 109, 255, 0.6);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 0 20px rgba(183, 109, 255, 0.4);
+}
+
+.scroll-button.left {
+  left: 8px;
+}
+
+.scroll-button.right {
+  right: 8px;
+}
+
+.scroll-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ============================================
+   SONGS CAROUSEL (HORIZONTAL)
+   ============================================ */
+
+.songs-carousel {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding: 8px 4px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
 
 .songs-carousel::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
@@ -489,6 +684,11 @@
   background: var(--surface-container-lowest, #0e0e0e);
   border: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.songs-carousel.large-cards .song-card {
+  width: 280px;
+  min-width: 280px;
 }
 
 .songs-carousel .song-card:hover {
@@ -2413,21 +2613,9 @@
    ============================================ */
 
 .recent-list-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-@media (max-width: 1200px) {
-  .recent-list-container { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (max-width: 900px) {
-  .recent-list-container { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 600px) {
-  .recent-list-container { grid-template-columns: 1fr; }
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .recent-list-item {
@@ -2437,21 +2625,15 @@
   padding: 8px;
   border-radius: 12px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.02);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease;
 }
 
 .recent-list-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .recent-list-item:active {
-  transform: translateY(0);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .recent-item-left {

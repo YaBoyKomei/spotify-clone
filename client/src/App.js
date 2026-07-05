@@ -1025,7 +1025,7 @@ function App() {
                     <ChevronRightIcon />
                   </button>
                 )}
-                <div className="songs-carousel" id="carousel-ai-recommendations">
+                <div className="songs-carousel large-cards" id="carousel-ai-recommendations">
                   {aiRecommendations.map(song => (
                     <SongCard
                       key={song.id}
@@ -1058,7 +1058,7 @@ function App() {
               <h2 className="section-title">Recently Played</h2>
             </div>
             <div className="recent-list-container">
-              {recentItems.slice(0, 16).map(item => (
+              {recentItems.slice(0, 10).map(item => (
                 <div
                   key={item.id}
                   className="recent-list-item"
