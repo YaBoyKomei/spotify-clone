@@ -1163,6 +1163,167 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
     touchEndY.current = 0;
   };
 
+  const renderQueuePanel = () => {
+    return (
+      {showQueue && currentSong && (
+        <div className="queue-panel">
+          {/* Drag handle for mobile */}
+          <div
+            className="queue-drag-handle"
+            onTouchStart={handleQueueHeaderTouchStart}
+            onTouchMove={handleQueueHeaderTouchMove}
+            onTouchEnd={handleQueueHeaderTouchEnd}
+          >
+            <div className="drag-indicator"></div>
+          </div>
+          <div
+            className="queue-header"
+            onTouchStart={handleQueueHeaderTouchStart}
+            onTouchMove={handleQueueHeaderTouchMove}
+            onTouchEnd={handleQueueHeaderTouchEnd}
+          >
+            <h3>Up Next</h3>
+            <div className="queue-header-actions">
+              <button
+                className="queue-refresh-btn"
+                onClick={onRefreshQueue}
+                title="Refresh Queue"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                </svg>
+              </button>
+              <button className="queue-close-btn" onClick={onToggleQueue}>✕</button>
+            </div>
+          </div>
+          <div className="queue-list">
+            {/* Queue Songs */}
+            {queue.length > 0 ? (
+              queue.map((song, index) => {
+                const isCurrentSong = currentSong && song.id === currentSong.id;
+                const isDragging = draggedIndex === index;
+                const isDragOver = dragOverIndex === index;
+
+                return (
+                  <div
+                    key={`${song.id}-${index}`}
+                    className={`queue-item ${isCurrentSong ? 'current-queue-item' : ''} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+                    draggable={!isCurrentSong}
+                    onDragStart={(e) => {
+                      if (!isCurrentSong) {
+                        setDraggedIndex(index);
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/html', e.currentTarget);
+                      }
+                    }}
+                    onDragOver={(e) => {
+                      if (!isCurrentSong && draggedIndex !== null) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        setDragOverIndex(index);
+                      }
+                    }}
+                    onDragLeave={() => {
+                      setDragOverIndex(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (draggedIndex !== null && draggedIndex !== index && !isCurrentSong) {
+                        onReorderQueue(draggedIndex, index);
+                      }
+                      setDraggedIndex(null);
+                      setDragOverIndex(null);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedIndex(null);
+                      setDragOverIndex(null);
+                    }}
+                  >
+                    {!isCurrentSong && (
+                      <div
+                        className="drag-handle"
+                        title="Hold to reorder"
+                        onTouchStart={(e) => handleDragHandleTouchStart(e, index)}
+                        onTouchMove={(e) => handleDragHandleTouchMove(e)}
+                        onTouchEnd={(e) => handleDragHandleTouchEnd(e, index)}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-16h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z" />
+                        </svg>
+                      </div>
+                    )}
+                    <img
+                      src={song.cover}
+                      alt={song.title}
+                      onClick={() => {
+                        if (!isCurrentSong) {
+                          onPlayFromQueue(song);
+                          onToggleQueue();
+                        }
+                      }}
+                      style={{ cursor: isCurrentSong ? 'default' : 'pointer' }}
+                    />
+                    <div
+                      className="queue-item-info"
+                      onClick={() => {
+                        if (!isCurrentSong) {
+                          onPlayFromQueue(song);
+                          onToggleQueue();
+                        }
+                      }}
+                      style={{ cursor: isCurrentSong ? 'default' : 'pointer' }}
+                    >
+                      <div className="queue-item-title">{song.title}</div>
+                      <div className="queue-item-artist">{song.artist}</div>
+                    </div>
+                    <div className="queue-item-actions">
+                      <button
+                        className={`queue-action-btn ${likedSongs?.find(s => s.id === song.id) ? 'liked' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleLikeInQueue(song);
+                        }}
+                        title={likedSongs?.find(s => s.id === song.id) ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
+                      >
+                        <HeartIcon filled={!!likedSongs?.find(s => s.id === song.id)} />
+                      </button>
+                      <button
+                        className="queue-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToPlaylistFromQueue(song);
+                        }}
+                        title="Add to Playlist"
+                      >
+                        <PlusIcon />
+                      </button>
+                      {isCurrentSong ? (
+                        <span className="now-playing-badge">Now Playing</span>
+                      ) : (
+                        <span className="queue-item-number">{index + 1}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="queue-empty">
+                <p>No songs in queue</p>
+              </div>
+            )}
+            {/* Loading indicator for infinite scroll */}
+            {isLoadingMore && (
+              <div className="queue-loading">
+                <div className="queue-loading-spinner"></div>
+                <span>Loading more songs...</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+    );
+  };
+
   // Expanded Full-Screen Player View
   if (isExpanded && currentSong) {
     return (
@@ -1421,6 +1582,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
         <div className="expanded-signature">
           <span>YaBoy Komei</span>
         </div>
+        {renderQueuePanel()}
       </div>
     );
   }
@@ -1498,162 +1660,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
       )}
 
       {/* Queue Panel */}
-      {showQueue && currentSong && (
-        <div className="queue-panel">
-          {/* Drag handle for mobile */}
-          <div
-            className="queue-drag-handle"
-            onTouchStart={handleQueueHeaderTouchStart}
-            onTouchMove={handleQueueHeaderTouchMove}
-            onTouchEnd={handleQueueHeaderTouchEnd}
-          >
-            <div className="drag-indicator"></div>
-          </div>
-          <div
-            className="queue-header"
-            onTouchStart={handleQueueHeaderTouchStart}
-            onTouchMove={handleQueueHeaderTouchMove}
-            onTouchEnd={handleQueueHeaderTouchEnd}
-          >
-            <h3>Up Next</h3>
-            <div className="queue-header-actions">
-              <button
-                className="queue-refresh-btn"
-                onClick={onRefreshQueue}
-                title="Refresh Queue"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                </svg>
-              </button>
-              <button className="queue-close-btn" onClick={onToggleQueue}>✕</button>
-            </div>
-          </div>
-          <div className="queue-list">
-            {/* Queue Songs */}
-            {queue.length > 0 ? (
-              queue.map((song, index) => {
-                const isCurrentSong = currentSong && song.id === currentSong.id;
-                const isDragging = draggedIndex === index;
-                const isDragOver = dragOverIndex === index;
-
-                return (
-                  <div
-                    key={`${song.id}-${index}`}
-                    className={`queue-item ${isCurrentSong ? 'current-queue-item' : ''} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
-                    draggable={!isCurrentSong}
-                    onDragStart={(e) => {
-                      if (!isCurrentSong) {
-                        setDraggedIndex(index);
-                        e.dataTransfer.effectAllowed = 'move';
-                        e.dataTransfer.setData('text/html', e.currentTarget);
-                      }
-                    }}
-                    onDragOver={(e) => {
-                      if (!isCurrentSong && draggedIndex !== null) {
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = 'move';
-                        setDragOverIndex(index);
-                      }
-                    }}
-                    onDragLeave={() => {
-                      setDragOverIndex(null);
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (draggedIndex !== null && draggedIndex !== index && !isCurrentSong) {
-                        onReorderQueue(draggedIndex, index);
-                      }
-                      setDraggedIndex(null);
-                      setDragOverIndex(null);
-                    }}
-                    onDragEnd={() => {
-                      setDraggedIndex(null);
-                      setDragOverIndex(null);
-                    }}
-                  >
-                    {!isCurrentSong && (
-                      <div
-                        className="drag-handle"
-                        title="Hold to reorder"
-                        onTouchStart={(e) => handleDragHandleTouchStart(e, index)}
-                        onTouchMove={(e) => handleDragHandleTouchMove(e)}
-                        onTouchEnd={(e) => handleDragHandleTouchEnd(e, index)}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-16h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z" />
-                        </svg>
-                      </div>
-                    )}
-                    <img
-                      src={song.cover}
-                      alt={song.title}
-                      onClick={() => {
-                        if (!isCurrentSong) {
-                          onPlayFromQueue(song);
-                          onToggleQueue();
-                        }
-                      }}
-                      style={{ cursor: isCurrentSong ? 'default' : 'pointer' }}
-                    />
-                    <div
-                      className="queue-item-info"
-                      onClick={() => {
-                        if (!isCurrentSong) {
-                          onPlayFromQueue(song);
-                          onToggleQueue();
-                        }
-                      }}
-                      style={{ cursor: isCurrentSong ? 'default' : 'pointer' }}
-                    >
-                      <div className="queue-item-title">{song.title}</div>
-                      <div className="queue-item-artist">{song.artist}</div>
-                    </div>
-                    <div className="queue-item-actions">
-                      <button
-                        className={`queue-action-btn ${likedSongs?.find(s => s.id === song.id) ? 'liked' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleLikeInQueue(song);
-                        }}
-                        title={likedSongs?.find(s => s.id === song.id) ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
-                      >
-                        <HeartIcon filled={!!likedSongs?.find(s => s.id === song.id)} />
-                      </button>
-                      <button
-                        className="queue-action-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddToPlaylistFromQueue(song);
-                        }}
-                        title="Add to Playlist"
-                      >
-                        <PlusIcon />
-                      </button>
-                      {isCurrentSong ? (
-                        <span className="now-playing-badge">Now Playing</span>
-                      ) : (
-                        <span className="queue-item-number">{index + 1}</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="queue-empty">
-                <p>No songs in queue</p>
-              </div>
-            )}
-            {/* Loading indicator for infinite scroll */}
-            {isLoadingMore && (
-              <div className="queue-loading">
-                <div className="queue-loading-spinner"></div>
-                <span>Loading more songs...</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {renderQueuePanel()}
     </div>
   );
 }
