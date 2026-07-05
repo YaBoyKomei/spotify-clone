@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
-import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon } from './Icons';
+import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon, ShareIcon, MoreVerticalIcon, ConnectIcon } from './Icons';
 import { getApiUrl } from '../config';
 
 // Collapse/Expand icons
@@ -1168,22 +1168,16 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
           <button className="collapse-btn" onClick={toggleExpanded}>
             <ChevronDownIcon />
           </button>
-          <div className="expanded-toggle-switch">
-            <div className={`toggle-slider ${expandedView === 'lyrics' ? 'right' : ''}`}></div>
-            <button 
-              className={`toggle-option ${expandedView === 'playing' ? 'active' : ''}`}
-              onClick={() => toggleExpandedView('playing')}
-            >
-              Now Playing
-            </button>
-            <button 
-              className={`toggle-option ${expandedView === 'lyrics' ? 'active' : ''}`}
-              onClick={() => toggleExpandedView('lyrics')}
-            >
-              Lyrics
-            </button>
+          
+          <div className="expanded-header-info">
+            <span className="header-subtitle">PLAYING FROM PLAYLIST</span>
+            <span className="header-title">Midnight Chill Radio</span>
           </div>
-          <div className="expanded-header-spacer"></div>
+
+          <div className="expanded-header-actions">
+            <button className="header-action-btn"><ShareIcon /></button>
+            <button className="header-action-btn"><MoreVerticalIcon /></button>
+          </div>
         </div>
 
         {/* Now Playing View */}
@@ -1201,7 +1195,18 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
                   {currentSong.title}
                 </span>
               </div>
-              <div className="expanded-song-artist">{currentSong.artist}</div>
+            </div>
+
+            {/* Lyrics Preview Card */}
+            <div className="expanded-lyrics-preview">
+              <p>Floating through the neon lights</p>
+              <div className="pagination-dots">
+                <span className="dot active"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+              </div>
             </div>
 
             {/* Progress Bar */}
@@ -1232,7 +1237,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               >
                 <ShuffleIcon />
               </button>
-              <button onClick={onPrevious} className="expanded-control-btn">
+              <button onClick={onPrevious} className="expanded-control-btn prev-next">
                 <SkipBackIcon />
               </button>
               <button
@@ -1249,7 +1254,7 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               >
                 {isPlaying ? <PauseIcon /> : songEnded ? <RefreshIcon /> : <PlayIcon />}
               </button>
-              <button onClick={onNext} className="expanded-control-btn">
+              <button onClick={onNext} className="expanded-control-btn prev-next">
                 <SkipForwardIcon />
               </button>
               <button
@@ -1261,35 +1266,19 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
             </div>
 
             {/* Bottom Actions */}
-            <div className="expanded-actions">
+            <div className="expanded-actions-pills">
               <button
-                className={`expanded-action-btn ${isLiked ? 'liked' : ''}`}
-                onClick={onToggleLike}
-              >
-                <HeartIcon filled={isLiked} />
-              </button>
-              <button
-                className="expanded-action-btn"
+                className="pill-action-btn"
                 onClick={() => onAddToPlaylistFromQueue(currentSong)}
               >
                 <PlusIcon />
+                <span>Add to</span>
               </button>
               <button
-                className={`expanded-action-btn ${autoplay ? 'active' : ''}`}
-                onClick={onToggleAutoplay}
+                className="pill-action-btn"
               >
-                <AutoplayIcon />
-              </button>
-              <button
-                className="expanded-action-btn"
-                onClick={() => {
-                  setIsExpanded(false);
-                  setTimeout(() => onToggleQueue(), 100);
-                }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-                </svg>
+                <ConnectIcon />
+                <span>Connect</span>
               </button>
             </div>
           </>
