@@ -1214,21 +1214,21 @@ function Player({ currentSong, isPlaying, onTogglePlay, onNext, onPrevious, shuf
               title="Click to view full lyrics"
             >
               {lyricsLoading ? (
-                <p>Loading lyrics...</p>
+                <div className="lyrics-scroller-container"><p className="lyric-line loading">Loading lyrics...</p></div>
               ) : lyrics ? (
-                <p style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {lyrics.split('\n').find(line => line.trim().length > 5) || "Lyrics available"}
-                </p>
+                <div className="lyrics-scroller-container">
+                  <div 
+                    className="lyrics-scroller"
+                    style={{ transform: `translateY(-${progress}%)` }}
+                  >
+                    {lyrics.split('\n').map((line, index) => (
+                      <p key={index} className="lyric-line">{line || '\u00A0'}</p>
+                    ))}
+                  </div>
+                </div>
               ) : (
-                <p>Now Playing</p>
+                <div className="lyrics-scroller-container"><p className="lyric-line">Now Playing</p></div>
               )}
-              <div className="pagination-dots">
-                <span className="dot active"></span>
-                <span className="dot"></span>
-                <span className="dot"></span>
-                <span className="dot"></span>
-                <span className="dot"></span>
-              </div>
             </div>
 
             {/* Progress Bar */}

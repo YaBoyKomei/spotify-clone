@@ -492,29 +492,38 @@
   box-shadow: inset 0 1px 10px rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.3);
 }
 
-.expanded-lyrics-preview p {
+.lyrics-scroller-container {
+  height: 80px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+}
+
+.lyrics-scroller {
+  position: absolute;
+  top: 30px; /* start slightly offset from center */
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  transition: transform 1s linear;
+}
+
+.lyric-line {
   font-size: 1.1rem;
   font-family: 'Inter', sans-serif;
   color: rgba(255, 255, 255, 0.85);
   font-weight: 500;
   margin: 0 0 16px 0;
   line-height: 1.4;
+  text-align: center;
 }
 
-.pagination-dots {
-  display: flex;
-  gap: 6px;
-}
-
-.pagination-dots .dot {
-  width: 6px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-}
-
-.pagination-dots .dot.active {
-  background: rgba(255, 255, 255, 0.8);
+.lyric-line.loading {
+  opacity: 0.5;
+  animation: pulse 1.5s infinite;
 }
 
 /* Expanded Progress Bar */
