@@ -338,7 +338,6 @@
   padding-top: env(safe-area-inset-top, 30px);
   padding-bottom: env(safe-area-inset-bottom, 30px);
   animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  overflow-y: auto;
 }
 
 @keyframes slideUp {
@@ -445,7 +444,7 @@
   text-align: center;
   padding: 20px 20px 10px;
   overflow: visible; /* Prevent cutting if squished */
-  flex-shrink: 0;
+  
 }
 
 .expanded-song-title {
@@ -506,7 +505,7 @@
   flex-direction: column;
   align-items: center;
   box-shadow: inset 0 1px 10px rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.3);
-  flex-shrink: 0;
+  
 }
 
 .lyrics-scroller-container {
@@ -575,7 +574,7 @@
 .expanded-progress {
   padding: 0 20px;
   margin-bottom: 30px;
-  flex-shrink: 0;
+  
 }
 
 .expanded-progress-bar {
@@ -657,7 +656,7 @@
   justify-content: center;
   gap: 24px;
   margin-bottom: 20px;
-  flex-shrink: 0;
+  
 }
 
 .expanded-control-btn {
@@ -1922,5 +1921,53 @@
   .expanded-lyrics-content .lyrics-text {
     font-size: 1rem;
     line-height: 1.8;
+  }
+}
+
+
+/* Responsive adjustments for shorter screens */
+@media (max-height: 850px) {
+  .expanded-header {
+    margin-bottom: 10px;
+    padding: 5px 0;
+  }
+  .expanded-artwork {
+    max-height: 35vh;
+    padding: 5px 20px;
+  }
+  .expanded-song-info {
+    padding: 10px 20px 5px;
+  }
+  .expanded-song-title {
+    font-size: 1.5rem;
+  }
+  .expanded-lyrics-preview {
+    margin: 0 20px 15px;
+    padding: 12px 15px;
+  }
+  .lyrics-scroller-container {
+    height: 40px;
+  }
+  .lyrics-scroller {
+    top: 10px;
+  }
+  .lyric-line {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+  }
+  .expanded-progress {
+    margin-bottom: 15px;
+  }
+  .expanded-controls {
+    margin-bottom: 10px;
+    gap: 16px;
+  }
+  .expanded-control-btn {
+    width: 44px;
+    height: 44px;
+  }
+  .expanded-play-button {
+    width: 60px;
+    height: 60px;
   }
 }
