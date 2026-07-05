@@ -509,7 +509,7 @@
 }
 
 .lyrics-scroller-container {
-  height: 80px;
+  height: 110px;
   width: 100%;
   position: relative;
   overflow: hidden;
@@ -519,7 +519,7 @@
 
 .lyrics-scroller {
   position: absolute;
-  top: 30px; /* start slightly offset from center */
+  top: 40px; /* start slightly offset from center */
   left: 0;
   right: 0;
   display: flex;
@@ -1946,10 +1946,10 @@
     padding: 12px 15px;
   }
   .lyrics-scroller-container {
-    height: 40px;
+    height: 65px;
   }
   .lyrics-scroller {
-    top: 10px;
+    top: 20px;
   }
   .lyric-line {
     margin: 0 0 10px 0;
