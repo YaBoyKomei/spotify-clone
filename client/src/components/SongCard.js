@@ -55,7 +55,7 @@ function SongCard({ song, currentSong, isLiked, onPlay, onToggleLike, onAddToPla
 
   return (
     <article
-      className={`song-card ${currentSong?.id === song.id ? 'active' : ''}`}
+      className={`song-card ${currentSong?.id === song.id ? 'active' : ''} ${showMenu ? 'menu-open' : ''}`}
       role="button"
       tabIndex={0}
       onKeyPress={handleKeyPress}
