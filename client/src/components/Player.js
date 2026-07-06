@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
-import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon, ShareIcon, MoreVerticalIcon, ConnectIcon, ChevronDownIcon, XIcon } from './Icons';
+import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon, ShareIcon, MoreVerticalIcon, ConnectIcon, XIcon } from './Icons';
 import { getApiUrl } from '../config';
 
 // Collapse/Expand icons
