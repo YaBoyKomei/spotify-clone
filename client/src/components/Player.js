@@ -56,10 +56,37 @@ function Player({
   const [lyricsLoading, setLyricsLoading] = useState(false);
   const [lyricsSource, setLyricsSource] = useState('');
   const [expandedView, setExpandedView] = useState('playing'); // 'playing' or 'lyrics'
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const titleRef = useRef(null);
   const intervalRef = useRef(null);
   const playerInitialized = useRef(false);
   const isPlayingRef = useRef(isPlaying);
+  
+  const progressRef = useRef(null);
+  const titleContainerRef = useRef(null);
+  const titleTextRef = useRef(null);
+  
+  const lyricsScrollerRef = useRef(null);
+  const fullLyricsScrollerRef = useRef(null);
+
+  useEffect(() => {
+    const updateScroller = (scrollerRef) => {
+      if (scrollerRef.current) {
+        const container = scrollerRef.current.parentElement;
+        const activeEl = scrollerRef.current.querySelector('.active');
+        if (container && activeEl) {
+          const activeTop = activeEl.offsetTop;
+          const activeHeight = activeEl.clientHeight;
+          const containerHeight = container.clientHeight;
+          const translate = containerHeight / 2 - (activeTop + activeHeight / 2);
+          scrollerRef.current.style.transform = `translateY(${translate}px)`;
+        }
+      }
+    };
+    updateScroller(lyricsScrollerRef);
+    updateScroller(fullLyricsScrollerRef);
+  });
+
   const playerRef = useRef(null);
   const manualPauseRef = useRef(false); // Track if user manually paused
   const lastActionTimeRef = useRef(0); // Track last user action
@@ -1457,7 +1484,8 @@ function Player({
                       <div className="lyrics-scroller-container">
                         <div 
                           className="lyrics-scroller"
-                          style={{ transform: `translateY(-${lineOffset}px)`, transition: 'transform 0.4s ease-out' }}
+                          ref={lyricsScrollerRef}
+                          style={{ top: 0, transition: 'transform 0.4s ease-out' }}
                         >
                           {parsedLyrics.map((line, index) => {
                             const distance = Math.abs(index - activeIndex);
@@ -1477,7 +1505,8 @@ function Player({
                       <div className="lyrics-scroller-container">
                         <div 
                           className="lyrics-scroller"
-                          style={{ transform: `translateY(-${progress}%)` }}
+                          ref={lyricsScrollerRef}
+                          style={{ top: 0, transition: 'transform 0.4s ease-out' }}
                         >
                           {lines.map((line, index) => {
                             const distance = Math.abs(index - activeIndex);
@@ -1614,9 +1643,9 @@ function Player({
                     
                     return (
                       <div className="synced-lyrics-full-wrapper" style={{ height: '60vh', position: 'relative', overflow: 'hidden', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}>
-                        <div style={{ position: 'absolute', top: '40%', width: '100%', transition: 'transform 0.4s ease-out', transform: `translateY(-${activeIndex * 45}px)` }}>
+                        <div ref={fullLyricsScrollerRef} style={{ position: 'absolute', top: 0, width: '100%', transition: 'transform 0.4s ease-out' }}>
                           {parsedLyrics.map((line, index) => (
-                            <p key={index} style={{ 
+                            <p key={index} className={index === activeIndex ? "full-lyric-line active" : "full-lyric-line"} style={{ 
                                 fontSize: index === activeIndex ? '1.5rem' : '1.1rem',
                                 color: index === activeIndex ? '#fff' : 'rgba(255,255,255,0.4)',
                                 fontWeight: index === activeIndex ? 'bold' : 'normal',
