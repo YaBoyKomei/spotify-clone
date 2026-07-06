@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Player.css';
-import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon, ShareIcon, MoreVerticalIcon, ConnectIcon } from './Icons';
+import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, VolumeIcon, HeartIcon, ShuffleIcon, RepeatIcon, RepeatOneIcon, AutoplayIcon, PlusIcon, RefreshIcon, ShareIcon, MoreVerticalIcon, ConnectIcon, ChevronDownIcon, XIcon } from './Icons';
 import { getApiUrl } from '../config';
 
 // Collapse/Expand icons
@@ -42,9 +42,7 @@ const parseLrc = (lrcText) => {
   return parsed.length > 0 ? parsed : null;
 };
 
-function Player({ 
-  currentSong, 
-  activePlaylistName, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
+function Player({ currentView, currentSong, activePlaylistName, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -57,6 +55,7 @@ function Player({
   const [lyricsSource, setLyricsSource] = useState('');
   const [expandedView, setExpandedView] = useState('playing'); // 'playing' or 'lyrics'
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
   const titleRef = useRef(null);
   const intervalRef = useRef(null);
   const playerInitialized = useRef(false);
@@ -249,7 +248,22 @@ function Player({
         // Silently fail
       }
     }
-  }, [isPlaying, currentTime]);
+    
+    // Check if the current song is in the queue
+    if (currentSong && queue.length > 0) {
+      const index = queue.findIndex(s => s.id === currentSong.id);
+      if (index !== -1) {
+        setCurrentQueueIndex(index);
+      }
+    }
+  }, [isPlaying, currentTime, currentSong, queue]);
+
+  // Minimize player when changing views (pages)
+  useEffect(() => {
+    if (isExpanded) {
+      setIsExpanded(false);
+    }
+  }, [currentView]);
 
   // Initialize audio element for background playback detection
   useEffect(() => {
@@ -1220,8 +1234,8 @@ function Player({
 
   // Handle swipe down to collapse expanded player
   const handleExpandedTouchStart = (e) => {
-    // Don't trigger swipe-to-close if touching buttons, inputs, or lyrics content
-    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('.expanded-lyrics-content')) return;
+    // Don't trigger swipe-to-close if touching buttons, inputs, lyrics content, or queue panel
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('.expanded-lyrics-content') || e.target.closest('.queue-panel')) return;
     touchStartY.current = e.touches[0].clientY;
   };
 
@@ -1435,8 +1449,11 @@ function Player({
           </div>
 
           <div className="expanded-header-actions">
-            <button className="header-action-btn"><ShareIcon /></button>
-            <button className="header-action-btn"><MoreVerticalIcon /></button>
+            {expandedView === 'lyrics' && (
+              <button className="header-action-btn" onClick={() => setExpandedView('playing')}>
+                <XIcon />
+              </button>
+            )}
           </div>
         </div>
 

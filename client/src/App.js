@@ -7,7 +7,7 @@ import Player from './components/Player';
 import { getApiUrl } from './config';
 // import AudioPlayer from './components/AudioPlayer';
 import SongCard from './components/SongCard';
-import { SearchIcon, MusicIcon } from './components/Icons';
+import { SearchIcon, MusicIcon, HeartIcon, PlusIcon } from './components/Icons';
 import { ChevronLeftIcon, ChevronRightIcon } from './components/ScrollButton';
 import { updateSEOForView, addSongStructuredData, preloadCriticalResources } from './utils/seo';
 
@@ -123,9 +123,10 @@ function App() {
     localStorage.setItem('playCount', JSON.stringify(playCount));
   }, [playCount]);
 
+  // Save recentItems to localStorage whenever it changes
   useEffect(() => {
-    // Keep only last 10 recent items
-    const limitedRecent = recentItems.slice(0, 10);
+    // Keep only last 16 recent items
+    const limitedRecent = recentItems.slice(0, 16);
     if (limitedRecent.length !== recentItems.length) {
       setRecentItems(limitedRecent);
     }
@@ -1080,7 +1081,7 @@ function App() {
                 </button>
               )}
               <div className="recent-list-container" id="carousel-recent">
-                {recentItems.slice(0, 8).map(item => (
+                {recentItems.slice(0, 16).map(item => (
                   <div
                     key={item.id}
                     className="recent-list-item"
@@ -1099,20 +1100,29 @@ function App() {
                         <p className="recent-item-artist">{item.artist || 'Various Artists'}</p>
                       </div>
                     </div>
-                    <button
-                      className="recent-item-more"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if(item.type !== 'album') {
-                          setSelectedSongForPlaylist(item);
-                          setShowAddToPlaylist(true);
-                        }
-                      }}
-                    >
-                      <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                      </svg>
-                    </button>
+                    <div className="recent-item-actions">
+                      <button
+                        className="recent-item-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLike(item);
+                        }}
+                      >
+                        <HeartIcon filled={!!likedSongs.find(s => (s.id || s.videoId) === (item.id || item.videoId))} />
+                      </button>
+                      <button
+                        className="recent-item-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if(item.type !== 'album') {
+                            setSelectedSongForPlaylist(item);
+                            setShowAddToPlaylist(true);
+                          }
+                        }}
+                      >
+                        <PlusIcon />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1770,6 +1780,7 @@ function App() {
       </div>
       {currentSong && (
         <Player
+          currentView={currentView}
           currentSong={currentSong}
           activePlaylistName={activePlaylistName}
           isPlaying={isPlaying}
