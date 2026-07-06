@@ -1415,7 +1415,13 @@ function Player({
       >
         {/* Header with collapse button and toggle */}
         <div className="expanded-header">
-          <button className="collapse-btn" onClick={toggleExpanded}>
+          <button className="collapse-btn" onClick={() => {
+            if (expandedView === 'lyrics') {
+              setExpandedView('playing');
+            } else {
+              toggleExpanded();
+            }
+          }}>
             <ChevronDownIcon />
           </button>
           
@@ -1675,6 +1681,26 @@ function Player({
                   <p>No lyrics available for this song</p>
                 </div>
               )}
+            </div>
+
+            {/* Progress Bar */}
+            <div className="expanded-progress" style={{ marginBottom: '15px' }}>
+              <div className="expanded-progress-bar">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={progress}
+                  onChange={handleSeek}
+                  className="expanded-progress-input"
+                />
+                <div className="expanded-progress-fill" style={{ width: `${progress}%` }}></div>
+              </div>
+              <div className="expanded-time">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
             </div>
 
             {/* Mini controls */}
