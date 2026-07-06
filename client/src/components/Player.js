@@ -19,6 +19,29 @@ const LyricsIcon = () => (
   </svg>
 );
 
+// Parse LRC format lyrics
+const parseLrc = (lrcText) => {
+  if (!lrcText || !lrcText.includes('[00:')) return null;
+  const lines = lrcText.split('\n');
+  const parsed = [];
+  const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const match = line.match(timeRegex);
+    if (match) {
+      const minutes = parseInt(match[1], 10);
+      const seconds = parseInt(match[2], 10);
+      const ms = parseInt(match[3], 10);
+      const msMultiplier = match[3].length === 2 ? 10 : 1;
+      const timeInSeconds = minutes * 60 + seconds + (ms * msMultiplier) / 1000;
+      const text = line.replace(timeRegex, '').trim();
+      parsed.push({ time: timeInSeconds, text: text || '\u00A0' });
+    }
+  }
+  return parsed.length > 0 ? parsed : null;
+};
+
 function Player({ 
   currentSong, 
   activePlaylistName, isPlaying, onTogglePlay, onNext, onPrevious, shuffle, onToggleShuffle, repeat, onToggleRepeat, autoplay, onToggleAutoplay, isLiked, onToggleLike, queue, showQueue, onToggleQueue, onPlayFromQueue, onRefreshQueue, onExtendQueue, likedSongs, onToggleLikeInQueue, onAddToPlaylistFromQueue, onReorderQueue }) {
@@ -1074,12 +1097,38 @@ function Player({
 
   // Fetch lyrics for current song
   const fetchLyrics = async () => {
-    if (!currentSong || !currentSong.youtubeId) return;
+    if (!currentSong) return;
     
     setLyricsLoading(true);
     setLyrics(null);
     setLyricsSource('');
     
+    try {
+      // First try to get synced lyrics from LRCLIB
+      const title = encodeURIComponent(currentSong.title);
+      const artist = encodeURIComponent(currentSong.artist);
+      const lrcRes = await fetch(`https://lrclib.net/api/search?track_name=${title}&artist_name=${artist}`);
+      if (lrcRes.ok) {
+         const lrcData = await lrcRes.json();
+         if (lrcData && lrcData.length > 0) {
+           const bestMatch = lrcData.find(t => t.syncedLyrics) || lrcData.find(t => t.plainLyrics);
+           if (bestMatch) {
+             setLyrics(bestMatch.syncedLyrics || bestMatch.plainLyrics);
+             setLyricsSource(bestMatch.syncedLyrics ? 'LRCLIB (Synced)' : 'LRCLIB');
+             setLyricsLoading(false);
+             return;
+           }
+         }
+      }
+    } catch (e) {
+       console.log('Error fetching from LRCLIB:', e);
+    }
+    
+    if (!currentSong.youtubeId) {
+      setLyricsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(getApiUrl(`/api/lyrics/${currentSong.youtubeId}`));
       const data = await response.json();
@@ -1391,25 +1440,57 @@ function Player({
                 <div className="lyrics-scroller-container"><p className="lyric-line loading">Loading lyrics...</p></div>
               ) : lyrics ? (
                 (() => {
-                  const lines = lyrics.split('\n');
-                  const activeIndex = Math.min(lines.length - 1, Math.max(0, Math.floor((progress / 100) * lines.length)));
-                  return (
-                    <div className="lyrics-scroller-container">
-                      <div 
-                        className="lyrics-scroller"
-                        style={{ transform: `translateY(-${progress}%)` }}
-                      >
-                        {lines.map((line, index) => {
-                          const distance = Math.abs(index - activeIndex);
-                          let className = "lyric-line";
-                          if (index === activeIndex) className += " active";
-                          else if (distance === 1) className += " adjacent";
-                          else className += " distant";
-                          return <p key={index} className={className}>{line || '\u00A0'}</p>;
-                        })}
+                  const parsedLyrics = parseLrc(lyrics);
+                  if (parsedLyrics) {
+                    let activeIndex = 0;
+                    for (let i = 0; i < parsedLyrics.length; i++) {
+                      if (currentTime >= parsedLyrics[i].time) {
+                        activeIndex = i;
+                      } else {
+                        break;
+                      }
+                    }
+                    
+                    const lineOffset = activeIndex * 40; 
+                    
+                    return (
+                      <div className="lyrics-scroller-container">
+                        <div 
+                          className="lyrics-scroller"
+                          style={{ transform: `translateY(-${lineOffset}px)`, transition: 'transform 0.4s ease-out' }}
+                        >
+                          {parsedLyrics.map((line, index) => {
+                            const distance = Math.abs(index - activeIndex);
+                            let className = "lyric-line";
+                            if (index === activeIndex) className += " active";
+                            else if (distance === 1) className += " adjacent";
+                            else className += " distant";
+                            return <p key={index} className={className}>{line.text}</p>;
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
+                    );
+                  } else {
+                    const lines = lyrics.split('\n');
+                    const activeIndex = Math.min(lines.length - 1, Math.max(0, Math.floor((progress / 100) * lines.length)));
+                    return (
+                      <div className="lyrics-scroller-container">
+                        <div 
+                          className="lyrics-scroller"
+                          style={{ transform: `translateY(-${progress}%)` }}
+                        >
+                          {lines.map((line, index) => {
+                            const distance = Math.abs(index - activeIndex);
+                            let className = "lyric-line";
+                            if (index === activeIndex) className += " active";
+                            else if (distance === 1) className += " adjacent";
+                            else className += " distant";
+                            return <p key={index} className={className}>{line || '\u00A0'}</p>;
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }
                 })()
               ) : (
                 <div className="lyrics-scroller-container"><p className="lyric-line">Now Playing</p></div>
@@ -1519,12 +1600,46 @@ function Player({
                   <p>Loading lyrics...</p>
                 </div>
               ) : lyrics ? (
-                <>
-                  <pre className="lyrics-text">{lyrics}</pre>
-                  {lyricsSource && (
-                    <p className="lyrics-source">{lyricsSource}</p>
-                  )}
-                </>
+                (() => {
+                  const parsedLyrics = parseLrc(lyrics);
+                  if (parsedLyrics) {
+                    let activeIndex = 0;
+                    for (let i = 0; i < parsedLyrics.length; i++) {
+                      if (currentTime >= parsedLyrics[i].time) {
+                        activeIndex = i;
+                      } else {
+                        break;
+                      }
+                    }
+                    
+                    return (
+                      <div className="synced-lyrics-full-wrapper" style={{ height: '60vh', position: 'relative', overflow: 'hidden', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}>
+                        <div style={{ position: 'absolute', top: '40%', width: '100%', transition: 'transform 0.4s ease-out', transform: `translateY(-${activeIndex * 45}px)` }}>
+                          {parsedLyrics.map((line, index) => (
+                            <p key={index} style={{ 
+                                fontSize: index === activeIndex ? '1.5rem' : '1.1rem',
+                                color: index === activeIndex ? '#fff' : 'rgba(255,255,255,0.4)',
+                                fontWeight: index === activeIndex ? 'bold' : 'normal',
+                                transition: 'all 0.4s ease-out',
+                                margin: '0 0 15px 0',
+                                textAlign: 'center',
+                                textShadow: index === activeIndex ? '0 0 10px rgba(183,109,255,0.5)' : 'none'
+                            }}>{line.text}</p>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <>
+                        <pre className="lyrics-text">{lyrics}</pre>
+                        {lyricsSource && (
+                          <p className="lyrics-source">{lyricsSource}</p>
+                        )}
+                      </>
+                    );
+                  }
+                })()
               ) : (
                 <div className="lyrics-not-found">
                   <LyricsIcon />
