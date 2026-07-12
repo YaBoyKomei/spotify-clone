@@ -1449,11 +1449,6 @@ function Player({ currentView, currentSong, activePlaylistName, isPlaying, onTog
           </div>
 
           <div className="expanded-header-actions">
-            {expandedView === 'lyrics' && (
-              <button className="header-action-btn" onClick={() => setExpandedView('playing')}>
-                <XIcon />
-              </button>
-            )}
           </div>
         </div>
 
@@ -1642,6 +1637,9 @@ function Player({ currentView, currentSong, activePlaylistName, isPlaying, onTog
                 <div className="lyrics-mini-title">{currentSong.title}</div>
                 <div className="lyrics-mini-artist">{currentSong.artist}</div>
               </div>
+              <button className="header-action-btn" onClick={() => setExpandedView('playing')} style={{ marginLeft: 'auto' }}>
+                <XIcon />
+              </button>
             </div>
 
             {/* Lyrics content */}
